@@ -1,0 +1,15 @@
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+
+  // Match PaperMod's theme: checks localStorage first, then system preference
+  const stored = localStorage.getItem('pref-theme');
+  const isDark = stored === 'dark' ||
+    (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: isDark ? 'dark' : 'neutral',
+    flowchart: { useMaxWidth: true, htmlLabels: true },
+    securityLevel: 'loose',
+  });
+</script>

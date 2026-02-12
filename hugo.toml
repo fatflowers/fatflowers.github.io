@@ -1,0 +1,85 @@
+baseURL = "/"
+theme = "PaperMod"
+enableEmoji = true
+defaultContentLanguage = "en"
+defaultContentLanguageInSubdir = false
+
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
+
+[params]
+  env = "production"
+  defaultTheme = "auto"
+  ShowReadingTime = true
+  ShowShareButtons = true
+  displayFullLangName = true
+
+[languages.en]
+  weight = 1
+  languageName = "English"
+  title = "Simon Sun"
+
+  [languages.en.params]
+    [languages.en.params.homeInfoParams]
+      Title = "Hi, I am Simon Sun"
+      Content = "AI Engineering | Backend Developer | Open Source Enthusiast"
+
+  [[languages.en.menus.main]]
+    name = "Tech"
+    url = "/categories/tech"
+    weight = 1
+
+  [[languages.en.menus.main]]
+    name = "Cat"
+    url = "/tags/cat"
+    weight = 2
+
+  [[languages.en.menus.main]]
+    name = "Coffee"
+    url = "/tags/coffee"
+    weight = 3
+
+  [[languages.en.menus.main]]
+    name = "Search"
+    url = "/search"
+    weight = 4
+
+  [[languages.en.menus.main]]
+    name = "Tags"
+    url = "/tags"
+    weight = 5
+
+[languages.zh]
+  weight = 2
+  languageName = "简体中文"
+  title = "Simon Sun"
+
+  [languages.zh.params]
+    [languages.zh.params.homeInfoParams]
+      Title = "你好，我是Simon Sun"
+      Content = "AI 工程师 | 后端开发者 | 开源爱好者"
+
+  [[languages.zh.menus.main]]
+    name = "技术"
+    url = "/zh/categories/tech"
+    weight = 1
+
+  [[languages.zh.menus.main]]
+    name = "猫咪"
+    url = "/zh/tags/cat"
+    weight = 2
+
+  [[languages.zh.menus.main]]
+    name = "咖啡"
+    url = "/zh/tags/coffee"
+    weight = 3
+
+  [[languages.zh.menus.main]]
+    name = "搜索"
+    url = "/zh/search"
+    weight = 4
+
+  [[languages.zh.menus.main]]
+    name = "标签"
+    url = "/zh/tags"
+    weight = 5
