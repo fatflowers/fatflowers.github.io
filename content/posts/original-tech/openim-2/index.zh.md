@@ -1,7 +1,7 @@
 ---
 title: "独立部署OpenIM遇到的坑（2）Socket泄漏"
 date: 2026-02-12
-categories: ["Tech"]
+categories: ["Original Tech"]
 tags: ["OpenIM", "Go", "后端", "Socket"]
 draft: false
 ---
@@ -17,13 +17,13 @@ draft: false
 - `openimserver-openim-push`和`openimserver-openim-msggateway` 的goroutine数量多
 - `openimserver-openim-push`和`openimserver-openim-msggateway` pod socket数很多
 
-![socket数过多](/posts/openim-2/0401socketCount.png)
+![socket数过多](/posts/original-tech/openim-2/0401socketCount.png)
 
 ## 原因
 
 这看起来像是一个socket泄漏问题，即打开了socket连接，但没有主动关闭，继而引发了协程泄漏。
 
-![消息下行数据链路](/posts/openim-2/msg_downstream.png)
+![消息下行数据链路](/posts/original-tech/openim-2/msg_downstream.png)
 
 
 ## 解决办法

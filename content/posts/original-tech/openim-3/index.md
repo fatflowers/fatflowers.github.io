@@ -1,7 +1,7 @@
 ---
 title: "OpenIM Self-Hosting Pitfalls (3): Scaling Errors"
 date: 2026-02-12
-categories: ["Tech"]
+categories: ["Original Tech"]
 tags: ["OpenIM", "Go", "Backend", "K8s", "Consistent Hashing"]
 draft: false
 ---
@@ -42,14 +42,14 @@ But the current problem is:
 2. Courier's Navigation System A: Recipient -> Station B
 3. Recipient waits for the package at Station A, but the Courier delivers it to Station B.
 
-<img src="/posts/openim-3/metaphor_en.svg" alt="Metaphor Illustration" width="600" style="max-width: 100%; height: auto;">
+<img src="/posts/original-tech/openim-3/metaphor_en.svg" alt="Metaphor Illustration" width="600" style="max-width: 100%; height: auto;">
 
 **Two independent navigation systems gave different results!**
 
 ## Technical Cause Analysis
 
 ### OpenIM Internal Connection Link
-![OpenIM Internal Connection Link](/posts/openim-3/full_path_link_en.png)
+![OpenIM Internal Connection Link](/posts/original-tech/openim-3/full_path_link.png)
 
 As seen in the figure, the problem involves two independent routing processes:
 - **Message Sending Path**: `openim-push` directly finds the `openim-msggateway` node connected to the user via consistent hashing.
@@ -78,7 +78,7 @@ host := fmt.Sprintf("%s-openim-msggateway-%d.%s-openim-msggateway-headless.%s.sv
 ```
 
 ### Problem Example
-![Input side and output side find different openim-msggateway](/posts/openim-3/expansion_en.png)
+![Input side and output side find different openim-msggateway](/posts/original-tech/openim-3/expansion_en.png)
 
 Assume scaling to 5 nodes:
 1. **User Connection**: Assigned to the 4th node via consistent hashing.

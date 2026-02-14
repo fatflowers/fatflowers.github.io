@@ -53,34 +53,39 @@ defaultContentLanguageInSubdir = false
       Content = "AI Engineering | Backend Developer | Open Source Enthusiast"
 
   [[languages.en.menus.main]]
-    name = "Tech"
-    url = "/categories/tech"
+    name = "Original Tech"
+    url = "/categories/original-tech"
     weight = 1
+
+  [[languages.en.menus.main]]
+    name = "Curated Reads"
+    url = "/categories/curated-reads"
+    weight = 2
 
   [[languages.en.menus.main]]
     name = "Cat"
     url = "/tags/cat"
-    weight = 2
+    weight = 3
 
   [[languages.en.menus.main]]
     name = "Coffee"
     url = "/tags/coffee"
-    weight = 3
+    weight = 4
 
   [[languages.en.menus.main]]
     name = "Archives"
     url = "/archives"
-    weight = 4
+    weight = 5
 
   [[languages.en.menus.main]]
     name = "Search"
     url = "/search"
-    weight = 5
+    weight = 6
 
   [[languages.en.menus.main]]
     name = "Tags"
     url = "/tags"
-    weight = 6
+    weight = 7
 
 [languages.zh]
   weight = 2
@@ -101,31 +106,36 @@ defaultContentLanguageInSubdir = false
       Content = "AI 工程师 | 后端开发者 | 开源爱好者"
 
   [[languages.zh.menus.main]]
-    name = "技术"
-    url = "/zh/categories/tech"
+    name = "原创技术"
+    url = "/zh/categories/original-tech"
     weight = 1
+
+  [[languages.zh.menus.main]]
+    name = "转载精选"
+    url = "/zh/categories/curated-reads"
+    weight = 2
 
   [[languages.zh.menus.main]]
     name = "猫咪"
     url = "/zh/tags/cat"
-    weight = 2
+    weight = 3
 
   [[languages.zh.menus.main]]
     name = "咖啡"
     url = "/zh/tags/coffee"
-    weight = 3
+    weight = 4
 
   [[languages.zh.menus.main]]
     name = "归档"
     url = "/zh/archives"
-    weight = 4
+    weight = 5
 
   [[languages.zh.menus.main]]
     name = "搜索"
     url = "/zh/search"
-    weight = 5
+    weight = 6
 
   [[languages.zh.menus.main]]
     name = "标签"
     url = "/zh/tags"
-    weight = 6
+    weight = 7
