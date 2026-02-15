@@ -1,5 +1,6 @@
 baseURL = "/"
 theme = "PaperMod"
+googleAnalytics = "G-GZGV3E1GNH"
 enableEmoji = true
 defaultContentLanguage = "en"
 defaultContentLanguageInSubdir = false
