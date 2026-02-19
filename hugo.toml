@@ -30,7 +30,7 @@ defaultContentLanguageInSubdir = false
   ShowBreadCrumbs = true
   ShowPostNavLinks = true
   ShowToc = true
-  TocOpen = false
+  TocOpen = true
   ShowWordCount = true
   ShowRssButtonInSectionTermList = true
 
