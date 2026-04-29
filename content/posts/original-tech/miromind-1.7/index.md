@@ -3,9 +3,41 @@ title: "In-Depth Analysis of MiroThinker 1.7: Engineering Optimizations and Guar
 date: 2026-04-29
 tags: ["MiroThinker", "Agent", "LLM", "Long-Horizon Reasoning", "MCP", "Context Management", "Fault Tolerance"]
 categories: ["Original Tech"]
+cover:
+  image: "panel.png"
 ---
 
-> MiroThinker 1.7 has achieved SOTA results in the field of long-horizon question reasoning. These outstanding results stem from the combination of a powerful Model and a solid Harness. This article documents key engineering optimizations in its Harness implementation.
+> MiroThinker 1.7 has achieved [SOTA results](https://github.com/MiroMindAI/MiroThinker) in the field of long-horizon question reasoning. These outstanding results stem from the combination of a powerful Model and a solid Harness. This article documents key engineering optimizations in its Harness implementation.
+
+## Prerequisite Background
+
+MiroThinker is a deep research Agent — given a complex question ("what are the titles of the cs papers on arxiv today"), it autonomously breaks down the task, searches, scrapes webpages, runs Python for verification, and finally outputs the `\boxed{answer}`. The foundation is classic ReAct: each turn involves LLM reasoning + tool calling, the results are written back to the history, looping 200~300 times until convergence.
+
+Supporting a 256K context + up to 300 tool calls for a single task is a significant engineering challenge. The runtime generally looks like this:
+
+```mermaid
+flowchart TD
+    Task["task_description (User Query)"] --> Loop
+
+    subgraph Loop ["Orchestrator Main Loop (≤200/300 turns)"]
+        direction TB
+        For["for turn in 1..max_turns:"]
+        S1["① LLM Thinking → tool_call"]
+        S2["② ToolManager → MCP Server<br>(search / python / scrape / ...)"]
+        S3["③ keep_tool_result: Truncate remote tool results"]
+        S4["④ ensure_summary_context: Token estimation early braking"]
+        S5["⑤ rollback / Intermediate Answer Pool"]
+        
+        For --> S1 --> S2 --> S3 --> S4 --> S5
+    end
+
+    Loop --> Condition{"End Condition"}
+    Condition -- "Success \boxed{}" --> Success["Output Final Answer"]
+    Condition -- "Max turns / Context full" --> Failure["generate_failure_summary"]
+    Failure --> Restart["Restart attempt (≤3 times)"]
+```
+
+The following sections will detail the three main parts: "Guardrail Mechanisms → Tool Layer → Context Processing".
 
 ## 1. Model Behavior Guardrails
 MiroThinker implements various mechanisms to prevent model errors and hallucinations.
@@ -95,7 +127,31 @@ else:
 ```
 > 📍 Source: [`base_client.py:202-218`](https://github.com/MiroMindAI/MiroThinker/blob/370f9836/apps/miroflow-agent/src/llm/base_client.py#L202-L218)
 
-### 3.2 Error Summary: [`generate_failure_summary`](https://github.com/MiroMindAI/MiroThinker/blob/370f9836/apps/miroflow-agent/src/core/answer_generator.py#L170)
+### 3.2 Early Braking: [`ensure_summary_context`](https://github.com/MiroMindAI/MiroThinker/blob/370f9836/apps/miroflow-agent/src/llm/providers/openai_client.py#L392)
+
+Section 3.1 solves the problem of slow token accumulation in steady state, but a **single** tool result could instantly burst the limit—for example, a 50K token webpage body. `ensure_summary_context` performs a token estimation at the end of each turn, braking early if approaching the limit:
+
+```python
+estimated_total = (
+    last_prompt_tokens + last_completion_tokens
+    + last_user_tokens          # The newly inserted tool result
+    + summary_tokens            # Reserved for final summary
+    + max_tokens                # Reserved for response
+    + 1000                      # buffer
+)
+if estimated_total >= max_context_length:   # 256K
+    message_history.pop()       # Discard the newly added tool result
+    message_history.pop()       # Discard the corresponding assistant tool_call
+    return False                # Main loop sees False → break immediately
+```
+
+The token count is estimated using tiktoken and multiplied by 1.5 as a buffer, ensuring it's conservative rather than precise. Once it is determined to overflow, the main loop directly enters the final summary stage.
+
+Division of labor with 3.1:
+- **3.1**: Slowly saves tokens in steady state, performed on every call.
+- **3.2**: Brakes instantly if a single result is too large, breaking out of the main loop.
+
+### 3.3 Error Summary: [`generate_failure_summary`](https://github.com/MiroMindAI/MiroThinker/blob/370f9836/apps/miroflow-agent/src/core/answer_generator.py#L170)
 
 Section 3.1 covers "mechanical truncation" within a single task. However, when a task exhausts `max_turns` or hits the context limit without producing an answer, a more radical compression is needed—forcing the model to condense the entire conversation into a concise failure summary.
 
@@ -125,7 +181,23 @@ The new attempt starts with a fresh 256K window but can see the pitfalls encount
 
 This design ensures the reasoning chain isn't contaminated by "half-truncated compression"—it either runs entirely or restarts completely. It effectively sidesteps the common issue in rolling summaries where "the model hallucinates further based on its own fabricated summary."
 
-### 3.3 Assistant Prefill: [`continue_final_message`](https://github.com/MiroMindAI/MiroThinker/blob/370f9836/apps/miroflow-agent/src/llm/providers/openai_client.py#L153-L155)
+### 3.4 Fallback Answer Pool: [`intermediate_boxed_answers`](https://github.com/MiroMindAI/MiroThinker/blob/370f9836/apps/miroflow-agent/src/core/orchestrator.py#L848-L852)
+
+In every turn of the main loop, the system extracts `\boxed{...}` content from the LLM output and stores it in a list:
+
+```python
+boxed_content = output_formatter._extract_boxed_content(assistant_response_text)
+if boxed_content:
+    self.intermediate_boxed_answers.append(boxed_content)
+```
+
+If the task ultimately fails to produce a compliant answer, it falls back to the last intermediate answer as the fallback output.
+
+However, there is a **condition**: when context management is enabled, the intermediate retries **do not** use this fallback. A false positive fallback would cause the pipeline to misjudge it as a success and stop triggering new attempts. It is only enabled during the final retry (`is_final_retry=True`).
+
+This transforms "answer extraction" from a one-time event into a continuous process—the model might have guessed a part correctly at step 50, but then wandered off track later. The fallback pool ensures that such partial progress is not wasted.
+
+### 3.5 Assistant Prefill: [`continue_final_message`](https://github.com/MiroMindAI/MiroThinker/blob/370f9836/apps/miroflow-agent/src/llm/providers/openai_client.py#L153-L155)
 
 ```python
   if messages_for_llm[-1].get("role") == "assistant":
@@ -142,3 +214,25 @@ An `assistant` message at the end of `message_history` occurs in several scenari
 - **Scenario 2:** Regeneration boundary after a rollback.
 - **Scenario 3:** Truncation recovery.
   - When `finish_reason == "length"` triggers a retry with `max_tokens *= 1.1`, the previous assistant output was truncated. By preserving this truncated assistant message and setting `continue_final_message=True`, the model simply resumes generation from the truncation point, avoiding the need to regenerate the existing text.
+
+## 4. Takeaways List
+
+After walking through the source code, several engineering designs are worth adapting in your own Agent projects:
+
+1. **Rollback ensuring failures don't consume budget (1.1)**
+   Treating "pretend this turn never happened" as a first-class citizen is cleaner than forcibly injecting a retry prompt, and it makes the state machine easier to reason about.
+
+2. **Runtime compression uses copies, while original history is preserved (3.1)**
+   What is sent to the LLM is a truncated copy, but the TaskLog is always full. This saves money at runtime, while offline training / visualization get the full data. One piece of code feeds multiple downstreams.
+
+3. **Failure summaries feed the next attempt, not the current session (3.3)**
+   Avoids the issue of the "model hallucinating further based on its newly fabricated summary." It either runs fully or restarts completely, keeping the state machine clean.
+
+4. **Continuous answer extraction (3.4)**
+   Trying to extract `\boxed{}` in every turn rather than just at the end. The fallback pool ensures that progress isn't wasted if the model "guessed right halfway but took a wrong turn later."
+
+5. **Hardcoding known model bugs (1.2)**
+   Parameter name mapping, sandbox_id blacklists—rather than training the model to not make mistakes, it's better to provide a safety net at the engineering layer. These are targeted patches summarized from thousands of traces, not over-defensive programming.
+
+6. **Using Sub-agents as tools (2.3)**
+   Registering them in the tool list with an `agent-` prefix makes them indistinguishable from the main Agent's invocation method. A single abstraction unifies two execution models.
