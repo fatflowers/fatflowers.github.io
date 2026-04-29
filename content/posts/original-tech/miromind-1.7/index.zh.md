@@ -1,11 +1,43 @@
 ---
-title: "深度解析 MiroThinker 1.7：长时序推理 Agent 的工程优化与护栏设计"
+title: "读 MiroThinker 1.7 Agent源码：长时序 Agent 的护栏机制与上下文管理"
 date: 2026-04-29
 tags: ["MiroThinker", "Agent", "LLM", "长时序推理", "MCP", "上下文管理", "容错机制"]
 categories: ["Original Tech"]
+cover:
+  image: "panel.png"
 ---
 
-> MiroThinker 1.7 在长问题推理领域取得了SOTA的成绩，优秀的成绩是由强Model与扎实的Harness共同组成的，本文是对其Harness实现中的关键工程优化的记录。
+> MiroThinker 1.7 在长问题推理领域取得了[SOTA的成绩](https://github.com/MiroMindAI/MiroThinker)，优秀的成绩是由强Model与扎实的Harness共同组成的，本文是对其Harness实现中的关键工程优化的记录。
+
+## 前置背景
+
+MiroThinker 是一个深度研究型 Agent —— 给一个复杂问题（"今天 arxiv 上 cs 的论文标题是什么"），它会自己拆任务、搜索、抓网页、跑 Python 验证，最后输出 `\boxed{答案}`。底子是经典 ReAct：每回合 LLM 思考 + 工具调用，结果回写历史，循环 200~300 次直到收敛。
+
+256K 上下文 + 单任务最多 300 次工具调用，对工程是不小挑战。运行时整体长这样：
+
+```mermaid
+flowchart TD
+    Task["task_description (用户问题)"] --> Loop
+
+    subgraph Loop ["Orchestrator 主循环 (≤200/300 turns)"]
+        direction TB
+        For["for turn in 1..max_turns:"]
+        S1["① LLM 思考 → tool_call"]
+        S2["② ToolManager → MCP Server<br>(search / python / scrape / ...)"]
+        S3["③ keep_tool_result：裁剪远端工具结果"]
+        S4["④ ensure_summary_context：token 预估刹车"]
+        S5["⑤ rollback / 中间答案池"]
+        
+        For --> S1 --> S2 --> S3 --> S4 --> S5
+    end
+
+    Loop --> Condition{"结束条件"}
+    Condition -- "成功 \boxed{}" --> Success["输出最终答案"]
+    Condition -- "跑满 / 上下文满" --> Failure["generate_failure_summary"]
+    Failure --> Restart["重启 attempt（≤3 次）"]
+```
+
+下文按"护栏机制 → 工具层 → 上下文处理"三块展开。
 
 ## 1. 模型行为护栏
 MiroThinker中实现了多种预防模型出错、幻觉的机制。
@@ -92,7 +124,32 @@ else:
     msg["content"] = "Tool result is omitted to save tokens."
 ```
 > 📍 源码：[`base_client.py:202-218`](https://github.com/MiroMindAI/MiroThinker/blob/370f9836/apps/miroflow-agent/src/llm/base_client.py#L202-L218)
-### 3.2 错误总结：[`generate_failure_summary`](https://github.com/MiroMindAI/MiroThinker/blob/370f9836/apps/miroflow-agent/src/core/answer_generator.py#L170)
+
+### 3.2 提前刹车：[`ensure_summary_context`](https://github.com/MiroMindAI/MiroThinker/blob/370f9836/apps/miroflow-agent/src/llm/providers/openai_client.py#L392)
+
+3.1 解决稳态下 token 慢慢累积的问题，但**单条**工具结果就能瞬间撑爆——比如一篇 50K token 的网页正文。`ensure_summary_context` 在每回合末做一次 token 预估，逼近上限就提前刹车：
+
+```python
+estimated_total = (
+    last_prompt_tokens + last_completion_tokens
+    + last_user_tokens          # 新塞进去的工具结果
+    + summary_tokens            # 给 final summary 留位置
+    + max_tokens                # 给响应留位置
+    + 1000                      # buffer
+)
+if estimated_total >= max_context_length:   # 256K
+    message_history.pop()       # 弹掉刚加的工具结果
+    message_history.pop()       # 弹掉对应的 assistant tool_call
+    return False                # 主循环看到 False → 立即跳出
+```
+
+token 数用 tiktoken 估算并乘 1.5 当 buffer，保守而非精确。一旦判定要爆，主循环直接进入 final summary 阶段。
+
+跟 3.1 的分工：
+- **3.1**：稳态下慢慢省 token，每次调用都做
+- **3.2**：单条结果太大就当场刹车，跳出主循环
+
+### 3.3 错误总结：[`generate_failure_summary`](https://github.com/MiroMindAI/MiroThinker/blob/370f9836/apps/miroflow-agent/src/core/answer_generator.py#L170)
 
 3.1 是单任务内的"机械裁剪"，但当任务跑满 `max_turns` 或上下文逼近上限仍没拿到答案时，就需要更彻底的压缩——让模型自己把整段对话浓缩成一段失败经验。
 
@@ -122,7 +179,23 @@ failure_summary_history.append({"role": "assistant", "content": FAILURE_SUMMARY_
 
 这样设计的好处是 reasoning chain 不会被"半截压缩"污染——要么完整跑、要么完全重启，避免了滚动 summary 常见的"模型对自己编的摘要再二次脑补"问题。
 
-### 3.3 assistant prefill [`continue_final_message`](https://github.com/MiroMindAI/MiroThinker/blob/370f9836/apps/miroflow-agent/src/llm/providers/openai_client.py#L153-L155)
+### 3.4 兜底答案池：[`intermediate_boxed_answers`](https://github.com/MiroMindAI/MiroThinker/blob/370f9836/apps/miroflow-agent/src/core/orchestrator.py#L848-L852)
+
+主循环每回合都会从 LLM 输出里抽 `\boxed{...}` 内容存进列表：
+
+```python
+boxed_content = output_formatter._extract_boxed_content(assistant_response_text)
+if boxed_content:
+    self.intermediate_boxed_answers.append(boxed_content)
+```
+
+任务最终如果没产出合规答案，就退回最后一个中间答案当兜底输出。
+
+但**有条件**：启用 context management 时，中间几次重试**不**用兜底——错误兜底会让 pipeline 误判成功而不再触发新一次 attempt；只在最后一次重试 (`is_final_retry=True`) 才打开。
+
+这把"答案提取"从一次性事件变成连续过程——模型在第 50 步可能就猜对了一部分，只是后面绕路绕错了，备胎池让这种部分进展不被浪费。
+
+### 3.5 assistant prefill [`continue_final_message`](https://github.com/MiroMindAI/MiroThinker/blob/370f9836/apps/miroflow-agent/src/llm/providers/openai_client.py#L153-L155)
 
 ```python
   if messages_for_llm[-1].get("role") == "assistant":
@@ -139,3 +212,25 @@ message_history 末尾出现 assistant 消息有几个场景：
 - 场景 2：Rollback 后的重生成边界
 - 场景 3：截断恢复
     - finish_reason == "length" 触发 max_tokens *= 1.1 重试时 —— 上一次的 assistant 输出被截断了，下次调用如果保留这条 truncated assistant，加上continue_final_message=True，模型就能接着被截断的地方往下补完，不用重新生成前面已经写过的部分。
+
+## 4. 可借鉴清单
+
+跑过这一遍源码，几个工程设计值得在自己的 Agent 项目里借鉴：
+
+1. **Rollback 让失败不消耗预算（1.1）**
+   把"假装这一回合没发生"做成一等公民，比硬塞重试 prompt 更干净，状态机也更可推理。
+
+2. **运行时压缩用副本，原始历史完整保留（3.1）**
+   发给 LLM 的是裁剪过的副本，TaskLog 永远是全量。运行时省钱、离线训练 / 可视化拿全数据，一份代码喂多个下游。
+
+3. **失败摘要喂下次 attempt，不喂回当前会话（3.3）**
+   避免"模型对自己刚编的摘要二次脑补"。要么完整跑、要么完全重启，状态机干净。
+
+4. **答案提取连续化（3.4）**
+   每回合都试着抽 `\boxed{}` 而不只在最后做。备胎池让"中间猜对了但后面绕远了"的进展不被浪费。
+
+5. **把已知模型 bug 硬编码（1.2）**
+   参数名映射、sandbox_id 黑名单——与其训练模型不犯错，不如在工程层托底。这是从几千次 trace 里总结出的针对性补丁，不是过度防御。
+
+6. **Sub-agent 当工具用（2.3）**
+   用 `agent-` 前缀注册到工具列表，主 Agent 调用方式毫无差别。一个抽象统一两种执行模型。
