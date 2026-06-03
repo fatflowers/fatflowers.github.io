@@ -203,7 +203,7 @@ if boxed_content:
       params["extra_body"]["add_generation_prompt"] = False
 ```
 > 📍 源码：[`openai_client.py:153-155`](https://github.com/MiroMindAI/MiroThinker/blob/370f9836/apps/miroflow-agent/src/llm/providers/openai_client.py#L153-L155)
-  
+
 当 message_history 末尾是 assistant 消息（比如格式纠错时塞了个开头），LLM 直接续写而不是从零开始。利用 vLLM/SGLang 的扩展能力做了精细控制。
 
 message_history 末尾出现 assistant 消息有几个场景：
