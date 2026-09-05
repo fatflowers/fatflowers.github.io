@@ -2,6 +2,13 @@
 
 这是 `fatflowers.github.io` 仓库中的公开情报系统。它以 Target → Channel → Tag 组织来源，通过 AIsa MCP/RSS/HTTP 等固定采集器获取公共信息，使用 D1 保存运行数据，由 Multica Cloud + Codex 分析，并将中文报告自动发布到当前 Hugo 博客。
 
+生产资源：
+
+- Worker：`https://personal-intelligence-api.sunliumin.workers.dev`
+- D1：`personal-intelligence`（APAC）
+- Multica：TomSun / 个人信息站点 / Intelligence Operator
+- 公开报告：`https://fatflowers.github.io/zh/categories/intelligence/`
+
 ## v1 边界
 
 - 只采集公共来源，只生成公开报告。

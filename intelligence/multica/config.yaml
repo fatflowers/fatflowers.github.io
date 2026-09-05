@@ -16,6 +16,12 @@ agent:
   instructions_file: intelligence/multica/agent-instructions.md
   skill_directory: intelligence/multica/skill
   access: only_me
+  model: gpt-5.6-sol
+  custom_args:
+    - -c
+    - 'model_provider="openai"'
+    - -c
+    - 'model="gpt-5.6-sol"'
 
 autopilots:
   - id: collect-due
@@ -55,7 +61,7 @@ autopilots:
     runbook: intelligence/multica/runbooks/channel-health.md
 
 desired_state: configured
-actual_state: not_applied
+actual_state: deployed
 notes:
   - 该文件是可迁移的声明，不保存 Multica 资源 ID 或凭据。
-  - 实际资源创建后，把平台返回的 ID 写入不含密钥的 deployment-state.yaml。
+  - 平台返回的非敏感 ID 与验收证据记录在 deployment-status.yaml。

@@ -1,16 +1,18 @@
 version: 1
-updated_at: "2026-09-06T01:02:00+08:00"
+updated_at: "2026-09-06T01:27:00+08:00"
 
 cloudflare:
   database:
     name: personal-intelligence
     id: 189c8a21-1766-4cbb-abf6-d6bc18e0e135
-    migration: 0001_initial.sql
+    migrations:
+      - 0001_initial.sql
+      - 0002_baseline_items.sql
     status: deployed
   worker:
     name: personal-intelligence-api
     url: https://personal-intelligence-api.sunliumin.workers.dev
-    version_id: 4eff9c39-6a3b-413f-b29a-c16457041239
+    version_id: 76911a3c-d08c-4239-bab7-7fc6f5ec46a6
     status: deployed
 
 multica:
@@ -29,6 +31,25 @@ multica:
     evening-intelligence: 3e6ca845-0d1a-4312-9c47-95f487bfc377
     weekly-strategic-review: 6f018be9-9106-41b2-9e01-7f9d3943b017
     channel-health-review: 86477fcd-0993-4300-9fd3-9ff640892216
+  triggers:
+    collect-due: cfa0dda3-0472-4ef7-ad06-b3823270b8d2
+    analyze-pending: 07b9ec0f-b38d-4a93-92c9-28b1566e491e
+    morning-intelligence: 30a33adc-09df-42e9-9130-a6f6ff705a20
+    midday-high-signals: 4ac326ec-92ca-4496-856b-84a33c8f3c1d
+    evening-intelligence: cb9d9499-1df5-4d23-a130-263777fa36b4
+    weekly-strategic-review: c76fbb2b-4133-4c1f-aea8-e8f17e5d145f
+    channel-health-review: b1dfe3fe-db9d-40ca-a44a-36e462abbe9a
+
+verification:
+  collection_autopilot_run: 01a0728b-4fcb-7514-98e0-07bfee63338f
+  collection_pipeline_run: f1f8b2c7-efa7-4ee6-99f0-015fc38fedbb
+  analyze_autopilot_run: 01a07299-f4ef-7ec8-b56c-c7a4e1121cee
+  natural_language_issue: TOM-1
+  first_report:
+    id: a32ff510-b9f8-5c5f-9379-569edce53138
+    commit: a491dfb0379b4614a6cfd868b63bef92b3502fc4
+    url: https://fatflowers.github.io/zh/posts/intelligence/2026-w36-weekly/
+    http_status: 200
 
 tasks:
   - id: MUL-001
@@ -52,35 +73,44 @@ tasks:
     blocking: null
   - id: MUL-004
     name: 创建日报 Autopilot
-    status: 进行中
+    status: 已完成
     evidence:
       - intelligence/multica/runbooks/morning-report.md
       - intelligence/multica/runbooks/midday-report.md
       - intelligence/multica/runbooks/evening-report.md
-    blocking: 等待 Multica Cloud 实际创建与报告链路验证
+      - multica.trigger:30a33adc-09df-42e9-9130-a6f6ff705a20
+      - multica.trigger:4ac326ec-92ca-4496-856b-84a33c8f3c1d
+      - multica.trigger:cb9d9499-1df5-4d23-a130-263777fa36b4
+    blocking: null
   - id: MUL-005
     name: 创建周报 Autopilot
-    status: 进行中
+    status: 已完成
     evidence:
       - intelligence/multica/runbooks/weekly-review.md
-    blocking: 等待 Multica Cloud 实际创建与报告链路验证
+      - multica.trigger:c76fbb2b-4133-4c1f-aea8-e8f17e5d145f
+    blocking: null
   - id: MUL-006
     name: 创建健康巡检 Autopilot
-    status: 进行中
+    status: 已完成
     evidence:
       - intelligence/multica/runbooks/channel-health.md
-    blocking: 等待 Multica Cloud 实际创建与频道健康链路验证
+      - multica.trigger:b1dfe3fe-db9d-40ca-a44a-36e462abbe9a
+    blocking: null
   - id: MUL-007
     name: 验证自然语言调整流程
-    status: 未完成
-    evidence: []
-    blocking: 等待 MUL-001 与 intelctl 完成
+    status: 已完成
+    evidence:
+      - multica.issue:TOM-1
+      - dry-run:composio-twitter:180-to-240
+    blocking: null
   - id: OPS-001
     name: 配置 Multica 高频采集 Autopilot
-    status: 进行中
+    status: 已完成
     evidence:
       - intelligence/multica/runbooks/collect-due.md
       - multica.autopilot:7c54a8c8-0a58-48fe-958c-f1673f500bc0
-    blocking: 等待添加并验证 schedule trigger
+      - multica.trigger:cfa0dda3-0472-4ef7-ad06-b3823270b8d2
+      - multica.run:01a0728b-4fcb-7514-98e0-07bfee63338f
+    blocking: null
 
 allowed_statuses: [未完成, 进行中, 已完成]

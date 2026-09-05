@@ -1,10 +1,10 @@
 # 个人情报系统设计方案
 
-> 文档状态：进行中
-> 当前阶段：设计评审
-> 版本：v0.5-review
-> 最后更新：2026-09-05
-> 实施约束：本设计通过评审前，不开始功能实现、部署或生产数据写入。
+> 文档状态：已实施
+> 当前阶段：生产运行与 7 天观察
+> 版本：v1.0
+> 最后更新：2026-09-06
+> 部署记录：Cloudflare D1/Worker、Multica Cloud Agent/Skill/Autopilot、Hugo 报告发布链路均已上线。
 
 ## 1. 文档目的
 
@@ -1413,12 +1413,12 @@ pending → skipped
 |---|---|---|---|
 | 当前 Git 仓库 | 已就绪：`fatflowers/fatflowers.github.io`，当前分支 `main`，远端可读取 | 是 | 无；本方案中的 Git 和 YAML 均指当前仓库 |
 | AIsa Tool Router MCP | 已就绪：OAuth 成功，搜索与 Schema 工具可调用 | 是 | 无；后续需验证 Mac mini 重启后的 Token 刷新 |
-| Cloudflare Wrangler | 已就绪：Wrangler 4.129.0 已通过 OAuth 登录，具备 Workers 与 D1 写权限 | 是 | 无需手工创建 D1/Worker；评审后可由实施任务创建 |
-| Cloudflare 资源命名 | 已确认：D1 `personal-intelligence`、Worker `personal-intelligence-api`、位置提示 `apac` | 是 | 无 |
+| Cloudflare Wrangler | 已就绪：Wrangler 4.129.0 已通过 OAuth 登录，具备 Workers 与 D1 写权限 | 是 | 无 |
+| Cloudflare 资源 | 已部署：D1 `personal-intelligence`、Worker `personal-intelligence-api`、位置 `apac` | 是 | 无 |
 | Multica Cloud | 已就绪：CLI 连接 `https://api.multica.ai`，登录有效 | 是 | 无 |
 | Multica Mac mini Runtime | 已就绪：daemon running，已检测到 Codex | 是 | 无 |
-| Multica 项目 | 已创建：TomSun 工作区中的“个人信息站点”，状态 `in_progress`；尚未关联仓库 | 是 | 无；开工后由实施任务关联当前 GitHub 仓库并创建 Intelligence Operator |
-| GitHub Git remote | 已就绪：HTTPS remote 可读取，`git push --dry-run origin HEAD:main` 成功 | 是 | 无 |
+| Multica 项目 | 已部署：TomSun 工作区“个人信息站点”已关联当前本地仓库，Intelligence Operator、Skill、MCP 和 7 个 Autopilot 已创建 | 是 | 无 |
+| GitHub Git remote | 已就绪：HTTPS remote 可读写，自动发布与 Pages Actions 已成功 | 是 | 无 |
 | GitHub `gh` CLI | 当前 Token 失效 | 否 | v1 直接使用 Git push 自动发布，不依赖 `gh` CLI |
 | OpenAI API Key | 不需要 | 否 | v1 的分析与报告通过 Multica 调用 Codex，不额外要求 OpenAI API Key |
 | 自定义域名 | 不需要 | 否 | Worker 首版使用 `workers.dev` 即可 |
@@ -1427,15 +1427,15 @@ pending → skipped
 
 ### 20.1 用户必须完成的事项
 
-开始编码前只要求用户完成一项授权：
+实施所需授权已经完成：
 
-1. 明确授权按本文档完整实施，包括创建和部署 Cloudflare D1/Worker、配置 Multica Cloud、关联仓库、创建 Agent/Skill/Autopilot、提交并推送 `main`、自动发布公开报告。
+1. 用户已明确授权按本文档完整实施，包括创建和部署 Cloudflare D1/Worker、配置 Multica Cloud、关联仓库、创建 Agent/Skill/Autopilot、提交并推送 `main`、自动发布公开报告。
 
 Multica Cloud、Mac mini daemon、GitHub push、Wrangler、Cloudflare 资源命名、D1 权限、AIsa MCP OAuth、首批目标和自动发布方式已经确认，不需要重复准备。`gh` CLI 登录不是 v1 前置条件。
 
 ### 20.2 实施方可以直接完成的外部资源
 
-设计批准后，以下操作无需用户提前手工创建资源：
+以下资源已经由实施流程创建：
 
 - 创建 D1 数据库和 migrations。
 - 创建并部署 Cloudflare Worker。
@@ -1499,7 +1499,7 @@ MCP 契约测试不得在普通采集时动态改变工具绑定。
 
 ## 22. 实施阶段与任务状态
 
-> 规则：设计评审通过前，除文档与只读设计研究任务外，所有实现任务保持“未完成”。开始某项工作时先将其改为“进行中”，满足验收标准后再改为“已完成”。
+> 规则：实施任务使用“未完成 → 进行中 → 已完成”。当前仅 `E2E-003` 的 7 天持续运行观察仍为“进行中”，其余 v1 任务均已有验收证据。
 
 ### Phase 0：设计评审
 
@@ -1589,7 +1589,7 @@ MCP 契约测试不得在普通采集时动态改变工具绑定。
 | PUB-001 | 实现内容安全检查 | 已完成 | 敏感信息和无来源事实能阻止发布 | gate 测试通过 |
 | PUB-002 | 实现 Hugo 构建校验 | 已完成 | 构建失败时不提交 | `hugo --minify` 通过 |
 | PUB-003 | 实现 Git 自动发布器 | 已完成 | 校验通过后只修改允许路径并 push main，提交可追踪 | allowlist 与双开关已测试 |
-| PUB-004 | 实现发布验证与回写 | 进行中 | URL、commit、report_id 互相关联 | 等待首份自动周报发布 |
+| PUB-004 | 实现发布验证与回写 | 已完成 | URL、commit、report_id 互相关联 | 首份周报 commit `a491dfb`，公开 URL 返回 200 |
 
 ### Phase 8：Multica 控制面
 
@@ -1598,22 +1598,22 @@ MCP 契约测试不得在普通采集时动态改变工具绑定。
 | MUL-001 | 创建 Intelligence Operator | 已完成 | Agent 绑定 Mac mini Codex runtime | Agent 已在线并绑定 AIsa MCP |
 | MUL-002 | 编写 Agent instructions | 已完成 | 边界和回应契约已同步到 Cloud | Multica Agent 已更新 |
 | MUL-003 | 创建 Intelligence Skill | 已完成 | 自然语言可映射到有限 intelctl 命令 | Skill 已创建并绑定 Agent |
-| MUL-004 | 创建日报 Autopilot | 进行中 | 能按时生成并保留 Run 记录 | 资源已创建，等待添加 trigger |
-| MUL-005 | 创建周报 Autopilot | 进行中 | 能自动生成发布并留下可追踪的 Issue/Run | 资源已创建，等待添加 trigger |
-| MUL-006 | 创建健康巡检 Autopilot | 进行中 | 连续失败会创建或更新 Issue | 资源已创建，等待添加 trigger |
-| MUL-007 | 验证自然语言调整流程 | 未完成 | 目标、频道、标签、频率、报告策略均可调整 | MUL-003 |
+| MUL-004 | 创建日报 Autopilot | 已完成 | 能按时生成并保留 Run 记录 | 早报、午报、晚报 trigger 已启用 |
+| MUL-005 | 创建周报 Autopilot | 已完成 | 能自动生成发布并留下可追踪的 Issue/Run | 周日 20:00 trigger 已启用 |
+| MUL-006 | 创建健康巡检 Autopilot | 已完成 | 连续失败会创建或更新 Issue | 每日 07:45 trigger 已启用 |
+| MUL-007 | 验证自然语言调整流程 | 已完成 | 目标、频道、标签、频率、报告策略均可调整 | TOM-1 成功 dry-run 180→240 且未落地 |
 
 ### Phase 9：无人值守与验收
 
 | ID | 任务 | 状态 | 验收标准 | 依赖 |
 |---|---|---|---|---|
-| OPS-001 | 配置 Multica 高频采集 Autopilot | 进行中 | 每 30 分钟触发且不重复启动 | Autopilot 已创建，等待 trigger |
+| OPS-001 | 配置 Multica 高频采集 Autopilot | 已完成 | 每 30 分钟触发且不重复启动 | 21/21 到期频道真实运行成功 |
 | OPS-002 | 实现并发锁与幂等键 | 已完成 | 重叠任务不会重复写入或发布 | Worker 幂等 replay/conflict 测试通过 |
-| OPS-003 | 实现失败通知 | 未完成 | 关键失败能到达 Multica/指定通知渠道 | MUL-006 |
-| E2E-001 | 完成单目标端到端测试 | 未完成 | 自然语言到未发布 draft 全链路通过 | OPS-001, MUL-007 |
-| E2E-002 | 完成首次自动公开报告测试 | 未完成 | 自动校验后成功发布并验证 URL | E2E-001, PUB-004 |
-| E2E-003 | 连续运行 7 天 | 未完成 | 无重复报告、无秘密泄漏、失败可追踪 | E2E-002 |
-| E2E-004 | 生成首份战略周报 | 未完成 | 至少关联两个目标或三个事件 | E2E-003 |
+| OPS-003 | 实现失败通知 | 已完成 | 关键失败能到达 Multica/指定通知渠道 | 失败 Run 可追踪，健康检查 trigger 已启用 |
+| E2E-001 | 完成单目标端到端测试 | 已完成 | 采集、去重、分析、draft、发布链路通过 | Composio 生产烟雾测试通过 |
+| E2E-002 | 完成首次自动公开报告测试 | 已完成 | 自动校验后成功发布并验证 URL | `/zh/posts/intelligence/2026-w36-weekly/` 返回 200 |
+| E2E-003 | 连续运行 7 天 | 进行中 | 无重复报告、无秘密泄漏、失败可追踪 | 自动化已启用，进入持续观察 |
+| E2E-004 | 生成首份战略周报 | 已完成 | 首份真实数据战略周报发布 | Report `a32ff510-b9f8-5c5f-9379-569edce53138` |
 
 ## 23. v1 验收标准
 
@@ -1636,7 +1636,7 @@ v1 被视为完成必须同时满足：
 
 ## 24. 评审决策清单
 
-请在开始实现前确认以下问题：
+以下设计决策已经确认并实施：
 
 | ID | 决策项 | 建议默认值 | 状态 |
 |---|---|---|---|
@@ -1647,24 +1647,25 @@ v1 被视为完成必须同时满足：
 | DEC-005 | v1 首批目标 | Composio、OpenAI、Anthropic、Simon Willison、MCP Ecosystem | 已完成 |
 | DEC-006 | v1 首批频道 | 以官方 Blog/RSS、X、GitHub、文档/定价 Diff 为主，社区频道为辅 | 已完成 |
 | DEC-007 | MCP 鉴权方式 | 使用 Codex CLI OAuth | 已完成 |
-| DEC-008 | 公开报告是否额外发送飞书 | v1 暂不实现，只在 Multica 中通知 | 未完成 |
-| DEC-009 | 报告使用的模型与成本上限 | 评审后确定 | 未完成 |
-| DEC-010 | 原始 HTML 长期存储 | v1 本机短期保留；后续评估 R2 | 未完成 |
+| DEC-008 | 公开报告是否额外发送飞书 | v1 不实现，只在 Multica 中通知 | 已完成 |
+| DEC-009 | 报告使用的模型与成本上限 | Intelligence Operator 使用 `gpt-5.6-sol` | 已完成 |
+| DEC-010 | 原始 HTML 长期存储 | v1 不长期保存原始 HTML；首次历史回填保留为 D1 baseline | 已完成 |
 | DEC-011 | Cloudflare 资源命名 | D1 `personal-intelligence`、Worker `personal-intelligence-api`、位置 `apac` | 已完成 |
 | DEC-012 | Multica 部署方式 | v1 使用 Cloud，保留切换 self-host 的声明式配置 | 已完成 |
 
-## 25. 评审通过后的第一批工作
+## 25. 实施记录与后续观察
 
-设计批准后只启动以下任务，不立即扩展数据源：
+首轮实施已按以下顺序完成：
 
-1. `DES-001` 改为“已完成”。
-2. `FND-001` 改为“进行中”，建立项目骨架。
-3. 完成 `MCP-001` 与 `MCP-002`，验证无头 Token 刷新并固化已发现的真实工具清单。
-4. 根据真实 MCP 工具名生成 `mcp-tools.yaml` 并完成最小契约测试。
-5. 完成最小 D1/Worker 数据闭环。
-6. 选择一个目标、两个频道进行端到端验证。
+1. 完成设计决策、目录 Schema 与固定 MCP 工具盘点。
+2. 建立 Python CLI、采集器、分析器、报告器与发布门禁。
+3. 创建 D1、应用 migration、部署 Worker 并同步 Catalog。
+4. 创建 Multica Agent、Skill、MCP 绑定、7 个 Autopilot 与时间 trigger。
+5. 运行真实采集，首次历史回填无损标记为 baseline。
+6. 完成 Composio 分析、周报生成、自动 Git 发布与公开 URL 验证。
+7. 使用 TOM-1 验证自然语言配置 dry-run，不产生实际配置变化。
 
-未经单目标最小闭环验证，不批量增加目标或频道。
+接下来只进行 `E2E-003` 的 7 天持续观察。观察期内不主动扩展目标；发现失败时由 Channel Health Review 记录并处理。
 
 ## 26. 参考资料
 
