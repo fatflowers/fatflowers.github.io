@@ -43,6 +43,8 @@ multica:
 verification:
   collection_autopilot_run: 01a0728b-4fcb-7514-98e0-07bfee63338f
   collection_pipeline_run: f1f8b2c7-efa7-4ee6-99f0-015fc38fedbb
+  scheduled_collection_run: 01a0729f-0bfc-7080-9c88-64821d2f4290
+  scheduled_collection_result: skipped_no_due_channels
   analyze_autopilot_run: 01a07299-f4ef-7ec8-b56c-c7a4e1121cee
   natural_language_issue: TOM-1
   first_report:
