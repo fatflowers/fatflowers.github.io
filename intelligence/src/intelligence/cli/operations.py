@@ -981,7 +981,7 @@ def generate_report(
         output.write_text(rendered.markdown, encoding="utf-8")
         publication = PublicationService(
             PublishValidator.default(), GitPublisher(root)
-        ).validate(report, rendered)
+        ).validate(report, rendered, changed_paths=(rendered.relative_path,))
         if publication.report.status is ReportStatus.FAILED:
             client.update_report_status(
                 report.report_id,
@@ -1107,7 +1107,9 @@ def _publish_built_report(
         raise CatalogError("generated report artifact is missing or differs; run report generate first")
 
     publication_service = PublicationService(PublishValidator.default(), GitPublisher(root))
-    validated = publication_service.validate(report, rendered)
+    validated = publication_service.validate(
+        report, rendered, changed_paths=(rendered.relative_path,)
+    )
     if validated.report.status is not ReportStatus.READY:
         raise CatalogError("publication gates failed")
     result = publication_service.publish_ready(
