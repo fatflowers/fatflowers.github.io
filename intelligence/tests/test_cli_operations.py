@@ -308,6 +308,45 @@ def test_report_build_is_deterministic_for_generate_then_publish(tmp_path):
     assert rendered1.markdown == rendered2.markdown
 
 
+def test_weekly_report_identity_is_stable_within_iso_week(tmp_path):
+    _, repository = project(tmp_path)
+    client = FakeClient()
+    client.report_items = [
+        {
+            "id": "item-1",
+            "title": "New API",
+            "url": "https://example.com/news",
+            "target_name": "Composio",
+            "published_at": "2026-09-03T00:00:00Z",
+            "summary": "Summary",
+            "key_change": "Changed",
+            "why_it_matters": "Important",
+            "company_impact": "Impact",
+            "importance": 4,
+            "confidence": 0.9,
+            "topics_json": '["MCP"]',
+            "watch_next_json": '["Pricing"]',
+            "evidence_json": '[{"url":"https://example.com/news","claim":"Evidence"}]',
+        }
+    ]
+    base = dict(
+        edition_value="weekly",
+        from_value=None,
+        to_value=None,
+        title=None,
+        description=None,
+        trends=[],
+        tag=None,
+        target_slug=None,
+    )
+
+    saturday, _, _ = build_report(client, date_value="2026-09-05", **base)
+    sunday, _, _ = build_report(client, date_value="2026-09-06", **base)
+
+    assert saturday.period == sunday.period == "2026-w36"
+    assert saturday.report_id == sunday.report_id
+
+
 def test_scheduler_dry_run_writes_nothing(tmp_path, monkeypatch):
     root, repository = project(tmp_path)
     destination = root / "agents"

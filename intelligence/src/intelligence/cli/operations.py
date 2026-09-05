@@ -877,9 +877,12 @@ def build_report(
         if edition is ReportEdition.WEEKLY
         else report_date.isoformat()
     )
-    report_id = str(
-        uuid5(REPORT_NAMESPACE, "%s:%s:%s" % (edition.value, start.isoformat(), end.isoformat()))
+    identity = (
+        "%s:%s:%s" % (edition.value, start.isoformat(), end.isoformat())
+        if edition is ReportEdition.AD_HOC
+        else "%s:%s" % (edition.value, period)
     )
+    report_id = str(uuid5(REPORT_NAMESPACE, identity))
     label = {
         ReportEdition.MORNING: "AI 情报早报",
         ReportEdition.MIDDAY: "AI 情报午间快讯",
