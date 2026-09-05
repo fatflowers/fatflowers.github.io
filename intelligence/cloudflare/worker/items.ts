@@ -110,7 +110,8 @@ export async function getPendingAnalysis({ env, url }: AuthContext): Promise<Api
     LEFT JOIN channel_tags ct ON ct.channel_id = i.channel_id
     LEFT JOIN tags cg ON cg.id = ct.tag_id
     LEFT JOIN analyses a ON a.item_id = i.id
-    WHERE a.item_id IS NULL AND (? IS NULL OR i.target_id = ?) AND (? IS NULL OR i.channel_id = ?)
+    WHERE a.item_id IS NULL AND i.is_baseline = 0
+      AND (? IS NULL OR i.target_id = ?) AND (? IS NULL OR i.channel_id = ?)
     GROUP BY i.id
     ORDER BY COALESCE(i.published_at, i.fetched_at), i.id
     LIMIT ?`).bind(targetId, targetId, channelId, channelId, limit).all();
