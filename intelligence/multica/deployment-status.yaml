@@ -1,0 +1,86 @@
+version: 1
+updated_at: "2026-09-06T01:02:00+08:00"
+
+cloudflare:
+  database:
+    name: personal-intelligence
+    id: 189c8a21-1766-4cbb-abf6-d6bc18e0e135
+    migration: 0001_initial.sql
+    status: deployed
+  worker:
+    name: personal-intelligence-api
+    url: https://personal-intelligence-api.sunliumin.workers.dev
+    version_id: 4eff9c39-6a3b-413f-b29a-c16457041239
+    status: deployed
+
+multica:
+  workspace_id: 92a2081b-1200-4ff9-90a5-821f789da663
+  project_id: c5a008ad-2bd9-4558-a5bc-cd596a4639a8
+  project_resource_id: f90129c0-8e59-4cd0-b4d6-13cfc0a2a999
+  runtime_id: ead208ce-b2f2-4e0b-931d-4620ad746ff1
+  agent_id: 996e3203-595c-4e46-b244-e170f88e6153
+  skill_id: e8b36ac9-40e9-40a3-9a9c-a259e9eade59
+  mcp_server_id: 55896b90-bd5b-4d5f-8d69-a30d39bde083
+  autopilots:
+    collect-due: 7c54a8c8-0a58-48fe-958c-f1673f500bc0
+    analyze-pending: abacc877-3a8e-4203-a3ee-b03095677a2b
+    morning-intelligence: 35e9fb31-90ce-46f6-a466-b6648e91ad68
+    midday-high-signals: b39270a5-32b1-4ced-b878-445a8688d82b
+    evening-intelligence: 3e6ca845-0d1a-4312-9c47-95f487bfc377
+    weekly-strategic-review: 6f018be9-9106-41b2-9e01-7f9d3943b017
+    channel-health-review: 86477fcd-0993-4300-9fd3-9ff640892216
+
+tasks:
+  - id: MUL-001
+    name: 创建 Intelligence Operator
+    status: 已完成
+    evidence:
+      - multica.agent:996e3203-595c-4e46-b244-e170f88e6153
+    blocking: null
+  - id: MUL-002
+    name: 编写 Agent instructions
+    status: 已完成
+    evidence:
+      - intelligence/multica/agent-instructions.md
+    blocking: null
+  - id: MUL-003
+    name: 创建 Intelligence Skill
+    status: 已完成
+    evidence:
+      - intelligence/multica/skill/SKILL.md
+      - multica.skill:e8b36ac9-40e9-40a3-9a9c-a259e9eade59
+    blocking: null
+  - id: MUL-004
+    name: 创建日报 Autopilot
+    status: 进行中
+    evidence:
+      - intelligence/multica/runbooks/morning-report.md
+      - intelligence/multica/runbooks/midday-report.md
+      - intelligence/multica/runbooks/evening-report.md
+    blocking: 等待 Multica Cloud 实际创建与报告链路验证
+  - id: MUL-005
+    name: 创建周报 Autopilot
+    status: 进行中
+    evidence:
+      - intelligence/multica/runbooks/weekly-review.md
+    blocking: 等待 Multica Cloud 实际创建与报告链路验证
+  - id: MUL-006
+    name: 创建健康巡检 Autopilot
+    status: 进行中
+    evidence:
+      - intelligence/multica/runbooks/channel-health.md
+    blocking: 等待 Multica Cloud 实际创建与频道健康链路验证
+  - id: MUL-007
+    name: 验证自然语言调整流程
+    status: 未完成
+    evidence: []
+    blocking: 等待 MUL-001 与 intelctl 完成
+  - id: OPS-001
+    name: 配置 Multica 高频采集 Autopilot
+    status: 进行中
+    evidence:
+      - intelligence/multica/runbooks/collect-due.md
+      - multica.autopilot:7c54a8c8-0a58-48fe-958c-f1673f500bc0
+    blocking: 等待添加并验证 schedule trigger
+
+allowed_statuses: [未完成, 进行中, 已完成]

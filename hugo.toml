@@ -14,6 +14,11 @@ defaultContentLanguageInSubdir = false
   lineNumbersInTable = true
   tabWidth = 4
 
+# Hugo 0.165's JSON minifier rejects valid multi-value JSON-LD emitted by the
+# pinned PaperMod theme. Keep JSON untouched while still minifying HTML/CSS/JS.
+[minify]
+  disableJSON = true
+
 [outputs]
   home = ["HTML", "RSS", "JSON"]
 
@@ -117,26 +122,31 @@ defaultContentLanguageInSubdir = false
     weight = 2
 
   [[languages.zh.menus.main]]
+    name = "情报报告"
+    url = "/zh/categories/intelligence"
+    weight = 3
+
+  [[languages.zh.menus.main]]
     name = "猫咪"
     url = "/zh/tags/cat"
-    weight = 3
+    weight = 4
 
   [[languages.zh.menus.main]]
     name = "咖啡"
     url = "/zh/tags/coffee"
-    weight = 4
+    weight = 5
 
   [[languages.zh.menus.main]]
     name = "归档"
     url = "/zh/archives"
-    weight = 5
+    weight = 6
 
   [[languages.zh.menus.main]]
     name = "搜索"
     url = "/zh/search"
-    weight = 6
+    weight = 7
 
   [[languages.zh.menus.main]]
     name = "标签"
     url = "/zh/tags"
-    weight = 7
+    weight = 8

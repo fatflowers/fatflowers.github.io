@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "personal-intelligence-api",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-09-05",
+  "workers_dev": true,
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "placement": {
+    "mode": "smart"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "personal-intelligence",
+      "database_id": "189c8a21-1766-4cbb-abf6-d6bc18e0e135",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

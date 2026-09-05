@@ -69,7 +69,15 @@
 
 {{- if .IsHome }}
 {{- $pages = where site.RegularPages "Type" "in" site.Params.mainSections }}
-{{- $pages = where $pages "Params.hiddenInHomeList" "!=" "true" }}
+{{- /* Front matter is the publication policy's output: routine reports set this
+      flag, while weekly and high-value reports deliberately leave it false. */}}
+{{- $homePages := slice }}
+{{- range $pages }}
+{{- if not (.Param "hiddenInHomeList") }}
+{{- $homePages = $homePages | append . }}
+{{- end }}
+{{- end }}
+{{- $pages = $homePages }}
 {{- end }}
 
 {{- $paginator := .Paginate $pages }}
@@ -89,6 +97,9 @@
 {{- else if $term }}
 {{- $class = "post-entry tag-entry" }}
 {{- end }}
+{{- if or (.Param "reportType") (.Param "generated") }}
+{{- $class = printf "%s intelligence-entry" $class }}
+{{- end }}
 
 <article class="{{ $class }}">
   {{- $isHidden := (.Param "cover.hiddenInList") | default (.Param "cover.hidden") | default false }}
@@ -106,6 +117,9 @@
       {{- end }}
     </h2>
   </header>
+  {{- if or (.Param "reportType") (.Param "generated") }}
+  {{- partial "intelligence/report_meta.html" (dict "page" . "compact" true) }}
+  {{- end }}
   {{- if (ne (.Param "hideSummary") true) }}
   <div class="entry-content">
     <p>{{ .Summary | plainify | htmlUnescape }}{{ if .Truncated }}...{{ end }}</p>

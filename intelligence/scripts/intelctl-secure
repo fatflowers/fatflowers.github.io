@@ -1,0 +1,23 @@
+#!/bin/zsh
+set -euo pipefail
+
+script_dir="${0:A:h}"
+project_dir="${script_dir:h}"
+token_file="${INTELLIGENCE_TOKEN_FILE:-${HOME}/.config/personal-intelligence/worker-token}"
+
+if [[ -r "$token_file" ]]; then
+  api_token="$(<"$token_file")"
+else
+  api_token="$(security find-generic-password -s personal-intelligence-api-token -w)"
+fi
+
+if [[ -z "$api_token" ]]; then
+  print -u2 "personal-intelligence-api-token is unavailable in macOS Keychain"
+  exit 1
+fi
+
+export INTELLIGENCE_API_URL="https://personal-intelligence-api.sunliumin.workers.dev"
+export INTELLIGENCE_API_TOKEN="$api_token"
+export UV_CACHE_DIR="${TMPDIR:-/tmp}/personal-intelligence-uv-cache"
+
+exec uv run --project "$project_dir" intelctl "$@"

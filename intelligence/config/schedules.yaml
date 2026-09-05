@@ -1,0 +1,99 @@
+version: 1
+timezone: Asia/Shanghai
+
+ownership:
+  deterministic_collection: multica_cloud
+  agent_workflows: multica_cloud
+
+jobs:
+  - id: collect-due
+    owner: multica_cloud
+    enabled: true
+    cadence:
+      type: interval
+      minutes: 30
+    runbook: intelligence/multica/runbooks/collect-due.md
+    overlap_policy: skip
+    timeout_minutes: 20
+    status_tracking: pipeline_runs
+
+  - id: analyze-pending
+    owner: multica_cloud
+    enabled: true
+    cadence:
+      type: hourly
+      minute: 5
+    runbook: intelligence/multica/runbooks/analyze-pending.md
+    overlap_policy: skip
+    timeout_minutes: 45
+
+  - id: morning-intelligence
+    owner: multica_cloud
+    enabled: true
+    cadence:
+      type: daily
+      time: "08:30"
+    runbook: intelligence/multica/runbooks/morning-report.md
+    overlap_policy: skip
+    timeout_minutes: 60
+
+  - id: midday-high-signals
+    owner: multica_cloud
+    enabled: true
+    cadence:
+      type: daily
+      time: "13:00"
+    runbook: intelligence/multica/runbooks/midday-report.md
+    overlap_policy: skip
+    timeout_minutes: 45
+
+  - id: evening-intelligence
+    owner: multica_cloud
+    enabled: true
+    cadence:
+      type: daily
+      time: "19:00"
+    runbook: intelligence/multica/runbooks/evening-report.md
+    overlap_policy: skip
+    timeout_minutes: 60
+
+  - id: weekly-strategic-review
+    owner: multica_cloud
+    enabled: true
+    cadence:
+      type: weekly
+      weekday: sunday
+      time: "20:00"
+    runbook: intelligence/multica/runbooks/weekly-review.md
+    overlap_policy: skip
+    timeout_minutes: 90
+
+  - id: channel-health-review
+    owner: multica_cloud
+    enabled: true
+    cadence:
+      type: daily
+      time: "07:45"
+    runbook: intelligence/multica/runbooks/channel-health.md
+    overlap_policy: skip
+    timeout_minutes: 30
+
+run_tracking:
+  states: [pending, running, succeeded, failed, skipped]
+  required_links:
+    - pipeline_run_id
+    - multica_run_id
+  optional_links:
+    - multica_issue_id
+    - target_id
+    - channel_id
+    - report_id
+    - git_commit
+    - published_url
+
+change_control:
+  source_of_truth: intelligence/config/schedules.yaml
+  apply_command: intelctl scheduler apply
+  dry_run_command: intelctl scheduler apply --dry-run
+  require_schema_validation: true
+  audit_changes: true

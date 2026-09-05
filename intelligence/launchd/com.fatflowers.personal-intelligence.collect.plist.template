@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.fatflowers.personal-intelligence.collect</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>__REPOSITORY_PATH__/intelligence/.venv/bin/intelctl</string>
+    <string>collect</string>
+    <string>--due</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>__REPOSITORY_PATH__</string>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StartInterval</key>
+  <integer>1800</integer>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>LowPriorityIO</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>60</integer>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PYTHONUNBUFFERED</key>
+    <string>1</string>
+    <key>INTELLIGENCE_ENV</key>
+    <string>production</string>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>__REPOSITORY_PATH__/intelligence/logs/collect.stdout.log</string>
+  <key>StandardErrorPath</key>
+  <string>__REPOSITORY_PATH__/intelligence/logs/collect.stderr.log</string>
+</dict>
+</plist>

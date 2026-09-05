@@ -1,6 +1,6 @@
 {{- define "main" }}
 
-<article class="post-single">
+<article class="post-single{{ if or (.Param "reportType") (.Param "generated") }} intelligence-report{{ end }}">
     <header class="post-header">
         {{ partial "breadcrumbs.html" . }}
         <h1 class="post-title entry-hint-parent">
@@ -28,6 +28,10 @@
         </div>
         {{- end }}
     </header>
+
+    {{- if or (.Param "reportType") (.Param "generated") }}
+    {{- partial "intelligence/report_meta.html" (dict "page" . "compact" false) }}
+    {{- end }}
 
     {{- /* Tags moved to top, right after header */ -}}
     {{- $tags := .Language.Params.Taxonomies.tag | default "tags" }}

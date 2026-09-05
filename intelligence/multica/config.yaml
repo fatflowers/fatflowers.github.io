@@ -1,0 +1,61 @@
+version: 1
+provider: multica-cloud
+api_url: https://api.multica.ai
+
+project:
+  name: 个人信息站点
+  repository: fatflowers/fatflowers.github.io
+  working_directory: /Users/simon/Documents/GitHub/fatflowers.github.io
+  runtime_selector:
+    platform: macOS
+    host_role: mac-mini
+    provider: codex
+
+agent:
+  name: Intelligence Operator
+  instructions_file: intelligence/multica/agent-instructions.md
+  skill_directory: intelligence/multica/skill
+  access: only_me
+
+autopilots:
+  - id: collect-due
+    name: Collect Due Channels
+    mode: run_only
+    schedule_ref: collect-due
+    runbook: intelligence/multica/runbooks/collect-due.md
+  - id: analyze-pending
+    name: Analyze Pending Items
+    mode: run_only
+    schedule_ref: analyze-pending
+    runbook: intelligence/multica/runbooks/analyze-pending.md
+  - id: morning-intelligence
+    name: Morning Intelligence
+    mode: create_issue
+    schedule_ref: morning-intelligence
+    runbook: intelligence/multica/runbooks/morning-report.md
+  - id: midday-high-signals
+    name: Midday High Signals
+    mode: create_issue_on_publish_or_failure
+    schedule_ref: midday-high-signals
+    runbook: intelligence/multica/runbooks/midday-report.md
+  - id: evening-intelligence
+    name: Evening Intelligence
+    mode: create_issue
+    schedule_ref: evening-intelligence
+    runbook: intelligence/multica/runbooks/evening-report.md
+  - id: weekly-strategic-review
+    name: Weekly Strategic Review
+    mode: create_issue
+    schedule_ref: weekly-strategic-review
+    runbook: intelligence/multica/runbooks/weekly-review.md
+  - id: channel-health-review
+    name: Channel Health Review
+    mode: create_issue_on_actionable_change
+    schedule_ref: channel-health-review
+    runbook: intelligence/multica/runbooks/channel-health.md
+
+desired_state: configured
+actual_state: not_applied
+notes:
+  - 该文件是可迁移的声明，不保存 Multica 资源 ID 或凭据。
+  - 实际资源创建后，把平台返回的 ID 写入不含密钥的 deployment-state.yaml。

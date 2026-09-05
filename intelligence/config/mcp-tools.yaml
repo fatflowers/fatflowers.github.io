@@ -1,0 +1,316 @@
+version: 1
+server:
+  name: aisa-tools
+  url: https://tools.aisa.one/mcp
+  transport: streamable-http
+  authentication: oauth
+  credentials_source: codex-mcp-login
+  discovery_tools:
+    search: AISA_SEARCH_TOOL
+    batch_schema: AISA_BATCH_GET_SCHEMA
+
+runtime_policy:
+  scheduled_allowed_statuses: [verified]
+  discovery_allowed_statuses: [schema_verified, verified]
+  rediscover_on:
+    - explicit_user_request
+    - tool_not_found
+    - schema_contract_failure
+    - provider_change_notice
+  never_discover_during_scheduled_collection: true
+  never_store_credentials_in_repository: true
+
+tools:
+  twitter-user-timeline-v1:
+    status: verified
+    tool_name: get_twitter_user_tweet_timeline
+    channel_types: [twitter]
+    description: 获取已解析 numeric userId 的公开用户时间线
+    input_template:
+      userId: "{{ channel.config.resolved_user_id }}"
+      cursor: "{{ cursor.next }}"
+      includeReplies: "{{ channel.config.include_replies }}"
+      includeParentTweet: "{{ channel.config.include_parent_tweet }}"
+    output_adapter: twitter_posts_v1
+    pagination:
+      type: cursor
+      request_field: cursor
+      response_field: cursor
+    limitations:
+      max_items_per_page: 20
+      accepts_handle: false
+      supports_time_range: false
+    contract:
+      version: 1
+      verified_at: "2026-09-06T00:27:05+08:00"
+      fixture: inline-shape:code,data.tweets,has_next_page,next_cursor,msg,status
+
+  twitter-keyword-search-v1:
+    status: schema_verified
+    tool_name: get_twitter_tweet_advanced_search
+    channel_types: [twitter_search]
+    description: 使用 X 高级查询语法搜索公开帖子
+    input_template:
+      query: "{{ channel.config.query }} since:{{ cursor.since_date }}"
+      queryType: Latest
+      cursor: "{{ cursor.next }}"
+    output_adapter: twitter_posts_v1
+    pagination:
+      type: cursor
+      request_field: cursor
+      response_field: cursor
+    contract:
+      version: 1
+      verified_at: null
+      fixture: null
+
+  reddit-subreddit-v1:
+    status: schema_verified
+    tool_name: get_reddit_subreddit
+    channel_types: [reddit]
+    description: 获取公开 subreddit 的最新帖子流
+    input_template:
+      subreddit: "{{ channel.config.subreddit }}"
+      sort: new
+      after: "{{ cursor.next }}"
+    output_adapter: reddit_posts_v1
+    pagination:
+      type: cursor
+      request_field: after
+      response_field: after
+    limitations:
+      subreddit_without_prefix: true
+      case_sensitive_subreddit: true
+    contract:
+      version: 1
+      verified_at: null
+      fixture: null
+
+  reddit-search-v1:
+    status: schema_verified
+    tool_name: get_reddit_search
+    channel_types: [reddit_search]
+    description: 跨公开 subreddit 搜索主题
+    input_template:
+      query: "{{ channel.config.query }}"
+      after: "{{ cursor.next }}"
+    output_adapter: reddit_posts_v1
+    pagination:
+      type: cursor
+      request_field: after
+      response_field: after
+    contract:
+      version: 1
+      verified_at: null
+      fixture: null
+
+  reddit-subreddit-search-v1:
+    status: schema_verified
+    tool_name: get_reddit_subreddit_search
+    channel_types: [reddit, reddit_search]
+    description: 在单个公开 subreddit 内搜索
+    input_template:
+      subreddit: "{{ channel.config.subreddit }}"
+      query: "{{ channel.config.query }}"
+      cursor: "{{ cursor.next }}"
+    output_adapter: reddit_posts_v1
+    pagination:
+      type: cursor
+      request_field: cursor
+      response_field: cursor
+    contract:
+      version: 1
+      verified_at: null
+      fixture: null
+
+  firecrawl-page-scrape-v1:
+    status: verified
+    tool_name: post_firecrawl_scrape
+    channel_types: [blog, documentation, pricing, changelog, web_diff]
+    description: 将单个公开 HTTPS 页面抓取为 Markdown
+    input_template:
+      url: "{{ channel.url }}"
+      proxy: basic
+      formats: [markdown]
+    output_adapter: firecrawl_document_v1
+    pagination:
+      type: none
+    limitations:
+      pdf_supported: false
+      allowed_formats: [markdown]
+    contract:
+      version: 1
+      verified_at: "2026-09-06T00:27:05+08:00"
+      fixture: inline-shape:data,success
+
+  firecrawl-site-map-v1:
+    status: verified
+    tool_name: post_firecrawl_map
+    channel_types: [blog, documentation, web_diff]
+    description: 发现公开站点 URL；正文仍由 scrape 工具获取
+    input_template:
+      url: "{{ channel.url }}"
+      limit: "{{ channel.config.map_limit }}"
+    output_adapter: firecrawl_urls_v1
+    pagination:
+      type: none
+    limitations:
+      returns_page_content: false
+      max_limit: 100000
+    contract:
+      version: 1
+      verified_at: "2026-09-06T00:27:05+08:00"
+      fixture: inline-shape:id,links[url,title,description],success
+
+  firecrawl-search-v1:
+    status: schema_verified
+    tool_name: post_firecrawl_search
+    channel_types: [web_search]
+    description: 搜索候选公开 URL，不作为关键事实的唯一来源
+    input_template:
+      query: "{{ channel.config.query }}"
+      limit: "{{ channel.config.limit }}"
+    output_adapter: web_search_results_v1
+    pagination:
+      type: none
+    limitations:
+      max_limit: 100
+      max_query_length: 500
+    contract:
+      version: 1
+      verified_at: null
+      fixture: null
+
+  youtube-search-v1:
+    status: schema_verified
+    tool_name: get_youtube_search
+    channel_types: [youtube]
+    description: 搜索公开 YouTube 视频、频道和播放列表
+    input_template:
+      engine: youtube
+      q: "{{ channel.config.query }}"
+      sp: "{{ cursor.next }}"
+    output_adapter: youtube_search_results_v1
+    pagination:
+      type: cursor
+      request_field: sp
+      response_field: sp
+    limitations:
+      dedicated_channel_feed: false
+    contract:
+      version: 1
+      verified_at: null
+      fixture: null
+
+  youtube-video-info-v1:
+    status: schema_verified
+    tool_name: post_dataforseo_serp_youtube_video_info_live
+    channel_types: [youtube]
+    description: 获取公开 YouTube 视频详情
+    input_template:
+      body:
+        - video_id: "{{ item.external_id }}"
+          device: desktop
+    output_adapter: youtube_video_info_v1
+    pagination:
+      type: none
+    contract:
+      version: 1
+      verified_at: null
+      fixture: null
+
+  youtube-video-subtitles-v1:
+    status: schema_verified
+    tool_name: post_dataforseo_serp_youtube_video_subtitles_live
+    channel_types: [youtube]
+    description: 获取公开 YouTube 视频字幕
+    input_template:
+      body:
+        - video_id: "{{ item.external_id }}"
+    output_adapter: youtube_subtitles_v1
+    pagination:
+      type: none
+    contract:
+      version: 1
+      verified_at: null
+      fixture: null
+
+  tavily-search-v1:
+    status: schema_verified
+    tool_name: post_tavily_search
+    channel_types: [web_search, news_search]
+    description: 通用或新闻搜索，仅用于候选发现和补充证据
+    input_template:
+      query: "{{ channel.config.query }}"
+      max_results: "{{ channel.config.limit }}"
+    output_adapter: web_search_results_v1
+    pagination:
+      type: none
+    limitations:
+      max_results: 20
+    contract:
+      version: 1
+      verified_at: null
+      fixture: null
+
+  exa-search-v1:
+    status: schema_verified
+    tool_name: post_exa_search
+    channel_types: [web_search, news_search]
+    description: 语义搜索，仅用于候选发现和补充证据
+    input_template:
+      query: "{{ channel.config.query }}"
+      numResults: "{{ channel.config.limit }}"
+    output_adapter: web_search_results_v1
+    pagination:
+      type: none
+    limitations:
+      max_results: 100
+    contract:
+      version: 1
+      verified_at: null
+      fixture: null
+
+  google-news-search-v1:
+    status: schema_verified
+    tool_name: post_dataforseo_serp_google_news_live
+    channel_types: [news_search]
+    description: Google News 关键词搜索，仅作补充来源发现
+    input_template:
+      body:
+        - keyword: "{{ channel.config.query }}"
+          depth: "{{ channel.config.limit }}"
+    output_adapter: google_news_results_v1
+    pagination:
+      type: none
+    contract:
+      version: 1
+      verified_at: null
+      fixture: null
+
+fallback_capabilities:
+  github:
+    primary: github_api
+    fallbacks: [rss, http]
+    mcp_binding: null
+  hacker_news:
+    primary: firebase_api
+    fallbacks: [rss, web_search]
+    mcp_binding: null
+  product_hunt:
+    primary: product_hunt_api
+    fallbacks: [rss, web_search, http]
+    mcp_binding: null
+  web_diff:
+    primary_binding: firecrawl-page-scrape-v1
+    diff_owner: local_deterministic_pipeline
+
+verification_workflow:
+  steps:
+    - discover_or_confirm_schema
+    - run_minimal_read_only_call
+    - save_redacted_response_shape
+    - implement_output_adapter
+    - pass_contract_test
+    - set_status_verified
+  fail_closed: true

@@ -9,3 +9,18 @@ resources/
 # Editor
 .vscode/
 .idea/
+
+# Personal intelligence runtime
+.env
+.dev.vars
+intelligence/.venv/
+intelligence/.pytest_cache/
+intelligence/**/__pycache__/
+intelligence/**/*.pyc
+intelligence/.coverage
+intelligence/data/
+intelligence/tmp/
+intelligence/logs/
+intelligence/browser-profile/
+intelligence/cloudflare/node_modules/
+intelligence/cloudflare/.wrangler/

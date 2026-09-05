@@ -1,0 +1,40 @@
+{{- $page := .page -}}
+{{- $compact := .compact | default false -}}
+{{- $reportType := lower (printf "%v" ($page.Param "reportType")) -}}
+{{- $typeLabels := dict
+  "morning" "早报"
+  "midday" "午间高信号"
+  "evening" "晚报"
+  "daily" "日报"
+  "weekly" "战略周报"
+  "ad-hoc" "专题报告"
+-}}
+{{- $typeLabel := index $typeLabels $reportType | default $reportType -}}
+{{- $period := $page.Param "period" -}}
+{{- $sourcesCount := $page.Param "sourcesCount" -}}
+{{- $importance := $page.Param "importance" -}}
+{{- $trend := $page.Param "trend" -}}
+
+<div class="intelligence-meta{{ if $compact }} intelligence-meta--compact{{ end }}" aria-label="情报报告信息">
+  {{- with $typeLabel }}
+  <span class="intelligence-badge intelligence-badge--type">{{ . }}</span>
+  {{- end }}
+  {{- if $page.Param "highValue" }}
+  <span class="intelligence-badge intelligence-badge--signal">高价值信号</span>
+  {{- end }}
+  {{- with $period }}
+  <span class="intelligence-detail"><span class="intelligence-detail__label">周期</span>{{ . }}</span>
+  {{- end }}
+  {{- with $sourcesCount }}
+  <span class="intelligence-detail"><span class="intelligence-detail__label">来源</span>{{ . }} 个</span>
+  {{- end }}
+  {{- with $importance }}
+  <span class="intelligence-detail intelligence-importance" aria-label="重要度 {{ . }} / 5">
+    <span class="intelligence-detail__label">重要度</span>
+    <span aria-hidden="true">{{- range seq 1 5 -}}{{ if le . (int $importance) }}★{{ else }}☆{{ end }}{{- end -}}</span>
+  </span>
+  {{- end }}
+  {{- if and (not $compact) $trend }}
+  <span class="intelligence-detail"><span class="intelligence-detail__label">趋势</span>{{ $trend }}</span>
+  {{- end }}
+</div>

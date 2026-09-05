@@ -1,0 +1,503 @@
+version: 1
+metadata:
+  name: personal-intelligence-catalog
+  description: 个人公开情报系统首批目标、频道与稳定标签
+  owner: Simon Sun
+  default_language: zh-CN
+  public_only: true
+
+tags:
+  - {slug: competitor, name: 竞品, type: relationship}
+  - {slug: ecosystem-partner, name: 生态伙伴, type: relationship}
+  - {slug: opinion-leader, name: 意见领袖, type: relationship}
+  - {slug: tech-giant, name: 科技大厂, type: organization}
+  - {slug: startup, name: 创业公司, type: organization}
+  - {slug: open-source-community, name: 开源社区, type: organization}
+  - {slug: agent-resource-layer, name: Agent资源层, type: sector}
+  - {slug: agent-infrastructure, name: Agent基础设施, type: sector}
+  - {slug: agent-platform, name: Agent平台, type: sector}
+  - {slug: developer-platform, name: 开发者平台, type: sector}
+  - {slug: model-layer, name: 模型层, type: sector}
+  - {slug: tool-integration, name: 工具集成, type: sector}
+  - {slug: ai-engineering, name: AI工程, type: sector}
+  - {slug: ai-safety, name: AI安全, type: sector}
+  - {slug: interoperability, name: 互操作性, type: sector}
+  - {slug: open-protocol, name: 开放协议, type: sector}
+  - {slug: mcp, name: MCP, type: technology}
+  - {slug: sdk, name: SDK, type: technology}
+  - {slug: llm, name: LLM, type: technology}
+  - {slug: open-source, name: 开源, type: technology}
+  - {slug: ecosystem-registry, name: 生态注册表, type: technology}
+  - {slug: official, name: 官方, type: provenance}
+  - {slug: community, name: 社区, type: provenance}
+  - {slug: social, name: 社交媒体, type: channel}
+  - {slug: product-update, name: 产品更新, type: signal}
+  - {slug: pricing, name: Pricing, type: signal}
+  - {slug: documentation, name: 文档变化, type: signal}
+  - {slug: release, name: 发布动态, type: signal}
+  - {slug: high-signal, name: 高信号页面, type: signal}
+  - {slug: trend-watch, name: 趋势观察, type: signal}
+
+targets:
+  - slug: composio
+    name: Composio
+    type: company
+    description: Agent 工具集成与资源层竞品
+    priority: high
+    enabled: true
+    tags: [competitor, startup, agent-resource-layer, tool-integration, mcp, sdk]
+    channels:
+      - slug: composio-blog
+        name: Official Blog
+        type: blog
+        collector: mcp
+        url: https://composio.dev/blog
+        interval_minutes: 60
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, product-update]
+        tool_binding: firecrawl-page-scrape-v1
+        fallbacks:
+          - {collector: http}
+      - slug: composio-twitter
+        name: Official X
+        type: twitter
+        collector: mcp
+        handle: composio
+        url: https://x.com/composio
+        interval_minutes: 180
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, social, product-update]
+        tool_binding: twitter-user-timeline-v1
+        config:
+          resolved_user_id: "1710011976179728384"
+          include_replies: false
+          include_parent_tweet: true
+      - slug: composio-pricing
+        name: Pricing
+        type: pricing
+        collector: mcp
+        url: https://composio.dev/pricing
+        interval_minutes: 360
+        priority: critical
+        enabled: true
+        tier: core
+        tags: [official, pricing, high-signal]
+        tool_binding: firecrawl-page-scrape-v1
+        config:
+          diff: true
+        fallbacks:
+          - {collector: http}
+      - slug: composio-documentation
+        name: Documentation
+        type: documentation
+        collector: mcp
+        url: https://docs.composio.dev
+        interval_minutes: 360
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, documentation, high-signal]
+        tool_binding: firecrawl-site-map-v1
+        config:
+          map_limit: 500
+          scrape_changed_pages_with: firecrawl-page-scrape-v1
+          diff: true
+        fallbacks:
+          - {collector: http}
+      - slug: composio-github
+        name: GitHub Organization
+        type: github-release
+        collector: github_api
+        url: https://github.com/ComposioHQ
+        interval_minutes: 180
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, open-source, release]
+        config:
+          organization: ComposioHQ
+          include_releases: true
+          include_recent_commits: true
+        fallbacks:
+          - {collector: rss}
+          - {collector: http}
+
+  - slug: openai
+    name: OpenAI
+    type: company
+    description: 模型、Agent 与开发者平台的核心厂商
+    priority: critical
+    enabled: true
+    tags: [competitor, tech-giant, model-layer, agent-platform, developer-platform]
+    channels:
+      - slug: openai-news
+        name: Official News RSS
+        type: rss
+        collector: rss
+        url: https://openai.com/news/rss.xml
+        interval_minutes: 60
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, product-update]
+      - slug: openai-twitter
+        name: Official X
+        type: twitter
+        collector: mcp
+        handle: OpenAI
+        url: https://x.com/OpenAI
+        interval_minutes: 180
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, social, product-update]
+        tool_binding: twitter-user-timeline-v1
+        config:
+          resolved_user_id: "4398626122"
+          include_replies: false
+          include_parent_tweet: true
+      - slug: openai-api-changelog
+        name: API Changelog
+        type: changelog
+        collector: mcp
+        url: https://developers.openai.com/api/docs/changelog
+        interval_minutes: 60
+        priority: critical
+        enabled: true
+        tier: core
+        tags: [official, release, documentation, high-signal]
+        tool_binding: firecrawl-page-scrape-v1
+        config:
+          diff: true
+        fallbacks:
+          - {collector: http}
+      - slug: openai-api-pricing
+        name: API Pricing
+        type: pricing
+        collector: mcp
+        url: https://developers.openai.com/api/docs/pricing
+        interval_minutes: 360
+        priority: critical
+        enabled: true
+        tier: core
+        tags: [official, pricing, high-signal]
+        tool_binding: firecrawl-page-scrape-v1
+        config:
+          diff: true
+        fallbacks:
+          - {collector: http}
+      - slug: openai-github
+        name: GitHub Organization
+        type: github-release
+        collector: github_api
+        url: https://github.com/openai
+        interval_minutes: 180
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, open-source, release]
+        config:
+          organization: openai
+          include_releases: true
+          include_recent_commits: true
+        fallbacks:
+          - {collector: rss}
+          - {collector: http}
+      - slug: openai-youtube
+        name: YouTube
+        type: youtube
+        collector: mcp
+        url: https://www.youtube.com/OpenAI
+        interval_minutes: 720
+        priority: normal
+        enabled: false
+        tier: supplemental
+        tags: [official, product-update]
+        tool_binding: youtube-search-v1
+        config:
+          query: OpenAI
+          channel_only: true
+      - slug: openai-reddit
+        name: Reddit Community
+        type: reddit
+        collector: mcp
+        url: https://www.reddit.com/r/OpenAI
+        interval_minutes: 360
+        priority: low
+        enabled: false
+        tier: supplemental
+        tags: [community, social]
+        tool_binding: reddit-subreddit-v1
+        config:
+          subreddit: OpenAI
+
+  - slug: anthropic
+    name: Anthropic
+    type: company
+    description: Claude 模型、Agent 平台与 AI 安全厂商
+    priority: critical
+    enabled: true
+    tags: [competitor, tech-giant, model-layer, agent-platform, ai-safety]
+    channels:
+      - slug: anthropic-news
+        name: Official News
+        type: blog
+        collector: mcp
+        url: https://www.anthropic.com/news
+        interval_minutes: 60
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, product-update]
+        tool_binding: firecrawl-site-map-v1
+        config:
+          map_limit: 300
+          scrape_changed_pages_with: firecrawl-page-scrape-v1
+        fallbacks:
+          - {collector: http}
+      - slug: anthropic-twitter
+        name: Official X
+        type: twitter
+        collector: mcp
+        handle: AnthropicAI
+        url: https://x.com/AnthropicAI
+        interval_minutes: 180
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, social, product-update]
+        tool_binding: twitter-user-timeline-v1
+        config:
+          resolved_user_id: "1353836358901501952"
+          include_replies: false
+          include_parent_tweet: true
+      - slug: anthropic-api-release-notes
+        name: API Release Notes
+        type: changelog
+        collector: mcp
+        url: https://platform.claude.com/docs/en/release-notes/overview
+        interval_minutes: 60
+        priority: critical
+        enabled: true
+        tier: core
+        tags: [official, release, documentation, high-signal]
+        tool_binding: firecrawl-page-scrape-v1
+        config:
+          diff: true
+        fallbacks:
+          - {collector: http}
+      - slug: anthropic-api-pricing
+        name: API Pricing
+        type: pricing
+        collector: mcp
+        url: https://platform.claude.com/docs/en/about-claude/pricing
+        interval_minutes: 360
+        priority: critical
+        enabled: true
+        tier: core
+        tags: [official, pricing, high-signal]
+        tool_binding: firecrawl-page-scrape-v1
+        config:
+          diff: true
+        fallbacks:
+          - {collector: http}
+      - slug: anthropic-github
+        name: GitHub Organization
+        type: github-release
+        collector: github_api
+        url: https://github.com/anthropics
+        interval_minutes: 180
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, open-source, release]
+        config:
+          organization: anthropics
+          include_releases: true
+          include_recent_commits: true
+        fallbacks:
+          - {collector: rss}
+          - {collector: http}
+      - slug: anthropic-youtube
+        name: YouTube
+        type: youtube
+        collector: mcp
+        url: https://www.youtube.com/@anthropic-ai
+        interval_minutes: 720
+        priority: normal
+        enabled: false
+        tier: supplemental
+        tags: [official, product-update]
+        tool_binding: youtube-search-v1
+        config:
+          query: Anthropic
+          channel_only: true
+      - slug: anthropic-reddit
+        name: Reddit Community
+        type: reddit
+        collector: mcp
+        url: https://www.reddit.com/r/Anthropic
+        interval_minutes: 360
+        priority: low
+        enabled: false
+        tier: supplemental
+        tags: [community, social]
+        tool_binding: reddit-subreddit-v1
+        config:
+          subreddit: Anthropic
+
+  - slug: simon-willison
+    name: Simon Willison
+    type: person
+    description: AI 工程、LLM 与开源领域意见领袖
+    priority: high
+    enabled: true
+    tags: [opinion-leader, ai-engineering, open-source, llm, trend-watch]
+    channels:
+      - slug: simon-willison-atom
+        name: Everything Atom
+        type: rss
+        collector: rss
+        url: https://simonwillison.net/atom/everything/
+        interval_minutes: 60
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, product-update]
+      - slug: simon-willison-twitter
+        name: Official X
+        type: twitter
+        collector: mcp
+        handle: simonw
+        url: https://x.com/simonw
+        interval_minutes: 180
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, social, trend-watch]
+        tool_binding: twitter-user-timeline-v1
+        config:
+          resolved_user_id: "12497"
+          include_replies: false
+          include_parent_tweet: true
+      - slug: simon-willison-github
+        name: GitHub
+        type: github-release
+        collector: github_api
+        url: https://github.com/simonw
+        interval_minutes: 360
+        priority: normal
+        enabled: true
+        tier: core
+        tags: [official, open-source, release]
+        config:
+          user: simonw
+          include_releases: true
+          include_recent_commits: true
+        fallbacks:
+          - {collector: rss}
+          - {collector: http}
+      - slug: simon-willison-youtube
+        name: YouTube
+        type: youtube
+        collector: mcp
+        url: https://www.youtube.com/channel/UCPzGwk1N5ea7sV3S2c2x1kg
+        interval_minutes: 720
+        priority: low
+        enabled: false
+        tier: supplemental
+        tags: [official]
+        tool_binding: youtube-search-v1
+        config:
+          query: Simon Willison
+          channel_only: true
+
+  - slug: mcp-ecosystem
+    name: MCP Ecosystem
+    type: topic
+    description: Model Context Protocol 规范、生态与注册表
+    priority: critical
+    enabled: true
+    tags: [ecosystem-partner, open-source-community, open-protocol, agent-infrastructure, interoperability, sdk, ecosystem-registry]
+    channels:
+      - slug: mcp-official-blog
+        name: Official Blog
+        type: blog
+        collector: mcp
+        url: https://blog.modelcontextprotocol.io
+        interval_minutes: 60
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, product-update]
+        tool_binding: firecrawl-site-map-v1
+        config:
+          map_limit: 300
+          scrape_changed_pages_with: firecrawl-page-scrape-v1
+        fallbacks:
+          - {collector: http}
+      - slug: mcp-specification
+        name: Specification
+        type: documentation
+        collector: mcp
+        url: https://modelcontextprotocol.io/specification/
+        interval_minutes: 360
+        priority: critical
+        enabled: true
+        tier: core
+        tags: [official, documentation, high-signal]
+        tool_binding: firecrawl-page-scrape-v1
+        config:
+          diff: true
+        fallbacks:
+          - {collector: http}
+      - slug: mcp-registry
+        name: Registry
+        type: documentation
+        collector: mcp
+        url: https://registry.modelcontextprotocol.io
+        interval_minutes: 720
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, ecosystem-registry, high-signal]
+        tool_binding: firecrawl-site-map-v1
+        config:
+          map_limit: 1000
+          diff: true
+        fallbacks:
+          - {collector: http}
+      - slug: mcp-github
+        name: GitHub Organization
+        type: github-release
+        collector: github_api
+        url: https://github.com/modelcontextprotocol
+        interval_minutes: 120
+        priority: critical
+        enabled: true
+        tier: core
+        tags: [official, open-source, release]
+        config:
+          organization: modelcontextprotocol
+          include_releases: true
+          include_recent_commits: true
+        fallbacks:
+          - {collector: rss}
+          - {collector: http}
+      - slug: mcp-reddit
+        name: Reddit Community
+        type: reddit
+        collector: mcp
+        url: https://www.reddit.com/r/mcp
+        interval_minutes: 360
+        priority: low
+        enabled: false
+        tier: supplemental
+        tags: [community, social, trend-watch]
+        tool_binding: reddit-subreddit-v1
+        config:
+          subreddit: mcp

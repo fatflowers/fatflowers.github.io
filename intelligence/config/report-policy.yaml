@@ -1,0 +1,96 @@
+version: 1
+metadata:
+  public_only: true
+  default_language: zh-CN
+  timezone: Asia/Shanghai
+
+publication:
+  mode: automatic
+  branch: main
+  remote: origin
+  content_directory: content/posts/intelligence
+  image_directory: static/images/intelligence
+  commit_message_template: "content(intelligence): publish {{ edition }} report for {{ report_date }}"
+  allowed_changed_paths:
+    - content/posts/intelligence/
+    - static/images/intelligence/
+  daily_hidden_in_home_list: true
+  weekly_hidden_in_home_list: false
+  ad_hoc_default_status: draft
+  publish_user_requested_ad_hoc_only: true
+
+report_status:
+  allowed: [draft, validating, ready, published, failed]
+  automatic_path: [draft, validating, ready, published]
+  terminal_failure_status: failed
+
+editions:
+  morning:
+    enabled: true
+    cutoff_local: "08:15"
+    publish_local: "08:30"
+    generate_when: any_effective_new_item
+  midday:
+    enabled: true
+    cutoff_local: "12:45"
+    publish_local: "13:00"
+    generate_when: importance_at_least
+    minimum_importance: 4
+  evening:
+    enabled: true
+    cutoff_local: "18:45"
+    publish_local: "19:00"
+    generate_when: any_effective_new_item
+  weekly:
+    enabled: true
+    weekday: sunday
+    publish_local: "20:00"
+    lookback_days: 7
+    generate_when: always
+  ad_hoc:
+    enabled: true
+    generate_when: explicit_request
+    automatic_publish: false
+
+carry_forward:
+  low_value_to_evening: true
+  importance_below: 4
+  never_duplicate_published_items: true
+
+validation_gates:
+  - id: public-sources-only
+    description: 所有引用必须是无需登录即可访问的公共来源
+  - id: evidence-required
+    description: 每个关键事实至少有一个来源 URL
+  - id: sensitive-content-scan
+    description: 阻止 Token、Cookie、密钥、内部信息和个人敏感信息
+  - id: front-matter
+    description: Front Matter 与文件名必须符合 Hugo 约定
+  - id: hugo-build
+    command: hugo --minify
+  - id: git-diff-check
+    command: git diff --check
+  - id: changed-path-scope
+    description: 自动发布只能修改 publication.allowed_changed_paths
+
+failure_policy:
+  publish_on_any_gate_failure: false
+  keep_draft_on_failure: true
+  create_or_update_multica_issue: true
+  retry_agent_schema_repair_once: true
+  git_conflict_action: stop
+
+front_matter:
+  category: Intelligence
+  generated: true
+  include_fields:
+    - title
+    - date
+    - categories
+    - tags
+    - description
+    - reportType
+    - period
+    - generated
+    - sourcesCount
+    - hiddenInHomeList

@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fatflowers.github.io/schemas/intelligence/catalog.schema.json",
+  "title": "Personal Intelligence Catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "tags", "targets"],
+  "properties": {
+    "version": { "const": 1 },
+    "metadata": { "type": "object" },
+    "tags": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/tag" }
+    },
+    "targets": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/target" }
+    }
+  },
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^[a-z0-9]+(?:[-_][a-z0-9]+)*$"
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "normal", "high", "critical"]
+    },
+    "tag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slug", "name", "type"],
+      "properties": {
+        "slug": { "$ref": "#/$defs/slug" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "type": { "$ref": "#/$defs/identifier" }
+      }
+    },
+    "channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slug", "name", "type", "collector", "interval_minutes"],
+      "properties": {
+        "slug": { "$ref": "#/$defs/slug" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "type": { "$ref": "#/$defs/identifier" },
+        "collector": {
+          "type": "string",
+          "enum": ["mcp", "rss", "http", "browser", "github_api"]
+        },
+        "url": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "handle": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "interval_minutes": { "type": "integer", "minimum": 5, "maximum": 43200 },
+        "priority": { "$ref": "#/$defs/priority" },
+        "enabled": { "type": "boolean" },
+        "tier": { "type": "string", "enum": ["core", "supplemental"] },
+        "tool_binding": { "$ref": "#/$defs/slug" },
+        "tags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/slug" }
+        },
+        "config": { "type": "object" },
+        "fallbacks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/fallback" }
+        }
+      },
+      "anyOf": [
+        { "required": ["url"] },
+        { "required": ["handle"] },
+        { "required": ["config"] }
+      ]
+    },
+    "fallback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["collector"],
+      "properties": {
+        "collector": {
+          "type": "string",
+          "enum": ["mcp", "rss", "http", "browser", "github_api"]
+        },
+        "url": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "tool_binding": { "$ref": "#/$defs/slug" },
+        "config": { "type": "object" }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slug", "name", "type", "channels"],
+      "properties": {
+        "slug": { "$ref": "#/$defs/slug" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "type": { "$ref": "#/$defs/identifier" },
+        "description": { "type": "string", "maxLength": 2000 },
+        "priority": { "$ref": "#/$defs/priority" },
+        "enabled": { "type": "boolean" },
+        "tags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/slug" }
+        },
+        "channels": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/channel" }
+        }
+      }
+    }
+  }
+}
