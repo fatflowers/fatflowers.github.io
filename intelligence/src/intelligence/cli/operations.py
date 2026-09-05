@@ -7,6 +7,7 @@ adapter and deterministic storage payload builder here.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import plistlib
@@ -969,12 +970,16 @@ def generate_report(
         }
 
     report_payload = _report_record(report, rendered.markdown)
+    report_version = hashlib.sha256(rendered.markdown.encode("utf-8")).hexdigest()[:16]
     try:
-        client.create_report(report_payload, idempotency_key="report:create:%s" % report.report_id)
+        client.create_report(
+            report_payload,
+            idempotency_key="report:create:%s:%s" % (report.report_id, report_version),
+        )
         client.update_report_status(
             report.report_id,
             "validating",
-            idempotency_key="report:validating:%s" % report.report_id,
+            idempotency_key="report:validating:%s:%s" % (report.report_id, report_version),
         )
         output = root / rendered.relative_path
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -986,7 +991,7 @@ def generate_report(
             client.update_report_status(
                 report.report_id,
                 "failed",
-                idempotency_key="report:failed:%s" % report.report_id,
+                idempotency_key="report:failed:%s:%s" % (report.report_id, report_version),
             )
             client.update_run(
                 command_run_id,
@@ -1002,7 +1007,7 @@ def generate_report(
         client.update_report_status(
             report.report_id,
             "ready",
-            idempotency_key="report:ready:%s" % report.report_id,
+            idempotency_key="report:ready:%s:%s" % (report.report_id, report_version),
         )
         client.update_run(
             command_run_id,
@@ -1014,7 +1019,7 @@ def generate_report(
             client.update_report_status(
                 report.report_id,
                 "failed",
-                idempotency_key="report:failed:%s" % report.report_id,
+                idempotency_key="report:failed:%s:%s" % (report.report_id, report_version),
             )
         except Exception:
             pass
@@ -1123,12 +1128,13 @@ def _publish_built_report(
     )
     git = result.git
     if execute and push and git and git.commit_sha:
+        report_version = hashlib.sha256(rendered.markdown.encode("utf-8")).hexdigest()[:16]
         client.update_report_status(
             report.report_id,
             "published",
             published_url=published_url,
             git_commit=git.commit_sha,
-            idempotency_key="report:published:%s" % report.report_id,
+            idempotency_key="report:published:%s:%s" % (report.report_id, report_version),
         )
     if execute:
         client.update_run(

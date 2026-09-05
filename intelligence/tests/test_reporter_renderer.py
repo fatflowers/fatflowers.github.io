@@ -103,3 +103,45 @@ def test_renderer_escapes_raw_html_and_hugo_shortcodes() -> None:
     assert "<script>" not in markdown
     assert "{{<" not in markdown
     assert "&lt;script&gt;" in markdown
+
+
+def test_renderer_collapses_multiline_titles_and_source_labels() -> None:
+    report = make_report()
+    source = ReportSource("https://example.com/thread", "第一行\n\n- 第二行")
+    signal = replace(
+        report.signals[0],
+        title="第一行\n\n- 第二行",
+        sources=(source,),
+        analysis=replace(
+            report.signals[0].analysis,
+            evidence=(replace(report.signals[0].analysis.evidence[0], url=source.url),),
+        ),
+    )
+
+    markdown = render_hugo_report(replace(report, signals=(signal,))).markdown
+
+    assert "### Composio：第一行 - 第二行" in markdown
+    assert "[第一行 - 第二行](https://example.com/thread)" in markdown
+
+
+def test_renderer_truncates_long_inline_titles() -> None:
+    report = make_report()
+    long_title = "很长的标题" * 40
+    source = ReportSource("https://example.com/long", long_title)
+    signal = replace(
+        report.signals[0],
+        title=long_title,
+        sources=(source,),
+        analysis=replace(
+            report.signals[0].analysis,
+            evidence=(replace(report.signals[0].analysis.evidence[0], url=source.url),),
+        ),
+    )
+
+    markdown = render_hugo_report(replace(report, signals=(signal,))).markdown
+
+    heading = next(line for line in markdown.splitlines() if line.startswith("### "))
+    source_line = next(line for line in markdown.splitlines() if line.startswith("- ["))
+    assert heading.endswith("…")
+    assert "](https://example.com/long)" in source_line
+    assert "…]" in source_line

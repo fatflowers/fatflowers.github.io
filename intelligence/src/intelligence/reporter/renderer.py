@@ -47,13 +47,22 @@ def _markdown_text(value: str) -> str:
 
 
 def _markdown_link_label(value: str) -> str:
-    return _markdown_text(value).replace("[", "\\[").replace("]", "\\]")
+    return _inline_markdown(value, limit=100).replace("[", "\\[").replace("]", "\\]")
+
+
+def _inline_markdown(value: str, *, limit: int = 120) -> str:
+    """Collapse untrusted multi-line titles into one readable Markdown line."""
+
+    collapsed = " ".join(_markdown_text(value).split())
+    if len(collapsed) <= limit:
+        return collapsed
+    return collapsed[: limit - 1].rstrip() + "…"
 
 
 def _signal_markdown(signal: ReportSignal) -> list[str]:
     analysis = signal.analysis
     lines = [
-        f"### {_markdown_text(signal.target)}：{_markdown_text(signal.title)}",
+        f"### {_inline_markdown(signal.target)}：{_inline_markdown(signal.title)}",
         "",
         f"**重要度：** {'★' * analysis.importance}{'☆' * (5 - analysis.importance)}  ",
         f"**置信度：** {round(analysis.confidence * 100)}%",
@@ -121,7 +130,10 @@ def render_hugo_report(report: Report) -> RenderedReport:
     ]
 
     body = [f"## {_EDITION_LABEL[report.edition]}关键信号", ""]
-    for signal in report.signals:
+    primary_signals = tuple(
+        signal for signal in report.signals if signal.analysis.importance > 2
+    ) or report.signals
+    for signal in primary_signals:
         body.extend(_signal_markdown(signal))
 
     body.extend(["## 趋势变化", ""])
@@ -130,7 +142,11 @@ def render_hugo_report(report: Report) -> RenderedReport:
     else:
         body.append("本期尚未识别出需要单独记录的跨事件趋势。")
 
-    low_priority = tuple(signal for signal in report.signals if signal.analysis.importance <= 2)
+    low_priority = tuple(
+        signal
+        for signal in report.signals
+        if signal.analysis.importance <= 2 and signal not in primary_signals
+    )
     if low_priority:
         body.extend(["", "## 低优先级动态", ""])
         body.extend(
