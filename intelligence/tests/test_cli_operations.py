@@ -363,3 +363,51 @@ def test_report_windows_are_timezone_aware():
     start, end = report_window(ReportEdition.MORNING, __import__("datetime").date(2026, 9, 6))
     assert start.isoformat().endswith("+08:00")
     assert (end - start).total_seconds() == 13.5 * 3600
+
+
+def test_failed_report_can_regenerate_unchanged_text(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from intelligence.cli import operations
+    from intelligence.publisher import GateResult
+    from intelligence.reporter import ReportStatus, render_hugo_report
+    from dataclasses import replace
+    from test_reporter_renderer import make_report
+
+    _, repository = project(tmp_path)
+    report = make_report()
+    rendered = render_hugo_report(report)
+    monkeypatch.setattr(operations, "build_report", lambda *a, **kw: (
+        report, rendered, SimpleNamespace(should_generate=True)
+    ))
+
+    class ReplayClient(FakeClient):
+        def __init__(self):
+            super().__init__()
+            self.seen = set()
+            self.state = None
+
+        def create_report(self, payload, *, idempotency_key):
+            if idempotency_key not in self.seen:
+                self.seen.add(idempotency_key)
+                self.state = "draft"
+
+        def update_report_status(self, report_id, state, *, idempotency_key):
+            if idempotency_key in self.seen:
+                return
+            assert (self.state, state) in {
+                ("draft", "validating"), ("validating", "failed"), ("validating", "ready")
+            }
+            self.seen.add(idempotency_key)
+            self.state = state
+
+    attempts = iter([ReportStatus.FAILED, ReportStatus.READY])
+    monkeypatch.setattr(operations.PublicationService, "validate", lambda *a, **kw:
+        SimpleNamespace(report=replace(report, status=next(attempts)),
+                        gates=(GateResult("sensitive_content", True, "checked"),)))
+    client = ReplayClient()
+    first = operations.generate_report(repository, client, command_run_id="attempt-1",
+        dry_run=False, report_options={"edition_value": "morning"})
+    second = operations.generate_report(repository, client, command_run_id="attempt-2",
+        dry_run=False, report_options={"edition_value": "morning"})
+    assert first["status"] == "failed"
+    assert second["status"] == client.state == "ready"

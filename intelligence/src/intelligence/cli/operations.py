@@ -973,7 +973,12 @@ def generate_report(
         }
 
     report_payload = _report_record(report, rendered.markdown)
-    report_version = hashlib.sha256(rendered.markdown.encode("utf-8")).hexdigest()[:16]
+    # A new generation attempt must execute its transitions again after a
+    # failed validation, even when the report text has not changed. Transport
+    # retries within this run still reuse the same idempotency keys.
+    report_version = hashlib.sha256(
+        (command_run_id + "\n" + rendered.markdown).encode("utf-8")
+    ).hexdigest()[:16]
     try:
         client.create_report(
             report_payload,
