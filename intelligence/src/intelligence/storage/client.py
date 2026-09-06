@@ -178,6 +178,35 @@ class WorkerAPIClient:
             headers={"Idempotency-Key": idempotency_key},
         )
 
+    def revise_published_report(
+        self,
+        report_id: str,
+        *,
+        title: str,
+        content_markdown: str,
+        reason: str,
+        git_commit: str,
+        expected_git_commit: str,
+        idempotency_key: str,
+        item_ids: Optional[Sequence[str]] = None,
+    ) -> Dict[str, Any]:
+        body: Dict[str, Any] = {
+            "title": title,
+            "content_markdown": content_markdown,
+            "reason": reason,
+            "git_commit": git_commit,
+            "expected_git_commit": expected_git_commit,
+        }
+        if item_ids is not None:
+            body["item_ids"] = list(item_ids)
+        return self._request(
+            "PATCH",
+            "/v1/reports/%s/editorial-revision"
+            % urllib.parse.quote(report_id, safe=""),
+            body=body,
+            headers={"Idempotency-Key": idempotency_key},
+        )
+
     def create_run(
         self, run: Mapping[str, Any], *, idempotency_key: str
     ) -> Dict[str, Any]:

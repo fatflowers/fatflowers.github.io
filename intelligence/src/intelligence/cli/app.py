@@ -201,6 +201,14 @@ def build_parser() -> argparse.ArgumentParser:
     report_publish.add_argument("--published-url")
     report_publish.add_argument("--remote", default="origin")
     report_publish.add_argument("--branch", default="main")
+    report_revise = report_commands.add_parser("revise")
+    report_revise.add_argument("--report-id", required=True)
+    report_revise.add_argument("--input", type=Path, required=True)
+    report_revise.add_argument("--title", required=True)
+    report_revise.add_argument("--reason", required=True)
+    report_revise.add_argument("--git-commit", required=True)
+    report_revise.add_argument("--expected-git-commit", required=True)
+    report_revise.add_argument("--item-id", action="append", dest="item_ids")
 
     scheduler = commands.add_parser("scheduler")
     scheduler_commands = scheduler.add_subparsers(dest="scheduler_command", required=True)
@@ -487,6 +495,18 @@ def execute(args: argparse.Namespace) -> Any:
         )
 
     if args.command == "report":
+        if args.report_command == "revise":
+            return client.revise_published_report(
+                args.report_id,
+                title=args.title,
+                content_markdown=args.input.read_text(encoding="utf-8"),
+                reason=args.reason,
+                git_commit=args.git_commit,
+                expected_git_commit=args.expected_git_commit,
+                item_ids=args.item_ids,
+                idempotency_key="report-revision:%s:%s"
+                % (args.report_id, args.git_commit),
+            )
         options = {
             "edition_value": args.edition,
             "date_value": args.date,

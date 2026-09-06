@@ -71,6 +71,27 @@ def test_all_worker_write_routes_set_idempotency_keys():
     assert calls[5]["path"] == "/v1/runs/run%2Fone"
 
 
+def test_editorial_revision_uses_dedicated_authenticated_route():
+    client = WorkerAPIClient("https://worker.example", "token")
+    calls = recorder(client)
+
+    client.revise_published_report(
+        "report/id",
+        title="Updated",
+        content_markdown="# Updated",
+        reason="Correction",
+        git_commit="abcdef1",
+        expected_git_commit="1234567",
+        item_ids=["one"],
+        idempotency_key="revision",
+    )
+
+    assert calls[0]["method"] == "PATCH"
+    assert calls[0]["path"] == "/v1/reports/report%2Fid/editorial-revision"
+    assert calls[0]["body"]["item_ids"] == ["one"]
+    assert calls[0]["headers"]["Idempotency-Key"] == "revision"
+
+
 def test_transient_write_retries_identical_request_and_idempotency_key():
     from unittest.mock import MagicMock
     response = MagicMock()
