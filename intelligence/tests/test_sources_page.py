@@ -69,6 +69,10 @@ def build(tmp_path: Path, catalog: dict) -> Path:
         ROOT / "intelligence/config/schedules.yaml",
         source / "intelligence/config/schedules.yaml",
     )
+    shutil.copy(
+        ROOT / "intelligence/config/mcp-tools.yaml",
+        source / "intelligence/config/mcp-tools.yaml",
+    )
     destination = tmp_path / "public"
     subprocess.run(
         [hugo, "--minify", "--destination", str(destination), "--baseURL", "https://example.org/"],
@@ -79,6 +83,7 @@ def build(tmp_path: Path, catalog: dict) -> Path:
 
 def test_sources_page_reads_current_catalog_and_navigation(tmp_path: Path) -> None:
     catalog = yaml.safe_load((ROOT / "intelligence/config/catalog.yaml").read_text())
+    registry = yaml.safe_load((ROOT / "intelligence/config/mcp-tools.yaml").read_text())
     destination = build(tmp_path, catalog)
     channels = [channel for target in catalog["targets"] for channel in target["channels"]]
     active = sum(bool(t["enabled"] and c["enabled"]) for t in catalog["targets"] for c in t["channels"])
@@ -94,6 +99,11 @@ def test_sources_page_reads_current_catalog_and_navigation(tmp_path: Path) -> No
         assert 'source-row-collector' in html
         assert 'source-row-interval' not in html
         assert ('采集方式：' if language else 'Collector:') in html
+        for channel in channels:
+            if channel["collector"] == "mcp":
+                binding = channel["tool_binding"]
+                assert f"AIsa · {registry['tools'][binding]['tool_name']}" in html
+                assert binding in html
         assert html.count('data-layout=compact-cards') + html.count('data-layout="compact-cards"') == len(catalog['targets'])
         assert sum(c["data-enabled"] == "true" for c in page.channels) == active
         assert all(channel["url"] in page.links for channel in channels)

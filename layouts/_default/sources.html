@@ -1,6 +1,11 @@
 {{ define "main" }}
 {{- $zh := eq .Lang "zh" -}}
 {{- $catalog := os.ReadFile "intelligence/config/catalog.yaml" | transform.Unmarshal -}}
+{{- $mcpRegistry := os.ReadFile "intelligence/config/mcp-tools.yaml" | transform.Unmarshal -}}
+{{- $mcpTools := dict -}}
+{{- range $alias, $binding := $mcpRegistry.tools -}}
+  {{- $mcpTools = merge $mcpTools (dict $alias $binding.tool_name) -}}
+{{- end -}}
 {{- $tags := dict -}}
 {{- range $catalog.tags }}{{ $tags = merge $tags (dict .slug .name) }}{{ end -}}
 {{- $total := 0 }}{{ $enabled := 0 -}}
@@ -50,12 +55,20 @@
         {{- $channelTags := slice -}}
         {{- range .tags }}{{ $channelTags = $channelTags | append (printf "%s %s" . (index $tags . | default .)) }}{{ end -}}
         {{- $publicURL := partial "source-public-url.html" .url -}}
-        <article class="source-channel" data-enabled="{{ $active }}" data-search="{{ .name }} {{ .type }} {{ .collector }} {{ delimit $channelTags " " }} {{ $publicURL }}">
+        {{- $toolName := "" -}}
+        {{- if and (eq .collector "mcp") .tool_binding -}}{{- $toolName = index $mcpTools .tool_binding | default .tool_binding -}}{{- end -}}
+        {{- $collectorLabel := .collector -}}
+        {{- if eq .collector "mcp" -}}{{- $collectorLabel = printf "AIsa · %s" $toolName -}}
+        {{- else if eq .collector "rss" -}}{{- $collectorLabel = "RSS" -}}
+        {{- else if eq .collector "http" -}}{{- $collectorLabel = "HTTP" -}}
+        {{- else if eq .collector "github_api" -}}{{- $collectorLabel = "GitHub API" -}}
+        {{- else if eq .collector "mcp_registry_api" -}}{{- $collectorLabel = "MCP Registry API" -}}{{- end -}}
+        <article class="source-channel" data-enabled="{{ $active }}" data-search="{{ .name }} {{ .type }} {{ .collector }} {{ $toolName }} {{ delimit $channelTags " " }} {{ $publicURL }}">
           <details class="source-details">
           <summary class="source-channel-heading" title="{{ if $zh }}展开详细配置{{ else }}Expand configuration{{ end }}">
             <span class="source-name" title="{{ .name }}">{{ if $publicURL }}<a href="{{ $publicURL }}" rel="noopener noreferrer">{{ .name }} <span aria-hidden="true">↗</span></a>{{ else }}{{ .name }}{{ end }}</span>
             <span class="source-row-type" title="{{ if $zh }}频道类型{{ else }}Channel type{{ end }}">{{ .type }}</span>
-            <span class="source-row-collector" title="{{ if $zh }}采集方式{{ else }}Collector{{ end }}">{{ if $zh }}采集方式：{{ else }}Collector: {{ end }}{{ .collector }}</span>
+            <span class="source-row-collector" title="{{ if $zh }}采集方式{{ else }}Collector{{ end }}">{{ if $zh }}采集方式：{{ else }}Collector: {{ end }}{{ $collectorLabel }}</span>
             <span class="source-status {{ if $active }}is-enabled{{ end }}">{{ if $active }}{{ if $zh }}已启用{{ else }}Enabled{{ end }}{{ else }}{{ if $zh }}未启用{{ else }}Disabled{{ end }}{{ end }}</span>
             <span class="source-chevron" aria-hidden="true">›</span>
           </summary>
@@ -64,7 +77,8 @@
           {{ if $publicURL }}<a class="source-url" href="{{ $publicURL }}" rel="noopener noreferrer">{{ $publicURL }}</a>{{ end }}
           <dl class="source-settings">
             <div><dt>{{ if $zh }}频道类型{{ else }}Channel type{{ end }}</dt><dd>{{ .type }}</dd></div>
-            <div><dt>{{ if $zh }}采集方式{{ else }}Collector{{ end }}</dt><dd>{{ .collector }}</dd></div>
+            <div><dt>{{ if $zh }}采集方式{{ else }}Collector{{ end }}</dt><dd>{{ $collectorLabel }}</dd></div>
+            {{ if $toolName }}<div><dt>{{ if $zh }}固定绑定{{ else }}Fixed binding{{ end }}</dt><dd>{{ .tool_binding }}</dd></div>{{ end }}
             <div><dt>{{ if $zh }}配置间隔{{ else }}Configured interval{{ end }}</dt><dd>{{ .interval_minutes }} {{ if $zh }}分钟{{ else }}min{{ end }}</dd></div>
             {{ with .priority }}<div><dt>{{ if $zh }}优先级{{ else }}Priority{{ end }}</dt><dd>{{ . }}</dd></div>{{ end }}
             {{ with .tier }}<div><dt>{{ if $zh }}频道层级{{ else }}Channel tier{{ end }}</dt><dd>{{ . }}</dd></div>{{ end }}
