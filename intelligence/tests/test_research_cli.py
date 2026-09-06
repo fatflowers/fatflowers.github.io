@@ -260,6 +260,15 @@ def test_non_native_x_discovery_is_rejected_before_fetch(monkeypatch):
     assert result["reason"] == "unsupported_social_discovery_url"
 
 
+def test_free_channel_never_creates_paid_firecrawl_fallback(monkeypatch):
+    client = Client()
+    client.items[0]["raw_metadata_json"] = '{"discovery_only":true,"allow_paid_fallback":false}'
+    monkeypatch.setattr(research, "fetch_article", lambda url: (_ for _ in ()).throw(OSError("offline")))
+    result = research.research_hydrate(client, item_id="one")
+    assert result["reason"] == "http_fetch_failed"
+    assert "fallback" not in result
+
+
 def test_exact_rss_date_evidence_can_complete_article(monkeypatch):
     client = Client()
     client.items[0].update(published_at="2026-09-05", raw_metadata_json='{"platform":"rss"}')

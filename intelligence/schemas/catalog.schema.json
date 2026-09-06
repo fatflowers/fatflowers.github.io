@@ -54,7 +54,7 @@
         "type": { "$ref": "#/$defs/identifier" },
         "collector": {
           "type": "string",
-          "enum": ["mcp", "rss", "http", "browser", "github_api"]
+          "enum": ["mcp", "rss", "http", "browser", "github_api", "mcp_registry_api"]
         },
         "url": { "type": "string", "format": "uri", "pattern": "^https://" },
         "handle": { "type": "string", "minLength": 1, "maxLength": 200 },
@@ -87,7 +87,7 @@
       "properties": {
         "collector": {
           "type": "string",
-          "enum": ["mcp", "rss", "http", "browser", "github_api"]
+          "enum": ["mcp", "rss", "http", "browser", "github_api", "mcp_registry_api"]
         },
         "url": { "type": "string", "format": "uri", "pattern": "^https://" },
         "tool_binding": { "$ref": "#/$defs/slug" },

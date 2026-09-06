@@ -96,7 +96,8 @@ def _queue_children(client, item, links, *, limit=30, allowed_hosts=None):
         candidate = NormalizedItem(external_id=None, target_slug=item["target_id"],
             channel_slug=item["channel_id"], url=url, title=link.get("title") or parsed.path,
             author=None, published_at=None, content_text="", fetched_at=now,
-            metadata={"discovery_only": True, "discovered_from": parent_url})
+            metadata={"discovery_only": True, "discovered_from": parent_url,
+                      "allow_paid_fallback": metadata.get("allow_paid_fallback", True)})
         record = normalized_item_record(candidate, target_id=item["target_id"], channel_id=item["channel_id"], now=now)
         # Indexes often label different articles identically (e.g. "Release").
         # A discovery stub has no body yet, so its hash must identify its URL,
@@ -209,10 +210,12 @@ def research_hydrate(client, *, item_id, since=None):
         article = fetch_article(item["url"])
     except (OSError, ValueError, TimeoutError) as exc:
         result = _persist(client, item, {}, since=since, tool_name="http")
-        result.update(reason="http_fetch_failed", error_type=type(exc).__name__, fallback=_fallback(item["url"]))
+        result.update(reason="http_fetch_failed", error_type=type(exc).__name__)
+        if metadata.get("allow_paid_fallback", True):
+            result["fallback"] = _fallback(item["url"])
         return result
     result = _persist(client, item, article, since=since, tool_name="http")
-    if result["status"] == "failed":
+    if result["status"] == "failed" and metadata.get("allow_paid_fallback", True):
         result["fallback"] = _fallback(item["url"])
     return result
 
@@ -352,6 +355,11 @@ def research_discover(repository, client, *, target=None):
                     page = RSSCollector(timeout=20).collect(ChannelSpec.from_catalog(entry.to_dict(), channel.to_dict()))
                     # Feed order convention is newest first; preserve actual publication dates.
                     records = [normalized_item_record(item, target_id=entry.id, channel_id=channel.id, now=now) for item in page.items[:20]]
+                    for record in records:
+                        record["raw_metadata"] = {
+                            **dict(record.get("raw_metadata") or {}),
+                            "allow_paid_fallback": channel.config.get("allow_paid_fallback", True),
+                        }
                     if records:
                         client.write_items(records, idempotency_key="research:feed:" + hashlib.sha256(json.dumps(records, sort_keys=True).encode()).hexdigest())
                     results.append({"target": entry.slug, "channel": channel.slug, "status": "discovered", "queued": len(records)})
@@ -361,7 +369,8 @@ def research_discover(repository, client, *, target=None):
             seed = NormalizedItem(external_id=None, target_slug=entry.slug, channel_slug=channel.slug,
                                   url=channel.url, title=channel.name, author=None, published_at=None,
                                   content_text="", fetched_at=now, metadata={"discovery_only": True, "research_seed": True,
-                                  "article_path_prefixes": channel.config.get("article_path_prefixes", [])})
+                                  "article_path_prefixes": channel.config.get("article_path_prefixes", []),
+                                  "allow_paid_fallback": channel.config.get("allow_paid_fallback", True)})
             record = normalized_item_record(seed, target_id=entry.id, channel_id=channel.id, now=now)
             client.write_items([record], idempotency_key="research:seed:" + hashlib.sha256(json.dumps(record, sort_keys=True).encode()).hexdigest())
             try:
@@ -369,11 +378,12 @@ def research_discover(repository, client, *, target=None):
                 queued = _queue_children(client, record, article.get("discovered_links", []), limit=20)
                 result = {"target": entry.slug, "channel": channel.slug, "item_id": record["id"],
                           "status": "discovered" if queued else "needs_fallback", "queued": len(queued)}
-                if not queued:
+                if not queued and channel.config.get("allow_paid_fallback", True):
                     fallbacks.append({"item_id": record["id"], **_fallback(channel.url)})
                 results.append(result)
             except (OSError, ValueError, TimeoutError) as exc:
                 results.append({"target": entry.slug, "channel": channel.slug, "item_id": record['id'], "status": "needs_fallback", "error_type": type(exc).__name__})
-                fallbacks.append({"item_id": record["id"], **_fallback(channel.url)})
+                if channel.config.get("allow_paid_fallback", True):
+                    fallbacks.append({"item_id": record["id"], **_fallback(channel.url)})
     return {"targets_checked": len(targets), "results": results, "fallback_plans": fallbacks,
             "next_step": "research run; execute fallback plans and research ingest for inaccessible indexes"}

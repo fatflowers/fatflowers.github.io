@@ -79,7 +79,7 @@ def build_parser() -> argparse.ArgumentParser:
     channel_add.add_argument("--name", required=True)
     channel_add.add_argument("--type", required=True, dest="channel_type")
     channel_add.add_argument(
-        "--collector", choices=["mcp", "rss", "http", "browser", "github_api"], required=True
+        "--collector", choices=["mcp", "rss", "http", "browser", "github_api", "mcp_registry_api"], required=True
     )
     channel_add.add_argument("--url")
     channel_add.add_argument("--handle")

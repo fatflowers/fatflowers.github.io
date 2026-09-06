@@ -166,8 +166,8 @@ targets:
   - slug: composio-documentation
     name: Documentation
     type: documentation
-    collector: mcp
-    url: https://docs.composio.dev
+    collector: http
+    url: https://docs.composio.dev/llms.txt
     interval_minutes: 360
     priority: high
     enabled: true
@@ -176,11 +176,9 @@ targets:
     - official
     - documentation
     - high-signal
-    tool_binding: firecrawl-page-scrape-v1
     config:
       diff: true
-    fallbacks:
-    - collector: http
+      allow_paid_fallback: false
   - slug: composio-github
     name: GitHub Organization
     type: github-release
@@ -388,7 +386,7 @@ targets:
   - slug: anthropic-news
     name: Official News
     type: blog
-    collector: mcp
+    collector: http
     url: https://www.anthropic.com/news
     interval_minutes: 60
     priority: high
@@ -397,9 +395,11 @@ targets:
     tags:
     - official
     - product-update
-    tool_binding: firecrawl-page-scrape-v1
-    fallbacks:
-    - collector: http
+    config:
+      article_path_prefixes:
+      - /news/
+      diff: true
+      allow_paid_fallback: false
   - slug: anthropic-engineering
     name: Anthropic Engineering
     type: blog
@@ -641,8 +641,8 @@ targets:
   - slug: mcp-official-blog
     name: Official Blog
     type: blog
-    collector: mcp
-    url: https://blog.modelcontextprotocol.io
+    collector: rss
+    url: https://blog.modelcontextprotocol.io/index.xml
     interval_minutes: 60
     priority: high
     enabled: true
@@ -650,9 +650,8 @@ targets:
     tags:
     - official
     - product-update
-    tool_binding: firecrawl-page-scrape-v1
-    fallbacks:
-    - collector: http
+    config:
+      allow_paid_fallback: false
   - slug: mcp-specification
     name: Specification
     type: documentation
@@ -674,8 +673,8 @@ targets:
   - slug: mcp-registry
     name: Registry
     type: documentation
-    collector: mcp
-    url: https://registry.modelcontextprotocol.io
+    collector: mcp_registry_api
+    url: https://registry.modelcontextprotocol.io/v0.1/servers
     interval_minutes: 720
     priority: high
     enabled: true
@@ -684,11 +683,11 @@ targets:
     - official
     - ecosystem-registry
     - high-signal
-    tool_binding: firecrawl-page-scrape-v1
     config:
-      diff: true
-    fallbacks:
-    - collector: http
+      page_limit: 100
+      max_pages: 3
+      initial_lookback_hours: 24
+      allow_paid_fallback: false
   - slug: mcp-github
     name: GitHub Organization
     type: github-release
