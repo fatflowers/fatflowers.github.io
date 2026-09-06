@@ -466,3 +466,13 @@ def test_published_edition_skips_before_rebuilding_or_touching_artifact(tmp_path
     assert generated["reason"] == published["reason"] == "already_published"
     assert generated["report_id"] == published["report_id"]
     assert [call[2]["run_status"] for call in client.calls if call[0] == "update_run"] == ["skipped", "skipped"]
+
+
+def test_pending_analysis_preserves_prior_publication_context():
+    from intelligence.cli.operations import pending_analysis
+    client = FakeClient()
+    context = [{"id": "prior", "summary": "Already explained this release", "canonical_url": "https://example.com/release"}]
+    client.get_pending_analysis = lambda **kwargs: {"items": [{"id": "new-tweet"}], "recent_published_events": context}
+    result = pending_analysis(client, command_run_id="context-run", limit=10, target_slug=None, channel_slug=None)
+    assert result["recent_published_events"] == context
+    assert result["items"] == [{"id": "new-tweet"}]

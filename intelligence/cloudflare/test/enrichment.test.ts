@@ -46,6 +46,42 @@ test('baseline discovery candidates are queued fairly across targets and bounded
   const newer=await call(db,'/v1/items/pending-enrichment?since=2026-09-07T00:00:00Z');
   assert.equal((await newer.json() as any).items.length,0);
 });
+test('analysis context contains only recent published daily memberships and is bounded',async()=>{
+  const db=new SqliteD1();
+  const now=new Date().toISOString();
+  const old=new Date(Date.now()-8*86400000).toISOString();
+  for(const id of ['a1','a2','b1']) {
+    db.db.prepare("INSERT INTO analyses(item_id,summary,key_change,importance,confidence,model,prompt_version,analyzed_at) VALUES(?,?,?,4,0.9,'test','v1',?)").run(id,'Summary '+id,'Change '+id,now);
+    db.db.prepare("UPDATE items SET canonical_url=?,published_at=? WHERE id=?").run('https://example.com/'+id,old,id);
+  }
+  const addReport=(id:string,status:string,edition:string,at:string,item:string)=>{
+    db.db.prepare("INSERT INTO reports(id,report_date,edition,window_start,window_end,title,slug,report_status,content_markdown,created_at,published_at) VALUES(?,?,?, ?,?,'Report',?,?,'Body',?,?)").run(id,id,edition,old,now,id,status,now,at);
+    db.db.prepare("INSERT INTO report_items(report_id,item_id,rank,section) VALUES(?,?,0,'primary')").run(id,item);
+  };
+  addReport('recent','published','morning',now,'a1');
+  addReport('duplicate-membership','published','evening',now,'a1');
+  addReport('stale','published','morning',old,'a2');
+  addReport('not-live','ready','midday',now,'a2');
+  addReport('weekly-only','published','weekly',now,'b1');
+  const first=await call(db,'/v1/items/pending-analysis?target_id=b');
+  assert.equal(first.status,200);
+  const events=(await first.json() as any).recent_published_events;
+  assert.deepEqual(events.map((event:any)=>event.id),['a1']);
+  assert.equal(events[0].summary,'Summary a1');
+  assert.equal(events[0].key_change,'Change a1');
+  assert.equal(events[0].canonical_url,'https://example.com/a1');
+  assert.equal(events[0].published_at,old); // Recently published catch-up is context.
+  assert.equal(events[0].reported_at,now);
+  for(let n=0;n<105;n++) {
+    const id='more-'+n;
+    db.db.prepare("INSERT INTO items(id,target_id,channel_id,url,title,fetched_at,content_hash,created_at) VALUES(?,'a','a',?,'Item',?,?,?)").run(id,'https://example.com/'+id,now,id,now);
+    db.db.prepare("INSERT INTO analyses(item_id,summary,importance,confidence,model,prompt_version,analyzed_at) VALUES(?,?,4,0.9,'test','v1',?)").run(id,'Long'.repeat(1000),now);
+    db.db.prepare("INSERT INTO report_items(report_id,item_id,rank,section) VALUES('recent',?,1,'brief')").run(id);
+  }
+  const bounded=(await (await call(db,'/v1/items/pending-analysis')).json() as any).recent_published_events;
+  assert.equal(bounded.length,100);
+  assert.ok(bounded.every((event:any)=>event.summary.length<=2000));
+});
 test('new article links outrank dated baseline backlog without starving other targets',async()=>{
   const db=new SqliteD1();
   db.db.exec(`UPDATE items SET published_at='2026-09-05T23:00:00Z' WHERE id='a1';

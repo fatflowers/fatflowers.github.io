@@ -123,7 +123,19 @@ export async function getPendingAnalysis({ env, url }: AuthContext): Promise<Api
     ), ranked AS (SELECT *, ROW_NUMBER() OVER (PARTITION BY target_id ORDER BY published_at DESC,id) AS target_rank FROM eligible)
     SELECT * FROM ranked ORDER BY target_rank,target_id
     LIMIT ?`).bind(from, targetId, targetId, channelId, channelId, limit).all();
-  return { status: 200, body: { items: rows.results ?? [] } };
+  // Cross-channel retellings do not necessarily share a URL. Give the analyst
+  // bounded, actually-published context to distinguish repetition from new facts.
+  // Scope by report publication time (not source date) so recent catch-up counts.
+  const recent = await env.DB.prepare(`SELECT i.id, substr(i.title,1,500) AS title,
+      substr(a.summary,1,2000) AS summary, substr(a.key_change,1,2000) AS key_change,
+      i.canonical_url, i.published_at, MAX(r.published_at) AS reported_at
+    FROM reports r JOIN report_items ri ON ri.report_id=r.id
+    JOIN items i ON i.id=ri.item_id JOIN analyses a ON a.item_id=i.id
+    WHERE r.report_status='published' AND r.edition IN ('morning','midday','evening')
+      AND julianday(r.published_at)>=julianday('now','-7 days')
+      AND julianday(r.published_at)<=julianday('now')
+    GROUP BY i.id ORDER BY MAX(r.published_at) DESC, i.id LIMIT 100`).all();
+  return { status: 200, body: { items: rows.results ?? [], recent_published_events: recent.results ?? [] } };
 }
 
 export async function writeAnalyses({ env, body }: AuthContext): Promise<ApiResponse> {

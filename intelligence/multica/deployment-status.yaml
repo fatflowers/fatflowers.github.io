@@ -14,7 +14,7 @@ cloudflare:
   worker:
     name: personal-intelligence-api
     url: https://personal-intelligence-api.sunliumin.workers.dev
-    version_id: 162e71e1-05ea-4d61-943e-00bb41edabba
+    version_id: fbecf971-710a-4db9-ac2a-07aa440b6a9d
     status: deployed
 
 multica:

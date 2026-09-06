@@ -756,6 +756,7 @@ def pending_analysis(
         "pipeline_run_id": command_run_id,
         "status": "running" if items else "skipped",
         "items": items,
+        "recent_published_events": response.get("recent_published_events", []),
     }
 
 
