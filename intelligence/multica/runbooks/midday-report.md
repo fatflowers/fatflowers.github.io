@@ -2,6 +2,8 @@
 
 目的：按 Asia/Shanghai 时区，在 13:00 仅当早报后至 12:45 出现 importance ≥ 4 的新信号时生成并自动发布午报。
 
+执行仓库日报编辑规则：最多 3 个重点与 5 条快讯，每条紧邻原文。无可核验日期或正文、目录页、旧闻和模板化分析不得出刊；没有合格新事件则跳过。
+
 1. 按 `analyze-pending.md` 补齐窗口内待分析条目。
 2. 执行 `intelligence/scripts/intelctl-secure report generate --edition midday`。
 3. 若无 importance ≥ 4 的未发布条目，将 Run 标记 `skipped`，原因写 `importance_threshold_not_met`，保持静默且不创建空文章。

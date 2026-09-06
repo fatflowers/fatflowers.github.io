@@ -56,8 +56,9 @@ def test_render_is_deterministic_and_has_required_front_matter() -> None:
     assert 'reportType: "morning"' in first.markdown
     assert "sourcesCount: 1" in first.markdown
     assert "hiddenInHomeList: true" in first.markdown
-    assert "## 早报关键信号" in first.markdown
-    assert "[官方公告](https://example.com/news)" in first.markdown
+    assert "## 30 秒速览" in first.markdown
+    assert "## 早报重点" in first.markdown
+    assert "[原文](https://example.com/news)" in first.markdown
 
 
 def test_weekly_report_appears_on_home_page() -> None:
@@ -120,11 +121,12 @@ def test_renderer_collapses_multiline_titles_and_source_labels() -> None:
 
     markdown = render_hugo_report(replace(report, signals=(signal,))).markdown
 
-    assert "### Composio：第一行 - 第二行" in markdown
-    assert "[第一行 - 第二行](https://example.com/thread)" in markdown
+    assert "### 发布了新的 Agent 能力" in markdown
+    assert "[原文](https://example.com/thread)" in markdown
+    assert "- 第二行" not in markdown
 
 
-def test_renderer_truncates_long_inline_titles() -> None:
+def test_renderer_uses_short_source_labels_even_for_long_titles() -> None:
     report = make_report()
     long_title = "很长的标题" * 40
     source = ReportSource("https://example.com/long", long_title)
@@ -140,8 +142,67 @@ def test_renderer_truncates_long_inline_titles() -> None:
 
     markdown = render_hugo_report(replace(report, signals=(signal,))).markdown
 
-    heading = next(line for line in markdown.splitlines() if line.startswith("### "))
-    source_line = next(line for line in markdown.splitlines() if line.startswith("- ["))
-    assert heading.endswith("…")
+    source_line = next(line for line in markdown.splitlines() if line.startswith("来源："))
     assert "](https://example.com/long)" in source_line
-    assert "…]" in source_line
+    assert "[原文](https://example.com/long)" in source_line
+    assert long_title not in markdown
+
+
+def test_reading_budget_inline_sources_and_no_source_dump() -> None:
+    report = make_report()
+    original = report.signals[0]
+    signals = tuple(
+        replace(
+            original,
+            item_id=f"item-{index}",
+            sources=(ReportSource(f"https://example.com/{index}", f"公告 {index}"),),
+            analysis=replace(
+                original.analysis,
+                summary=f"第 {index} 个产品新增稳定接口。",
+                evidence=(replace(original.analysis.evidence[0], url=f"https://example.com/{index}"),),
+            ),
+        )
+        for index in range(12)
+    )
+    markdown = render_hugo_report(replace(report, signals=(signals[0], *signals))).markdown
+    assert markdown.count("### ") == 3
+    briefs = markdown.split("## 一句话快讯")[1]
+    assert len([line for line in briefs.splitlines() if line.startswith("- ")]) == 5
+    for index in range(3, 8):
+        assert f"来源：[原文](https://example.com/{index})" in briefs
+    assert "sourcesCount: 8" in markdown
+    assert "https://example.com/8" not in markdown
+    for forbidden in ("## 来源", "对 Aisa", "置信度", "★", "继续观察", "## 趋势变化"):
+        assert forbidden not in markdown
+
+
+def test_reader_tags_and_generic_impact_are_filtered() -> None:
+    report = make_report()
+    signal = replace(report.signals[0], analysis=replace(
+        report.signals[0].analysis,
+        topics=("official", "competitor", "agent-resource-layer", "MCP", "Agent", "SDK", "API", "Tools", "模型"),
+        why_it_matters="反映相关产品与生态的演进，结合自身路线评估影响。",
+    ))
+    markdown = render_hugo_report(replace(report, signals=(signal,))).markdown
+    import json
+    tags = json.loads(next(line.removeprefix("tags: ") for line in markdown.splitlines() if line.startswith("tags: ")))
+    assert len(tags) == 5
+    assert not {"official", "competitor", "agent-resource-layer"} & set(tags)
+    assert "读者价值" not in markdown
+
+
+def test_additional_evidence_is_linked_with_its_event() -> None:
+    report = make_report()
+    signal = replace(report.signals[0], analysis=replace(
+        report.signals[0].analysis,
+        evidence=(*report.signals[0].analysis.evidence, replace(
+            report.signals[0].analysis.evidence[0], url="https://example.com/spec", claim="接口兼容性说明",
+        )),
+    ))
+    markdown = render_hugo_report(replace(report, signals=(signal,))).markdown
+    detail = markdown.split("### ", 1)[1]
+    assert "[补充来源 2](https://example.com/spec)" in detail
+    overview = markdown.split("## 早报重点", 1)[0]
+    assert "https://example.com/news" in overview
+    assert "https://example.com/spec" not in overview
+    assert "sourcesCount: 2" in markdown

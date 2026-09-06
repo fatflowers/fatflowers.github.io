@@ -2,6 +2,8 @@
 
 目的：按 Asia/Shanghai 时区，在 08:30 为前一日晚报后至当日 08:15 的窗口生成中文早报并自动发布。
 
+读者版规则：最多 3 个重点和 5 条一句话快讯，每条紧邻原文链接，顶部提供 30 秒速览。不发布历史旧闻、列表/分页/个人主页、未知日期、仅有标题或固定话术分析；不得将抓取时间当成发布时间。没有合格事件时正常跳过，不凑数。
+
 1. 查询窗口内条目及分析状态；若仍有待分析条目，先完整执行 `analyze-pending.md`。
 2. 执行 `intelligence/scripts/intelctl-secure report generate --edition morning`。
 3. 没有有效新内容时将 Run 标记为 `skipped`，原因写 `no_effective_new_items`，不创建空文章。

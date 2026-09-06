@@ -22,8 +22,10 @@ export async function getReportInput({ env, url }: AuthContext): Promise<ApiResp
     JOIN analyses a ON a.item_id = i.id
     JOIN targets t ON t.id = i.target_id
     JOIN channels c ON c.id = i.channel_id
-    WHERE datetime(COALESCE(i.published_at, i.fetched_at)) >= datetime(?)
-      AND datetime(COALESCE(i.published_at, i.fetched_at)) < datetime(?)
+    WHERE i.is_baseline = 0
+      AND COALESCE(json_extract(i.raw_metadata_json, '$.discovery_only'), 0) = 0
+      AND datetime(i.published_at) >= datetime(?)
+      AND datetime(i.published_at) < datetime(?)
       AND a.importance >= ?
       AND (? IS NULL OR i.target_id = ?)
       AND (? IS NULL OR EXISTS (
@@ -33,7 +35,7 @@ export async function getReportInput({ env, url }: AuthContext): Promise<ApiResp
         SELECT 1 FROM channel_tags ct JOIN tags cg ON cg.id = ct.tag_id
         WHERE ct.channel_id = i.channel_id AND cg.slug = ?
       ))
-    ORDER BY a.importance DESC, COALESCE(i.published_at, i.fetched_at) DESC, i.id
+    ORDER BY a.importance DESC, i.published_at DESC, i.id
     LIMIT ?`).bind(from, to, minImportance, targetId, targetId, tag, tag, tag, limit).all();
   return { status: 200, body: { window: { from, to }, items: rows.results ?? [] } };
 }

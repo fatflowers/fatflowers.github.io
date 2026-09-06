@@ -1,6 +1,7 @@
 import { getCatalog, getDueChannels, syncCatalog } from "./catalog.ts";
 import { ApiError, constantTimeEqual, errorResponse, jsonResponse, requireObject, sha256Hex } from "./http.ts";
 import { getPendingAnalysis, writeAnalyses, writeItems } from "./items.ts";
+import { revisePublishedReport } from "./revisions.ts";
 import {
   createAuditEvent,
   createReport,
@@ -36,6 +37,7 @@ const routes: Route[] = [
   { method: "POST", pattern: /^\/v1\/analyses\/batch$/, handler: writeAnalyses, write: true },
   { method: "GET", pattern: /^\/v1\/reports\/input$/, handler: getReportInput, write: false },
   { method: "POST", pattern: /^\/v1\/reports$/, handler: createReport, write: true },
+  { method: "PATCH", pattern: /^\/v1\/reports\/(?<id>[^/]+)\/editorial-revision$/, handler: revisePublishedReport, write: true },
   { method: "PATCH", pattern: /^\/v1\/reports\/(?<id>[^/]+)\/status$/, handler: updateReportStatus, write: true },
   { method: "POST", pattern: /^\/v1\/runs$/, handler: createRun, write: true },
   { method: "GET", pattern: /^\/v1\/runs$/, handler: listRuns, write: false },

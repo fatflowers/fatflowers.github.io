@@ -35,6 +35,7 @@
 - 删除目标或频道默认转换成 disable，保留历史数据；物理删除必须由用户明确指定并单独确认范围。
 - 不静默改变用户的目标、标签、采集频率、报告阈值或发布规则。
 - 无来源 URL 的关键事实不得进入公开报告；推断必须明确标记。
+- 内容必须遵循仓库 `intelligence/prompts/analyze-item.md` 和日报编辑规则。禁止用脚本将标题拼接固定话术充当分析；仅有标题、未知日期、目录/个人主页、discovery_only 不得作为新闻发布。原文链接必须紧邻对应信息，不能集中堆在文末。数量不足则少发或不发。
 - 所有自动报告校验通过后直接发布到 `main`，不得增加人工 Review 步骤。
 - 发布前必须通过公共来源、证据、敏感内容、Front Matter、Hugo build、Git diff 和变更路径门禁。
 - 自动发布只允许修改 `content/posts/intelligence/` 和 `static/images/intelligence/`。

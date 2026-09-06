@@ -50,7 +50,7 @@ class ReportPolicy:
                 signal
                 for signal in ordered
                 if signal.analysis.importance >= self.midday_min_importance
-            )
+            )[:8]
             deferred = tuple(signal for signal in ordered if signal not in selected)
             if not selected:
                 return PolicyDecision(False, (), deferred, "no_high_importance_signal", RunStatus.SKIPPED)
@@ -62,12 +62,11 @@ class ReportPolicy:
             )
             if not high_value:
                 return PolicyDecision(False, (), ordered, "low_value_deferred_to_evening", RunStatus.SKIPPED)
-            # Include low-priority context once at least one useful signal exists.
-            return PolicyDecision(True, ordered, (), "new_content", RunStatus.SUCCEEDED)
+            selected = high_value[:8]
+            deferred = tuple(signal for signal in ordered if signal not in selected)
+            return PolicyDecision(True, selected, deferred, "new_content", RunStatus.SUCCEEDED)
 
         if edition is ReportEdition.WEEKLY:
-            return PolicyDecision(True, ordered, (), "weekly_window_has_content", RunStatus.SUCCEEDED)
+            return PolicyDecision(True, ordered[:8], ordered[8:], "weekly_window_has_content", RunStatus.SUCCEEDED)
 
-        # Ad-hoc reports preserve the exact caller-provided population after
-        # deterministic ordering. They remain drafts until explicitly published.
-        return PolicyDecision(True, ordered, (), "ad_hoc_requested", RunStatus.SUCCEEDED)
+        return PolicyDecision(True, ordered[:8], ordered[8:], "ad_hoc_requested", RunStatus.SUCCEEDED)

@@ -62,3 +62,13 @@ def test_weekly_orders_signals_by_importance() -> None:
     )
     assert decision.should_generate
     assert [item.item_id for item in decision.selected] == ["2", "3", "1"]
+
+
+def test_daily_drops_low_value_and_caps_reading_budget() -> None:
+    decision = ReportPolicy().decide(
+        ReportEdition.MORNING,
+        [signal(str(i), 4) for i in range(1, 11)] + [signal("11", 2)],
+    )
+    assert len(decision.selected) == 8
+    assert len(decision.deferred) == 3
+    assert all(item.analysis.importance >= 3 for item in decision.selected)

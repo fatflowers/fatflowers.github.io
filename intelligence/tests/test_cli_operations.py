@@ -276,7 +276,8 @@ def test_report_build_is_deterministic_for_generate_then_publish(tmp_path):
         {
             "id": "item-1",
             "title": "New API",
-            "url": "https://example.com/news",
+            "url": "https://example.com/news/new-api",
+            "content_text": "A new API adds scoped authentication and audit logs for individual integrations.",
             "target_name": "Composio",
             "published_at": "2026-09-06T00:00:00Z",
             "summary": "Summary",
@@ -307,6 +308,14 @@ def test_report_build_is_deterministic_for_generate_then_publish(tmp_path):
     assert report1.report_id == report2.report_id
     assert rendered1.markdown == rendered2.markdown
 
+    # A first fetch of an undated page must not become an empty/noisy issue.
+    client.report_items[0]["published_at"] = None
+    client.report_items[0]["fetched_at"] = "2026-09-06T00:00:00Z"
+    rejected_report, rejected_render, rejected_decision = build_report(client, **options)
+    assert rejected_report.signals == ()
+    assert rejected_render is None
+    assert rejected_decision.should_generate is False
+
 
 def test_weekly_report_identity_is_stable_within_iso_week(tmp_path):
     _, repository = project(tmp_path)
@@ -315,7 +324,8 @@ def test_weekly_report_identity_is_stable_within_iso_week(tmp_path):
         {
             "id": "item-1",
             "title": "New API",
-            "url": "https://example.com/news",
+            "url": "https://example.com/news/new-api",
+            "content_text": "A new API adds scoped authentication and audit logs for individual integrations.",
             "target_name": "Composio",
             "published_at": "2026-09-03T00:00:00Z",
             "summary": "Summary",

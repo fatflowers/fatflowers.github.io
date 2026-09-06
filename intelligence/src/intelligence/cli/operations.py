@@ -43,6 +43,7 @@ from intelligence.reporter import (
     render_hugo_report,
 )
 from intelligence.storage import WorkerAPIClient
+from intelligence.reporter.editorial import exclusion_reason
 
 
 ITEM_NAMESPACE = UUID("2544494d-31e0-4b6a-9e18-2ad2dd2361ed")
@@ -870,7 +871,10 @@ def build_report(
         target_id=stable_id("target", target_slug) if target_slug else None,
         tag=tag,
     )
-    signals = tuple(_report_signal(row) for row in response.get("items", []))
+    signals = tuple(
+        _report_signal(row) for row in response.get("items", [])
+        if exclusion_reason(row, start, end) is None
+    )
     decision = ReportPolicy().decide(edition, signals)
     period = (
         "%d-w%02d" % (report_date.isocalendar()[0], report_date.isocalendar()[1])
@@ -1273,15 +1277,17 @@ def _report_signal(row: Mapping[str, Any]) -> ReportSignal:
             "evidence": _json_array(row.get("evidence_json")),
         }
     )
-    sources = tuple(
+    original_url = str(row.get("canonical_url") or row.get("url") or "")
+    sources = (ReportSource(original_url, "原文"),) + tuple(
         ReportSource(evidence.url, str(row.get("title") or evidence.claim))
         for evidence in analysis.evidence
+        if evidence.url != original_url
     )
     return ReportSignal(
         item_id=str(row["id"]),
         target=str(row.get("target_name") or row.get("target_slug") or "Unknown"),
         title=str(row.get("title") or row.get("url") or "Untitled"),
-        published_at=_datetime(str(row.get("published_at") or row.get("fetched_at"))),
+        published_at=_datetime(str(row["published_at"])),
         analysis=analysis,
         sources=sources,
     )

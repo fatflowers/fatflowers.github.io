@@ -46,10 +46,6 @@ def _markdown_text(value: str) -> str:
     )
 
 
-def _markdown_link_label(value: str) -> str:
-    return _inline_markdown(value, limit=100).replace("[", "\\[").replace("]", "\\]")
-
-
 def _inline_markdown(value: str, *, limit: int = 120) -> str:
     """Collapse untrusted multi-line titles into one readable Markdown line."""
 
@@ -59,34 +55,44 @@ def _inline_markdown(value: str, *, limit: int = 120) -> str:
     return collapsed[: limit - 1].rstrip() + "…"
 
 
+_BOILERPLATE = (
+    "反映相关产品与生态的演进",
+    "结合自身路线评估影响",
+    "持续关注后续动态",
+    "值得持续关注",
+    "需要进一步关注",
+)
+_INTERNAL_TAGS = {"official", "competitor", "social", "pricing", "high-signal", "product-update"}
+
+
+def _headline(signal: ReportSignal) -> str:
+    summary = signal.analysis.summary.strip()
+    # Prefer an informative Chinese sentence over an untranslated source title.
+    title = re.split(r"[。！？\n]", summary, maxsplit=1)[0] if re.search(r"[\u4e00-\u9fff]", summary) else signal.title
+    return _inline_markdown(title, limit=72)
+
+
+def _source_links(signal: ReportSignal, *, primary_only: bool = False) -> str:
+    sources = {source.url: source.title for source in signal.sources}
+    # Evidence may cite a second primary source; keep it next to this event too.
+    for evidence in signal.analysis.evidence:
+        sources.setdefault(evidence.url, evidence.claim)
+    urls = tuple(sources)
+    if primary_only:
+        urls = urls[:1]
+    return " · ".join(
+        f"[{'原文' if index == 0 else f'补充来源 {index + 1}'}]({url})"
+        for index, url in enumerate(urls)
+    )
+
+
 def _signal_markdown(signal: ReportSignal) -> list[str]:
     analysis = signal.analysis
-    lines = [
-        f"### {_inline_markdown(signal.target)}：{_inline_markdown(signal.title)}",
-        "",
-        f"**重要度：** {'★' * analysis.importance}{'☆' * (5 - analysis.importance)}  ",
-        f"**置信度：** {round(analysis.confidence * 100)}%",
-        "",
-        "**发生了什么**",
-        "",
-        _markdown_text(analysis.summary),
-        "",
-        "**变化是什么**",
-        "",
-        _markdown_text(analysis.key_change),
-        "",
-        "**为什么重要**",
-        "",
-        _markdown_text(analysis.why_it_matters),
-        "",
-        "**对 Aisa 的影响**",
-        "",
-        _markdown_text(analysis.company_impact),
-    ]
-    if analysis.watch_next:
-        lines.extend(["", "**继续观察**", ""])
-        lines.extend(f"- {_markdown_text(item)}" for item in analysis.watch_next)
-    lines.append("")
+    lines = [f"### {_headline(signal)}", "", _inline_markdown(analysis.summary, limit=320), ""]
+    impact = analysis.why_it_matters.strip()
+    if impact and impact != analysis.summary.strip() and not any(text in impact for text in _BOILERPLATE):
+        lines.extend([f"**读者价值：** {_inline_markdown(impact, limit=180)}", ""])
+    lines.extend([f"来源：{_source_links(signal)} · {signal.published_at.date().isoformat()}", ""])
     return lines
 
 
@@ -97,20 +103,38 @@ def render_hugo_report(report: Report) -> RenderedReport:
         raise ValueError("cannot render a report without signals")
 
     weekly = report.edition is ReportEdition.WEEKLY
+    # The policy orders events by importance. Deduplicate before applying the
+    # reading budget so an event cannot appear in both detail and briefs.
+    selected = []
+    seen_ids: set[str] = set()
+    seen_urls: set[str] = set()
+    for signal in report.signals:
+        urls = {source.url for source in signal.sources}
+        if signal.item_id in seen_ids or urls & seen_urls:
+            continue
+        selected.append(signal)
+        seen_ids.add(signal.item_id)
+        seen_urls.update(urls)
+        if len(selected) == 8:
+            break
+    primary_signals = tuple(selected[:3])
+    briefs = tuple(selected[3:8])
     tags = sorted(
         {
             value
-            for signal in report.signals
+            for signal in selected
             for value in (signal.target, *signal.analysis.topics)
+            if value.casefold() not in _INTERNAL_TAGS
+            and not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)+", value)
         },
         key=lambda value: (value.casefold(), value),
-    )
+    )[:5]
     source_by_url = {
         source.url: source
-        for signal in report.signals
+        for signal in selected
         for source in signal.sources
     }
-    sources = tuple(source_by_url[url] for url in sorted(source_by_url))
+    source_urls = set(source_by_url) | {e.url for signal in selected for e in signal.analysis.evidence}
 
     front_matter = [
         "---",
@@ -122,40 +146,26 @@ def render_hugo_report(report: Report) -> RenderedReport:
         f"reportType: {_yaml_string(report.edition.value)}",
         f"period: {_yaml_string(report.period)}",
         "generated: true",
-        f"sourcesCount: {len(sources)}",
+        f"sourcesCount: {len(source_urls)}",
         f"hiddenInHomeList: {'false' if weekly or any(s.analysis.importance == 5 for s in report.signals) else 'true'}",
         f"reportId: {_yaml_string(report.report_id)}",
         "---",
         "",
     ]
 
-    body = [f"## {_EDITION_LABEL[report.edition]}关键信号", ""]
-    primary_signals = tuple(
-        signal for signal in report.signals if signal.analysis.importance > 2
-    ) or report.signals
+    body = ["## 30 秒速览", ""]
+    for signal in primary_signals:
+        body.append(f"- {_headline(signal)}。{_source_links(signal, primary_only=True)}")
+    body.extend(["", f"## {_EDITION_LABEL[report.edition]}重点", ""])
     for signal in primary_signals:
         body.extend(_signal_markdown(signal))
 
-    body.extend(["## 趋势变化", ""])
-    if report.trends:
-        body.extend(f"- {_markdown_text(trend)}" for trend in report.trends)
-    else:
-        body.append("本期尚未识别出需要单独记录的跨事件趋势。")
-
-    low_priority = tuple(
-        signal
-        for signal in report.signals
-        if signal.analysis.importance <= 2 and signal not in primary_signals
-    )
-    if low_priority:
-        body.extend(["", "## 低优先级动态", ""])
+    if briefs:
+        body.extend(["## 一句话快讯", ""])
         body.extend(
-            f"- **{_markdown_text(signal.target)}**：{_markdown_text(signal.analysis.summary)}"
-            for signal in low_priority
+            f"- {_inline_markdown(signal.analysis.summary, limit=150)} 来源：{_source_links(signal)}"
+            for signal in briefs
         )
-
-    body.extend(["", "## 来源", ""])
-    body.extend(f"- [{_markdown_link_label(source.title)}]({source.url})" for source in sources)
     body.append("")
 
     filename = f"{_slug(report.period)}-{report.edition.value}.zh.md"
