@@ -88,6 +88,7 @@ def test_sources_page_reads_current_catalog_and_navigation(tmp_path: Path) -> No
         assert all("open" not in item for item in channel_details)
         assert len([item for item in page.details if item.get("class") == "source-target-info"]) == len(catalog["targets"])
         assert 'source-row-interval' in html and 'source-row-collector' in html
+        assert html.count('data-layout=compact-cards') + html.count('data-layout="compact-cards"') == len(catalog['targets'])
         assert sum(c["data-enabled"] == "true" for c in page.channels) == active
         assert all(channel["url"] in page.links for channel in channels)
         assert "https://openai.com/news/rss.xml" in page.links

@@ -44,7 +44,7 @@
       <p class="source-description">{{ .description }}</p>
       <ul class="source-tags" aria-label="{{ if $zh }}目标标签{{ else }}Target tags{{ end }}">{{ range .tags }}<li>{{ if $zh }}{{ index $tags . | default . }}{{ else }}{{ . }}{{ end }}</li>{{ end }}</ul>
       </details>
-      <div class="source-channels">
+      <div class="source-channels" data-layout="compact-cards">
         {{ range .channels }}
         {{- $active := and $target.enabled .enabled -}}
         {{- $channelTags := slice -}}
@@ -53,7 +53,7 @@
         <article class="source-channel" data-enabled="{{ $active }}" data-search="{{ .name }} {{ .type }} {{ .collector }} {{ delimit $channelTags " " }} {{ $publicURL }}">
           <details class="source-details">
           <summary class="source-channel-heading" title="{{ if $zh }}展开详细配置{{ else }}Expand configuration{{ end }}">
-            <span class="source-name">{{ if $publicURL }}<a href="{{ $publicURL }}" rel="noopener noreferrer">{{ .name }} <span aria-hidden="true">↗</span></a>{{ else }}{{ .name }}{{ end }}</span>
+            <span class="source-name" title="{{ .name }}">{{ if $publicURL }}<a href="{{ $publicURL }}" rel="noopener noreferrer">{{ .name }} <span aria-hidden="true">↗</span></a>{{ else }}{{ .name }}{{ end }}</span>
             <span class="source-row-type" title="{{ if $zh }}频道类型{{ else }}Channel type{{ end }}">{{ .type }}</span>
             <span class="source-row-collector" title="{{ if $zh }}采集方式{{ else }}Collector{{ end }}">{{ .collector }}</span>
             <span class="source-row-interval" title="{{ if $zh }}配置间隔{{ else }}Configured interval{{ end }}">{{ .interval_minutes }} {{ if $zh }}分{{ else }}min{{ end }}</span>
