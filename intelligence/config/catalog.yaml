@@ -635,10 +635,10 @@ targets:
     tags: [model-layer, developer-platform, open-source]
     channels:
       - slug: deepseek-news
-        name: Research and News
+        name: Official Release Announcements
         type: blog
         collector: mcp
-        url: https://deepseek.com/en/news/
+        url: https://api-docs.deepseek.com/updates
         interval_minutes: 60
         priority: high
         enabled: true
@@ -646,7 +646,7 @@ targets:
         tags: [official, product-update, open-source]
         tool_binding: firecrawl-page-scrape-v1
         config:
-          article_path_prefixes: [/en/news/]
+          article_path_prefixes: [/news/]
         fallbacks:
           - {collector: http}
       - slug: deepseek-api-updates

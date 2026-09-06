@@ -276,3 +276,12 @@ def test_batch_failed_or_ambiguous_calls_rejected():
         research._firecrawl_document({"results": [{"tool": "post_firecrawl_scrape", "successful": False, "data": document}]}, item)
     with pytest.raises(CatalogError):
         research._firecrawl_document({"results": [{"data": document}, {"data": document}]}, item)
+def test_discovery_same_caption_keeps_distinct_article_urls():
+    client = Client()
+    research._queue_children(client, client.items[0], [
+        {'url': 'https://example.com/news/a', 'title': 'Release announcement'},
+        {'url': 'https://example.com/news/b', 'title': 'Release announcement'},
+    ])
+    assert len(client.queued) == 2
+    assert len({x['content_hash'] for x in client.queued}) == 2
+    assert all(x['raw_metadata']['discovery_only'] for x in client.queued)

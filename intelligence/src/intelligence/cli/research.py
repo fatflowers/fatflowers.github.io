@@ -91,7 +91,12 @@ def _queue_children(client, item, links, *, limit=30, allowed_hosts=None):
             channel_slug=item["channel_id"], url=url, title=link.get("title") or parsed.path,
             author=None, published_at=None, content_text="", fetched_at=now,
             metadata={"discovery_only": True, "discovered_from": parent_url})
-        records.append(normalized_item_record(candidate, target_id=item["target_id"], channel_id=item["channel_id"], now=now))
+        record = normalized_item_record(candidate, target_id=item["target_id"], channel_id=item["channel_id"], now=now)
+        # Indexes often label different articles identically (e.g. "Release").
+        # A discovery stub has no body yet, so its hash must identify its URL,
+        # not collapse unrelated destinations by a repeated link caption.
+        record["content_hash"] = hashlib.sha256(("discovery:" + url).encode()).hexdigest()
+        records.append(record)
         if len(records) == limit:
             break
     if not records:
