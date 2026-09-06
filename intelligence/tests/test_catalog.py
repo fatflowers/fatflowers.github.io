@@ -128,4 +128,7 @@ def test_project_catalog_validates_when_present():
     if project_catalog.exists():
         catalog = CatalogRepository(project_catalog, SCHEMA).load()
         assert len(catalog.targets) == 5
-        assert sum(len(target.channels) for target in catalog.targets) == 28
+        assert sum(len(target.channels) for target in catalog.targets) == 32
+        channels = {channel.slug: channel for target in catalog.targets for channel in target.channels}
+        for slug in ('openai-engineering', 'openai-developer-blog', 'anthropic-engineering', 'claude-blog'):
+            assert channels[slug].enabled and channels[slug].channel_type == 'blog'

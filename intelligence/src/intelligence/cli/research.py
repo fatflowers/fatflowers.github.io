@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
 from typing import Any, Mapping
@@ -72,11 +73,17 @@ def _queue_children(client, item, links, *, limit=30, allowed_hosts=None):
     parent_url = canonicalize_url(item["url"])
     parent_host = urlsplit(parent_url).hostname
     allowed_hosts = set(allowed_hosts or [parent_host])
+    metadata = item.get("raw_metadata", item.get("raw_metadata_json")) or {}
+    if isinstance(metadata, str):
+        metadata = json.loads(metadata)
+    prefixes = metadata.get("article_path_prefixes", [])
     records, seen = [], {parent_url}
     now = datetime.now(timezone.utc).isoformat()
     for link in links:
         url = canonicalize_url(link.get("url", ""))
         parsed = urlsplit(url)
+        if prefixes and not any(parsed.path.startswith(prefix) for prefix in prefixes):
+            continue
         if parsed.scheme not in ("http", "https") or parsed.hostname not in allowed_hosts or parsed.username or parsed.password or url in seen:
             continue
         seen.add(url)
@@ -113,7 +120,7 @@ def _persist(client, item, article, *, since, tool_name):
         status, reason = "rejected", "release_has_no_substantive_change_details"
     elif article.get("page_kind") == "index":
         status, reason = "rejected", "index_page_requires_following_article_links"
-    elif len(article.get("content_text") or "") < 200:
+    elif len(article.get("content_text") or "") < (1 if tool_name == "twitter-native-api" else 200):
         status, reason = "failed", "insufficient_article_body"
     elif not published or not evidence:
         status, reason = "failed", "publication_date_unverified"
@@ -149,6 +156,26 @@ def research_hydrate(client, *, item_id, since=None):
     since = cutoff(since)
     raw = item.get("raw_metadata_json") or "{}"
     metadata = json.loads(raw) if isinstance(raw, str) else raw
+    if metadata.get("platform") == "twitter":
+        # A native platform response is the source. X's HTML login/index shell
+        # must never replace it or cause a short but complete announcement to
+        # be rejected as an index page.
+        body = (item.get("content_text") or "").strip()
+        native = metadata.get("raw") or {}
+        complete = (bool(body) and bool(item.get("published_at"))
+                    and not native.get("isTruncated") and not native.get("truncated")
+                    and not metadata.get("truncated")
+                    and metadata.get("source_content_kind") != "truncated_social_post"
+                    and not re.search(r"(?:…|\.\.\.)\s*(?:https?://\S+)?\s*$", body))
+        if not complete:
+            return {"item_id": item_id, "status": "needs_platform_refetch",
+                    "reason": "native_social_body_incomplete", "children": []}
+        article = {"title": item.get("title") or body[:160], "content_text": body,
+                   "canonical_url": item.get("canonical_url") or item["url"],
+                   "published_at": item["published_at"], "publication_precision": "second",
+                   "publication_evidence": {"source": "platform.twitter.published_at", "value": item["published_at"]},
+                   "page_kind": "article"}
+        return _persist(client, item, article, since=since, tool_name="twitter-native-api")
     if metadata.get("platform") == "github" and metadata.get("event_type") == "ReleaseEvent" and item.get("published_at"):
         # ReleaseEvent is the official API's body+timestamp, not an HTML snippet.
         article = {"title": item["title"], "content_text": item.get("content_text") or "",
@@ -241,7 +268,7 @@ def research_run(client, *, since=None, limit=30, target=None):
         pending.extend(row["id"] for row in result.get("queued_children", []))
     return {"since": since, "attempted": len(attempted), "results": results,
             "fallback_plans": fallbacks, "coverage": research_coverage(client, since=since),
-            "batch_complete": not fallbacks and not pending,
+            "batch_complete": not fallbacks and not pending and all(r['status'] in {'ready', 'rejected'} for r in results),
             "remaining_in_batch": len(pending)}
 
 
@@ -270,8 +297,14 @@ def resolve_mcp_fallbacks(client, result, *, since=None):
     if result.get("item_id") and completed:
         effective.update(completed[-1])
         effective.pop("fallback", None)
+    completed_by_id = {row['item_id']: row for row in completed}
+    rows = result.get('results', [effective] if effective.get('item_id') else [])
+    unresolved_items = [completed_by_id.get(row.get('item_id'), row) for row in rows
+                        if completed_by_id.get(row.get('item_id'), row).get('status')
+                        not in {'ready', 'rejected', 'discovered'}]
     return {**effective, "mcp_completed": completed, "fallback_plans": unresolved,
-            "batch_complete": not unresolved and not result.get("remaining_in_batch", 0),
+            "unresolved_items": unresolved_items,
+            "batch_complete": not unresolved and not unresolved_items and not result.get("remaining_in_batch", 0),
             "coverage": research_coverage(client, since=since)}
 
 
@@ -287,12 +320,13 @@ def research_discover(repository, client, *, target=None):
     results, fallbacks = [], []
     for entry in targets:
         eligible = [channel for channel in entry.channels if channel.enabled and channel.tier == "core" and channel.url]
-        channels = [channel for channel in eligible if channel.channel_type in ("blog", "news")]
-        if not channels:
-            channels = [channel for channel in eligible if channel.channel_type == "rss"]
-        for channel in channels[:2]:
+        # Every explicitly enabled editorial source is independent. Adding an
+        # engineering blog must not silently disable the news RSS, nor may a
+        # third blog disappear behind a per-target slice.
+        channels = [channel for channel in eligible if channel.channel_type in ("blog", "news", "rss")]
+        for channel in channels:
             now = datetime.now(timezone.utc).isoformat()
-            if channel.channel_type == "rss":
+            if channel.channel_type == "rss" or channel.collector_type == "rss":
                 try:
                     page = RSSCollector(timeout=20).collect(ChannelSpec.from_catalog(entry.to_dict(), channel.to_dict()))
                     # Feed order convention is newest first; preserve actual publication dates.
@@ -305,7 +339,8 @@ def research_discover(repository, client, *, target=None):
                 continue
             seed = NormalizedItem(external_id=None, target_slug=entry.slug, channel_slug=channel.slug,
                                   url=channel.url, title=channel.name, author=None, published_at=None,
-                                  content_text="", fetched_at=now, metadata={"discovery_only": True, "research_seed": True})
+                                  content_text="", fetched_at=now, metadata={"discovery_only": True, "research_seed": True,
+                                  "article_path_prefixes": channel.config.get("article_path_prefixes", [])})
             record = normalized_item_record(seed, target_id=entry.id, channel_id=channel.id, now=now)
             client.write_items([record], idempotency_key="research:seed:" + hashlib.sha256(json.dumps(record, sort_keys=True).encode()).hexdigest())
             try:
@@ -317,7 +352,7 @@ def research_discover(repository, client, *, target=None):
                     fallbacks.append({"item_id": record["id"], **_fallback(channel.url)})
                 results.append(result)
             except (OSError, ValueError, TimeoutError) as exc:
-                results.append({"target": entry.slug, "channel": channel.slug, "status": "needs_fallback", "error_type": type(exc).__name__})
+                results.append({"target": entry.slug, "channel": channel.slug, "item_id": record['id'], "status": "needs_fallback", "error_type": type(exc).__name__})
                 fallbacks.append({"item_id": record["id"], **_fallback(channel.url)})
     return {"targets_checked": len(targets), "results": results, "fallback_plans": fallbacks,
             "next_step": "research run; execute fallback plans and research ingest for inaccessible indexes"}

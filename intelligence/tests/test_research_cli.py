@@ -46,6 +46,16 @@ def test_balanced_selection():
     assert [i["target_id"] for i in result["items"]] == ["a", "b", "a"]
 
 
+def test_native_refetch_gap_never_reports_batch_complete(monkeypatch):
+    monkeypatch.setattr(research,'research_hydrate',lambda client,**kwargs: {
+        'item_id':kwargs['item_id'],'status':'needs_platform_refetch','reason':'truncated'})
+    result=research.research_run(Client(),limit=1)
+    assert not result['batch_complete']
+    resolved=research.resolve_mcp_fallbacks(Client(),result)
+    assert not resolved['batch_complete']
+    assert resolved['unresolved_items'][0]['reason']=='truncated'
+
+
 def test_hydrate_writes_body_revision_and_evidence(monkeypatch):
     monkeypatch.setattr(research, "fetch_article", lambda url: article())
     client = Client()
@@ -56,6 +66,28 @@ def test_hydrate_writes_body_revision_and_evidence(monkeypatch):
     assert saved["publication_precision"] == "day"
     assert saved["date_evidence"]["kind"] == "article_text"
     assert saved["published_at"].startswith("2026-09-05")
+
+
+def test_short_native_twitter_is_not_scraped_as_html(monkeypatch):
+    client = Client()
+    client.items[0].update(content_text="Astra is now available in the API.", published_at="2026-09-05T12:00:00Z",
+                           raw_metadata_json={"platform": "twitter", "raw": {}},
+                           enrichment_status="rejected", enrichment_reason="index_page_requires_following_article_links")
+    monkeypatch.setattr(research, "fetch_article", lambda url: (_ for _ in ()).throw(AssertionError("must not scrape X")))
+    result = research.research_hydrate(client, item_id="one", since="2026-09-01")
+    assert result["status"] == "ready"
+    assert client.writes[0]["tool_name"] == "twitter-native-api"
+    assert client.writes[0]["expected_revision"] == 3
+    assert client.writes[0]["date_evidence"]["kind"] == "platform"
+
+
+def test_truncated_native_twitter_is_not_promoted(monkeypatch):
+    client = Client()
+    client.items[0].update(content_text="Astra is now available… https://t.co/example", published_at="2026-09-05T12:00:00Z",
+                           raw_metadata_json={"platform": "twitter", "raw": {}})
+    monkeypatch.setattr(research, "fetch_article", lambda url: (_ for _ in ()).throw(AssertionError("must not scrape X")))
+    assert research.research_hydrate(client, item_id="one", since="2026-09-01")["status"] == "needs_platform_refetch"
+    assert client.writes == []
 
 
 def test_missing_date_is_failed_and_returns_fixed_fallback(monkeypatch):
@@ -168,6 +200,42 @@ def test_discover_uses_rss_when_no_blog(tmp_path, monkeypatch):
     result = research.research_discover(repository, client)
     assert result["results"][0]["queued"] == 1
     assert client.queued[0]["published_at"].startswith("2026-09-05")
+
+
+def test_discover_all_blogs_and_rss_without_silent_channel_cap(tmp_path, monkeypatch):
+    from copy import deepcopy
+    from test_cli_operations import project
+    from intelligence.collectors import CollectionPage
+    from intelligence.collectors.rss import RSSCollector
+    _, repository = project(tmp_path)
+    raw = repository.load_raw()
+    original = raw['targets'][0]['channels'][0]
+    blogs = []
+    for n in range(3):
+        channel = deepcopy(original)
+        channel.update(slug=f'composio-blog-{n}', url=f'https://composio.dev/blog-{n}')
+        blogs.append(channel)
+    feed = deepcopy(original)
+    feed.update(slug='composio-feed', type='rss', collector='rss', url='https://composio.dev/feed.xml')
+    raw['targets'][0]['channels'] = blogs + [feed]
+    repository.save(raw)
+    seen = []
+    def fetch(url):
+        seen.append(url)
+        return article(page_kind='index', discovered_links=[{'url':url+'/new'}])
+    monkeypatch.setattr(research,'fetch_article',fetch)
+    monkeypatch.setattr(RSSCollector,'collect',lambda self,channel: CollectionPage.of([]))
+    result = research.research_discover(repository,Client())
+    assert len(seen)==3
+    assert {r['channel'] for r in result['results']}=={c['slug'] for c in blogs+[feed]}
+
+
+def test_editorial_path_scope_keeps_documentation_nav_out_of_discovery():
+    client=Client()
+    item={**client.items[0], 'raw_metadata':{'article_path_prefixes':['/blog/']}}
+    result=research._queue_children(client,item,[{'url':'https://example.com/docs/setup'},
+        {'url':'https://example.com/blog/practical-guide'}])
+    assert [x['url'] for x in result]==['https://example.com/blog/practical-guide']
 
 
 def test_exact_rss_date_evidence_can_complete_article(monkeypatch):

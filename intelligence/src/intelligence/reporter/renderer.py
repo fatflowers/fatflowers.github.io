@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .models import Report, ReportEdition, ReportSignal
+from .policy import MAX_REPORT_SIGNALS
 
 
 @dataclass(frozen=True)
@@ -124,10 +125,10 @@ def render_hugo_report(report: Report) -> RenderedReport:
         selected.append(signal)
         seen_ids.add(signal.item_id)
         seen_urls.update(urls)
-        if len(selected) == 8:
+        if len(selected) == MAX_REPORT_SIGNALS:
             break
     primary_signals = tuple(selected[:3])
-    briefs = tuple(selected[3:8])
+    briefs = tuple(selected[3:MAX_REPORT_SIGNALS])
     tags = sorted(
         {
             value

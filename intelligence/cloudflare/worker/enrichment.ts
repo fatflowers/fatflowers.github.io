@@ -15,11 +15,14 @@ export async function pendingEnrichment({env, url}: AuthContext): Promise<ApiRes
     WHERE t.enabled=1 AND c.enabled=1 AND julianday(i.fetched_at)>=julianday(?)
       AND (COALESCE(json_extract(i.raw_metadata_json,'$.discovery_only'),0)=1 OR (
         (i.published_at IS NULL OR julianday(i.published_at)>=julianday('now','-72 hours'))
-        AND (length(COALESCE(i.content_text,''))<400 OR EXISTS (
+        AND (length(COALESCE(i.content_text,''))<400 OR
+          (c.channel_type='rss' AND NOT EXISTS(SELECT 1 FROM analyses a WHERE a.item_id=i.id)) OR EXISTS (
           SELECT 1 FROM analyses a WHERE a.item_id=i.id AND a.summary LIKE '公开来源显示%'
         ))
       ))
-      AND (i.enrichment_status IS NULL OR i.enrichment_status='failed') AND i.enrichment_attempts<3
+      AND ((i.enrichment_status IS NULL OR i.enrichment_status='failed') AND i.enrichment_attempts<3
+        OR (c.channel_type IN ('twitter','x') AND i.enrichment_status='rejected'
+          AND i.enrichment_reason='index_page_requires_following_article_links'))
       AND (? IS NULL OR i.target_id=?)
   ) SELECT * FROM candidates ORDER BY target_rank, target_id LIMIT ?`)
     .bind(since(url), target, target, parseLimit(url,100,500)).all();
@@ -55,9 +58,18 @@ export async function enrichItem({env,body,params}: AuthContext): Promise<ApiRes
   let evidence:Record<string,unknown>|null=null;
   if (status==='ready') {
     if (p.publication_precision != null && !['day','second'].includes(String(p.publication_precision))) throw new ApiError(400,'invalid_request','publication_precision must be day or second');
-    content=requireString(p.content_text,'content_text',{min:200,max:100000})!;
+    const currentMetadata=JSON.parse(String(current.raw_metadata_json ?? '{}'));
+    const nativeSocial=p.tool_name==='twitter-native-api'
+      && currentMetadata.platform==='twitter'
+      && currentMetadata.source_content_kind!=='truncated_social_post'
+      && !currentMetadata.truncated && !currentMetadata.raw?.truncated && !currentMetadata.raw?.isTruncated
+      && !/(?:…|\.\.\.)\s*(?:https?:\/\/\S+)?\s*$/.test(String(p.content_text))
+      && String(p.content_text).trim()===String(current.content_text ?? '').trim()
+      && Date.parse(String(p.published_at))===Date.parse(String(current.published_at));
+    const minimum=nativeSocial ? 1 : 200;
+    content=requireString(p.content_text,'content_text',{min:minimum,max:100000})!;
     title=requireString(p.title,'title',{min:1,max:2000})!;
-    if (content.trim().length<200 || !title.trim()) throw new ApiError(400,'invalid_request','Article body/title must contain meaningful text');
+    if (content.trim().length<minimum || !title.trim()) throw new ApiError(400,'invalid_request','Article body/title must contain meaningful text');
     finalUrl=publicUrl(p.final_url,'final_url');
     published=requireIsoDate(p.published_at,'published_at'); fetched=requireIsoDate(p.fetched_at,'fetched_at');
     if (Date.parse(published)>Date.parse(fetched)+300000) throw new ApiError(400,'invalid_date_evidence','Publication cannot be later than retrieval');
@@ -72,6 +84,7 @@ export async function enrichItem({env,body,params}: AuthContext): Promise<ApiRes
   const after=JSON.stringify({status,reason,content_text:content,title,final_url:finalUrl,published_at:published,fetched_at:fetched,date_evidence:evidence,publication_precision:p.publication_precision ?? 'second',tool_name:p.tool_name ?? null});
   const audit=crypto.randomUUID();
   const metadata=status==='ready' ? JSON.stringify({...JSON.parse(String(current.raw_metadata_json ?? '{}')),discovery_only:false,
+    ...(p.tool_name==='twitter-native-api' ? {source_content_kind:'complete_social_post'} : {}),
     enrichment:{date_evidence:evidence,tool_name:p.tool_name,fetched_at:fetched},publication_date_source:evidence!.kind,
     publication_precision:p.publication_precision ?? 'second'}) : null;
   const statements=[env.DB.prepare(`INSERT INTO item_enrichments
@@ -100,10 +113,14 @@ export async function coverage({env,url}: AuthContext): Promise<ApiResponse> {
     SUM(CASE WHEN i.enrichment_status='ready' THEN 1 ELSE 0 END) AS enriched,
     SUM(CASE WHEN i.enrichment_status='rejected' THEN 1 ELSE 0 END) AS rejected,
     SUM(CASE WHEN i.enrichment_status='failed' THEN 1 ELSE 0 END) AS failed,
-    SUM(CASE WHEN i.id IS NOT NULL AND (i.enrichment_status IS NULL OR i.enrichment_status='failed') AND (
+    SUM(CASE WHEN i.id IS NOT NULL AND (
+      ((i.enrichment_status IS NULL OR i.enrichment_status='failed') AND i.enrichment_attempts<3) OR
+      (json_extract(i.raw_metadata_json,'$.platform')='twitter' AND i.enrichment_status='rejected'
+        AND i.enrichment_reason='index_page_requires_following_article_links')) AND (
       COALESCE(json_extract(i.raw_metadata_json,'$.discovery_only'),0)=1 OR (
         (i.published_at IS NULL OR julianday(i.published_at)>=julianday('now','-72 hours'))
-        AND (length(COALESCE(i.content_text,''))<400 OR a.summary LIKE '公开来源显示%')
+        AND (length(COALESCE(i.content_text,''))<400 OR
+          (json_extract(i.raw_metadata_json,'$.platform')='rss' AND a.item_id IS NULL) OR a.summary LIKE '公开来源显示%')
       )) THEN 1 ELSE 0 END) AS pending_enrichment,
     COUNT(a.item_id) AS analyzed
     FROM targets t LEFT JOIN items i ON i.target_id=t.id AND julianday(i.fetched_at)>=julianday(?)

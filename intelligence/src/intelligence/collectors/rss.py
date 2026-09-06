@@ -6,6 +6,7 @@ import html
 import re
 import urllib.request
 import xml.etree.ElementTree as ET
+from urllib.parse import urlsplit
 from collections.abc import Mapping
 from datetime import datetime, timezone
 from typing import Any, Callable
@@ -60,7 +61,11 @@ class RSSCollector:
     def collect(self, channel: ChannelSpec, cursor: Mapping[str, Any] | None = None) -> CollectionPage:
         if not channel.url:
             raise ValueError("RSS channel requires a URL")
-        root = ET.fromstring(self.fetcher(channel.url, self.timeout))
+        feed_url = str(channel.config.get('feed_url') or channel.url)
+        if urlsplit(feed_url).hostname != urlsplit(channel.url).hostname or urlsplit(feed_url).scheme not in {'https', 'http'}:
+            raise ValueError('RSS feed override must be a same-host public HTTP(S) URL')
+        root = ET.fromstring(self.fetcher(feed_url, self.timeout))
+        required_categories = {str(value).casefold() for value in channel.config.get('include_categories', [])}
         entries = [node for node in root.iter() if _local(node.tag) in {"item", "entry"}]
         seen = str((cursor or {}).get("last_external_id", ""))
         items: list[NormalizedItem] = []
@@ -71,6 +76,11 @@ class RSSCollector:
                 newest_id = external_id
             if seen and external_id == seen:
                 break
+            categories = [_child_text(entry, 'category')] if not required_categories else [
+                (node.attrib.get('term') or ''.join(node.itertext())).strip()
+                for node in entry if _local(node.tag) == 'category']
+            if required_categories and not required_categories.intersection(value.casefold() for value in categories):
+                continue
             title = _child_text(entry, "title")
             content = _child_text(entry, "content", "encoded", "description", "summary")
             url = _link(entry) or external_id
@@ -87,7 +97,7 @@ class RSSCollector:
                     published_at=_child_text(entry, "published", "updated", "pubDate") or None,
                     content_text=_plain_html(content or title),
                     language=None,
-                    metadata={"platform": "rss"},
+                    metadata={"platform": "rss", "categories": categories, "feed_url": feed_url},
                     fetched_at=datetime.now(timezone.utc),
                 )
             )

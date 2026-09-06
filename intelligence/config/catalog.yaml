@@ -144,6 +144,37 @@ targets:
         enabled: true
         tier: core
         tags: [official, product-update]
+      - slug: openai-engineering
+        name: OpenAI Engineering
+        type: blog
+        collector: rss
+        url: https://openai.com/news/engineering/
+        config:
+          article_path_prefixes: [/index/]
+          feed_url: https://openai.com/news/rss.xml
+          include_categories: [Engineering]
+        interval_minutes: 60
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, ai-engineering]
+        fallbacks:
+          - {collector: http}
+      - slug: openai-developer-blog
+        name: OpenAI Developer Blog
+        type: blog
+        collector: mcp
+        url: https://developers.openai.com/blog/
+        config:
+          article_path_prefixes: [/blog/]
+        interval_minutes: 60
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, ai-engineering, developer-platform]
+        tool_binding: firecrawl-page-scrape-v1
+        fallbacks:
+          - {collector: http}
       - slug: openai-twitter
         name: Official X
         type: twitter
@@ -257,6 +288,36 @@ targets:
         config:
           map_limit: 300
           scrape_changed_pages_with: firecrawl-page-scrape-v1
+        fallbacks:
+          - {collector: http}
+      - slug: anthropic-engineering
+        name: Anthropic Engineering
+        type: blog
+        collector: mcp
+        url: https://www.anthropic.com/engineering
+        config:
+          article_path_prefixes: [/engineering/]
+        interval_minutes: 60
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, ai-engineering]
+        tool_binding: firecrawl-page-scrape-v1
+        fallbacks:
+          - {collector: http}
+      - slug: claude-blog
+        name: Claude Product and Engineering Blog
+        type: blog
+        collector: mcp
+        url: https://claude.com/blog
+        config:
+          article_path_prefixes: [/blog/]
+        interval_minutes: 60
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, ai-engineering, product-update]
+        tool_binding: firecrawl-page-scrape-v1
         fallbacks:
           - {collector: http}
       - slug: anthropic-twitter

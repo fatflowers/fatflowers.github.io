@@ -46,6 +46,31 @@ test('baseline discovery candidates are queued fairly across targets and bounded
   const newer=await call(db,'/v1/items/pending-enrichment?since=2026-09-07T00:00:00Z');
   assert.equal((await newer.json() as any).items.length,0);
 });
+test('recent full RSS backlog and wrong-index social rejection remain recoverable',async()=>{
+  const db=new SqliteD1();
+  db.db.exec(`UPDATE channels SET channel_type='rss' WHERE id='a';
+    UPDATE channels SET channel_type='twitter' WHERE id='b';
+    UPDATE items SET raw_metadata_json='{"platform":"rss"}',published_at=datetime('now','-1 hour'),
+      fetched_at=datetime('now'),content_text=replace(hex(zeroblob(500)),'00','body') WHERE id='a1';
+    UPDATE items SET raw_metadata_json='{"platform":"twitter"}',published_at=datetime('now','-1 hour'),
+      fetched_at=datetime('now'),enrichment_status='rejected',enrichment_attempts=3,
+      enrichment_reason='index_page_requires_following_article_links' WHERE id='b1'`);
+  const items=(await (await call(db,'/v1/items/pending-enrichment')).json() as any).items;
+  assert.ok(items.some((i:any)=>i.id==='a1'));
+  assert.ok(items.some((i:any)=>i.id==='b1'));
+});
+test('short social enrichment accepts only unchanged native body and timestamp',async()=>{
+  const db=new SqliteD1();
+  db.db.prepare("UPDATE items SET content_text=?,published_at=?,raw_metadata_json=? WHERE id='a1'")
+    .run('Now available in the API.',payload.published_at,'{"platform":"twitter"}');
+  const social={...payload,tool_name:'twitter-native-api',content_text:'Now available in the API.',
+    date_evidence:{...payload.date_evidence,kind:'platform'}};
+  assert.equal((await call(db,'/v1/items/a1/enrichment',{...social,content_text:'Invented short fact.'},'bad')).status,400);
+  assert.equal((await call(db,'/v1/items/a1/enrichment',social,'good')).status,200);
+  const row=db.db.prepare("SELECT is_baseline,raw_metadata_json FROM items WHERE id='a1'").get()!;
+  assert.equal(row.is_baseline,0);
+  assert.equal(JSON.parse(String(row.raw_metadata_json)).source_content_kind,'complete_social_post');
+});
 test('analysis context contains only recent published daily memberships and is bounded',async()=>{
   const db=new SqliteD1();
   const now=new Date().toISOString();

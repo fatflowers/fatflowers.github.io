@@ -120,3 +120,21 @@ def test_firecrawl_markdown_index_discovers_same_host_article_links():
     ![Decorative image](https://example.com/cover.png)''')
     assert result["page_kind"] == "index"
     assert [link["url"] for link in result["discovered_links"]] == ["https://example.com/blog/new-api"]
+def test_developer_blog_date_outside_markdown_article():
+    from intelligence.enrichment import enrich_article
+    html='''<main><div><div><span class="text-default font-medium">Sep 4, 2026</span><span>Codex</span></div>
+      <div><h1>Practical architecture</h1></div></div><article><p>Concrete construction method and results.</p></article></main>'''
+    result=enrich_article('https://developers.openai.com/blog/practical-architecture',html=html)
+    assert result['published_at']=='2026-09-04'
+    assert result['publication_evidence']['source']=='article.developer_blog_header'
+def test_blog_discovery_filters_navigation_before_spending_link_budget():
+    nav=''.join(f'<a href="/api/docs/page-{n}">Documentation page {n}</a>' for n in range(100))
+    html=nav+'<a href="/blog/new-practice">New engineering practice</a><a href="/blog/topic/code">Code topic</a>'
+    links=discover_links('https://developers.openai.com/blog/',html)
+    assert [x['url'] for x in links]==['https://developers.openai.com/blog/new-practice']
+def test_anthropic_engineering_header_date_is_not_site_updated_at():
+    html='''<header><h1>Containment methods</h1><p class="HeroEngineering-module__abc__date">Published May 25, 2026</p></header>
+    <article><p>Concrete containment methods for agents.</p></article><footer>Updated September 4, 2026</footer>'''
+    result=enrich_article('https://www.anthropic.com/engineering/how-we-contain-claude',html=html)
+    assert result['published_at']=='2026-05-25'
+    assert result['publication_evidence']['source']=='article.engineering_header'

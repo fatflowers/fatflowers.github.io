@@ -179,11 +179,11 @@ def test_reading_budget_inline_sources_and_no_source_dump() -> None:
     markdown = render_hugo_report(replace(report, signals=(signals[0], *signals))).markdown
     assert markdown.count("### ") == 3
     briefs = markdown.split("## 一句话快讯")[1]
-    assert len([line for line in briefs.splitlines() if line.startswith("- ")]) == 5
-    for index in range(3, 8):
+    assert len([line for line in briefs.splitlines() if line.startswith("- ")]) == 9
+    for index in range(3, 12):
         assert f"来源：[原文](https://example.com/{index})" in briefs
-    assert "sourcesCount: 8" in markdown
-    assert "https://example.com/8" not in markdown
+    assert "sourcesCount: 12" in markdown
+    assert "https://example.com/11" in markdown
     for forbidden in ("## 来源", "对 Aisa", "置信度", "★", "继续观察", "## 趋势变化"):
         assert forbidden not in markdown
 

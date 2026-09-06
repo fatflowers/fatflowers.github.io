@@ -141,7 +141,9 @@ def discover_links(url, html=None, *, markdown=None):
         html = "<main><ul>" + "".join(cards) + "</ul></main>"
     root = Parser(html or "").root
     result, seen = [], set()
-    forbidden = re.compile(r"/(?:tags?|categor(?:y|ies)|authors?|search|login|signup|privacy|terms|page|feed|rss)(?:/|$)", re.I)
+    forbidden = re.compile(r"/(?:tags?|topics?|categor(?:y|ies)|authors?|search|login|signup|privacy|terms|page|feed|rss)(?:/|$)", re.I)
+    base_path = urlsplit(url).path.rstrip('/')
+    editorial_prefix = base_path + '/' if base_path in {'/blog', '/engineering'} else '/index/' if base_path == '/news/engineering' else None
     for node in root.walk():
         if node.tag != "a" or not node.attrs.get("href"):
             continue
@@ -149,7 +151,9 @@ def discover_links(url, html=None, *, markdown=None):
         if not link or urlsplit(link).hostname != urlsplit(url).hostname or link.rstrip("/") == url.rstrip("/") or link in seen:
             continue
         path = urlsplit(link).path
-        if forbidden.search(path) or path.rstrip("/") in {"", "/blog", "/news", "/docs", "/documentation"} or re.search(r"\.(?:png|jpg|svg|pdf|zip)$", path, re.I):
+        if editorial_prefix and not path.startswith(editorial_prefix):
+            continue
+        if forbidden.search(path) or path.rstrip("/") in {"", "/blog", "/news", "/docs", "/documentation"} or re.search(r"\.(?:png|jpg|jpeg|webp|gif|svg|pdf|zip)$", path, re.I):
             continue
         ancestors, parent = [], node.parent
         while parent:
@@ -211,6 +215,30 @@ def enrich_article(url, *, html=None, markdown=None, metadata=None):
     canonical = next((_url(n.attrs.get("href", ""), url) for n in nodes if n.tag == "link" and "canonical" in n.attrs.get("rel", "").split()), None) or _url(meta.get("canonicalUrl") or meta.get("url") or url, url) or url
     dates = [("jsonld.datePublished", a.get("datePublished")) for a in structured]
     dates += [("metadata." + key, meta.get(key)) for key in ("article:published_time", "datePublished", "publishedTime", "published_at", "publicationDate")]
+    if urlsplit(url).hostname in {'anthropic.com', 'www.anthropic.com'} and urlsplit(url).path.startswith('/engineering/'):
+        for node in nodes:
+            css = node.attrs.get('class', '')
+            if 'HeroEngineering' in css and '__date' in css:
+                raw = re.sub(r'^Published\s*', '', _clean(_text(node)), flags=re.I)
+                dates.append(('article.engineering_header', raw))
+    # Developer-blog templates put a plain date next to the H1, outside the
+    # Markdown <article>. Read that local header, not dates in the nav/cards.
+    if urlsplit(url).hostname == 'developers.openai.com' and re.fullmatch(r'/blog/[^/]+/?', urlsplit(url).path):
+        heading = next((n for n in nodes if n.tag == 'h1'), None)
+        parent = heading.parent if heading else None
+        for _ in range(4):
+            if parent is None:
+                break
+            before = []
+            for node in parent.walk():
+                if node is heading:
+                    break
+                if node.tag in {'span', 'time'} and _date(_clean(_text(node)))[0]:
+                    before.append(_clean(_text(node)))
+            if len(set(before)) == 1:
+                dates.append(('article.developer_blog_header', before[0]))
+                break
+            parent = parent.parent
     # Datetime inside article header is useful even though header text is excluded.
     dates += [("article.time", n.attrs.get("datetime") or _clean(_text(n))) for n in body.walk() if n.tag == "time" and not re.search(r"modified|updated", n.attrs.get("class", "") + " " + n.attrs.get("itemprop", ""), re.I)]
     # Some official news templates render the date as plain visible text. Only

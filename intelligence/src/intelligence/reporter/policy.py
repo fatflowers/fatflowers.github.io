@@ -8,6 +8,8 @@ from intelligence.models.runs import RunStatus
 
 from .models import ReportEdition, ReportSignal
 
+MAX_REPORT_SIGNALS = 12
+
 
 def reading_budget(signals):
     """Give the overview distinct subjects when comparable useful events exist."""
@@ -18,7 +20,7 @@ def reading_budget(signals):
             seen.add(signal.target)
         if len(primary) == 3:
             break
-    return tuple((primary + [s for s in signals if s not in primary])[:8])
+    return tuple((primary + [s for s in signals if s not in primary])[:MAX_REPORT_SIGNALS])
 
 
 @dataclass(frozen=True)
@@ -96,4 +98,4 @@ class ReportPolicy:
             selected = reading_budget(ordered)
             return PolicyDecision(True, selected, tuple(s for s in ordered if s not in selected), "weekly_window_has_content", RunStatus.SUCCEEDED)
 
-        return PolicyDecision(True, ordered[:8], ordered[8:], "ad_hoc_requested", RunStatus.SUCCEEDED)
+        return PolicyDecision(True, ordered[:MAX_REPORT_SIGNALS], ordered[MAX_REPORT_SIGNALS:], "ad_hoc_requested", RunStatus.SUCCEEDED)
