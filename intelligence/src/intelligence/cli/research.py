@@ -82,9 +82,15 @@ def _queue_children(client, item, links, *, limit=30, allowed_hosts=None):
     for link in links:
         url = canonicalize_url(link.get("url", ""))
         parsed = urlsplit(url)
+        path = parsed.path.rstrip("/").lower()
+        navigation = (
+            path in {"", "/about", "/following", "/tos"}
+            or path.endswith(("/about", "/following", "/verified_followers"))
+            or path.startswith(("/tags/", "/tag/", "/hashtag/"))
+        )
         if prefixes and not any(parsed.path.startswith(prefix) for prefix in prefixes):
             continue
-        if parsed.scheme not in ("http", "https") or parsed.hostname not in allowed_hosts or parsed.username or parsed.password or url in seen:
+        if navigation or parsed.scheme not in ("http", "https") or parsed.hostname not in allowed_hosts or parsed.username or parsed.password or url in seen:
             continue
         seen.add(url)
         candidate = NormalizedItem(external_id=None, target_slug=item["target_id"],
@@ -121,7 +127,9 @@ def _persist(client, item, article, *, since, tool_name):
     status, reason = "ready", "article_body_and_publication_date_verified"
     published = article.get("published_at")
     evidence = article.get("publication_evidence")
-    if article.get("page_kind") == "routine_release":
+    if article.get("page_kind") == "unsupported_social_discovery":
+        status, reason = "rejected", "unsupported_social_discovery_url"
+    elif article.get("page_kind") == "routine_release":
         status, reason = "rejected", "release_has_no_substantive_change_details"
     elif article.get("page_kind") == "index":
         status, reason = "rejected", "index_page_requires_following_article_links"
@@ -161,6 +169,14 @@ def research_hydrate(client, *, item_id, since=None):
     since = cutoff(since)
     raw = item.get("raw_metadata_json") or "{}"
     metadata = json.loads(raw) if isinstance(raw, str) else raw
+    if urlsplit(item["url"]).hostname in {"x.com", "www.x.com", "twitter.com", "www.twitter.com"} and metadata.get("platform") != "twitter":
+        return _persist(
+            client,
+            item,
+            {"page_kind": "unsupported_social_discovery", "content_text": ""},
+            since=since,
+            tool_name="policy",
+        )
     if metadata.get("platform") == "twitter":
         # A native platform response is the source. X's HTML login/index shell
         # must never replace it or cause a short but complete announcement to

@@ -238,6 +238,28 @@ def test_editorial_path_scope_keeps_documentation_nav_out_of_discovery():
     assert [x['url'] for x in result]==['https://example.com/blog/practical-guide']
 
 
+def test_navigation_links_are_not_queued_for_firecrawl():
+    client = Client()
+    research._queue_children(client, client.items[0], [
+        {"url": "https://example.com/tags/releases"},
+        {"url": "https://example.com/user/verified_followers"},
+        {"url": "https://example.com/news/real-article"},
+    ])
+    assert [item["url"] for item in client.queued] == ["https://example.com/news/real-article"]
+
+
+def test_non_native_x_discovery_is_rejected_before_fetch(monkeypatch):
+    client = Client()
+    client.items[0].update(
+        url="https://x.com/example/verified_followers",
+        raw_metadata_json='{"discovery_only":true}',
+    )
+    monkeypatch.setattr(research, "fetch_article", lambda url: pytest.fail("must not fetch X navigation"))
+    result = research.research_hydrate(client, item_id="one")
+    assert result["status"] == "rejected"
+    assert result["reason"] == "unsupported_social_discovery_url"
+
+
 def test_exact_rss_date_evidence_can_complete_article(monkeypatch):
     client = Client()
     client.items[0].update(published_at="2026-09-05", raw_metadata_json='{"platform":"rss"}')

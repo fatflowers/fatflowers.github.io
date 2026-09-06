@@ -61,6 +61,21 @@ def test_router_rejects_failed_and_duplicate_result_rows():
     assert not parse_capture(event(tool="AISA_BATCH_USE", arguments=args, result=result), CALLS).payloads
 
 
+def test_router_preserves_sanitized_upstream_http_status():
+    args = {"calls": [{"call_id": "article-1", "tool": CALLS[0]["tool_name"], "arguments": CALLS[0]["arguments"]}]}
+    row = {"call_id": "article-1", "tool": CALLS[0]["tool_name"], "successful": False,
+           "error": {"status": 403, "message": "secret upstream response"}}
+    result = {"structured_content": {"results": [row]}}
+    parsed = parse_capture(event(tool="AISA_BATCH_USE", arguments=args, result=result), CALLS)
+    assert parsed.diagnostics == {"article-1": "upstream_http_403"}
+    assert "secret" not in parsed.diagnostics["article-1"]
+
+
+def test_direct_call_preserves_sanitized_upstream_http_status():
+    parsed = parse_capture(event(status="failed", error="Firecrawl returned HTTP 403"), CALLS)
+    assert parsed.diagnostics == {"article-1": "upstream_http_403"}
+
+
 def test_rejects_mutating_tool_before_spawning():
     with pytest.raises(ValueError, match="permitted"):
         capture_batch([{**CALLS[0], "tool_name": "post_twitter_tweet"}])

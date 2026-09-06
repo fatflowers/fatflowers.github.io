@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import selectors
 import signal
 import subprocess
@@ -25,6 +26,16 @@ ALLOWED_TOOLS = frozenset({
 class CaptureResult:
     payloads: dict[str, Any] = field(default_factory=dict)
     diagnostics: dict[str, str] = field(default_factory=dict)
+
+
+def _upstream_diagnostic(*values: Any) -> str:
+    """Keep an actionable status class without retaining upstream bodies."""
+    text = " ".join(
+        json.dumps(value, ensure_ascii=True) if not isinstance(value, str) else value
+        for value in values if value is not None
+    )
+    match = re.search(r"(?<!\d)(401|403|408|409|429|5\d\d)(?!\d)", text)
+    return "upstream_http_%s" % match.group(1) if match else "upstream_tool_error"
 
 
 def _validate(calls: list[dict[str, Any]]) -> None:
@@ -73,9 +84,15 @@ def parse_capture(events: str, calls: list[dict[str, Any]]) -> CaptureResult:
                 continue
         if item.get("tool") == "AISA_BATCH_USE":
             if item.get("status") != "completed" or item.get("error"):
+                diagnostic = _upstream_diagnostic(item.get("error"), item.get("status"))
+                for call in calls:
+                    result.diagnostics[call["call_id"]] = diagnostic
                 continue
             envelope = item.get("result")
             if not isinstance(envelope, dict) or envelope.get("isError") or envelope.get("is_error"):
+                diagnostic = _upstream_diagnostic(envelope)
+                for call in calls:
+                    result.diagnostics[call["call_id"]] = diagnostic
                 continue
             upstream = envelope.get("structured_content", envelope.get("structuredContent"))
             if upstream is None:
@@ -97,9 +114,17 @@ def parse_capture(events: str, calls: list[dict[str, Any]]) -> CaptureResult:
                     continue
                 row = matching[0]
                 if row.get("tool") != call["tool_name"] or row.get("error") or row.get("successful") is not True:
+                    result.diagnostics[call["call_id"]] = _upstream_diagnostic(
+                        row.get("error"), row.get("status"), row.get("upstream_status")
+                    )
                     continue
                 data = row.get("data")
                 if not isinstance(data, dict) or data.get("success") is False:
+                    result.diagnostics[call["call_id"]] = _upstream_diagnostic(
+                        data.get("error") if isinstance(data, dict) else data,
+                        data.get("status") if isinstance(data, dict) else None,
+                        data.get("upstream_status") if isinstance(data, dict) else None,
+                    )
                     continue
                 result.payloads[call["call_id"]] = data
                 result.diagnostics.pop(call["call_id"], None)
@@ -110,10 +135,15 @@ def parse_capture(events: str, calls: list[dict[str, Any]]) -> CaptureResult:
             call_id = call["call_id"]
             payload = item.get("result")
             if item.get("status") != "completed" or item.get("error") or not isinstance(payload, dict):
-                result.diagnostics[call_id] = "native_tool_failed"
+                result.diagnostics[call_id] = (
+                    _upstream_diagnostic(item.get("error"), item.get("status"))
+                    if item.get("error") else "native_tool_failed"
+                )
                 continue
             if payload.get("isError") or payload.get("is_error"):
-                result.diagnostics[call_id] = "upstream_tool_error"
+                result.diagnostics[call_id] = _upstream_diagnostic(
+                    payload.get("content"), payload.get("structuredContent"), payload.get("structured_content")
+                )
                 continue
             if not payload.get("content") and payload.get("structuredContent") is None and payload.get("structured_content") is None:
                 result.diagnostics[call_id] = "empty_native_tool_result"
