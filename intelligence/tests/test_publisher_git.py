@@ -58,6 +58,19 @@ def test_git_publisher_rejects_paths_outside_allowlist(tmp_path: Path) -> None:
         GitPublisher(tmp_path).publish((Path("hugo.toml"),), message="bad")
 
 
+def test_retry_pushes_already_committed_artifact_without_empty_commit(tmp_path: Path) -> None:
+    commands = []
+    def runner(command, **kwargs):
+        commands.append(tuple(command))
+        return subprocess.CompletedProcess(command, 0, "abc123\n" if command[1] == "rev-parse" else "", "")
+    result = GitPublisher(tmp_path, runner=runner).publish(
+        (Path("content/posts/intelligence/report.zh.md"),),
+        message="retry", push=True, dry_run=False)
+    assert result.pushed
+    assert not any(command[1] == "commit" for command in commands)
+    assert ("git", "push", "origin", "HEAD:main") in commands
+
+
 def test_publisher_blocks_unrelated_snapshot_commits_before_staging(tmp_path: Path) -> None:
     commands = []
 

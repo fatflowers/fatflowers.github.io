@@ -60,11 +60,27 @@ test("published correction archives old content and retains publication identity
   assert.equal(row.published_url, "https://example.com/morning");
   assert.equal(row.published_at, "2026-09-06");
   const audit = db.db.prepare("SELECT * FROM audit_events").get()!;
-  assert.deepEqual(JSON.parse(String(audit.before_json)), { title: "Original", content_markdown: "Original content", git_commit: "aaaaaaa" });
+  assert.deepEqual(JSON.parse(String(audit.before_json)), { title: "Original", content_markdown: "Original content", git_commit: "aaaaaaa", item_ids: [] });
   assert.equal(JSON.parse(String(audit.after_json)).reason, payload.reason);
   const replay = await revise(db);
   assert.equal(replay.headers.get("x-idempotent-replay"), "true");
   assert.equal(db.db.prepare("SELECT count(*) AS n FROM audit_events").get()!.n, 1);
+});
+
+test("editorial correction replaces story membership and archives previous selection atomically", async () => {
+  const db = new SqliteD1();
+  db.db.exec(`INSERT INTO targets(id,slug,name,target_type,created_at,updated_at)
+    VALUES ('t','t','Target','company','now','now');
+    INSERT INTO channels(id,target_id,slug,name,channel_type,collector_type,created_at,updated_at)
+    VALUES ('c','t','c','Channel','blog','http','now','now');
+    INSERT INTO items(id,target_id,channel_id,url,fetched_at,content_hash,created_at)
+    VALUES ('old','t','c','https://example.com/old','now','old','now'),
+           ('new','t','c','https://example.com/new','now','new','now');
+    INSERT INTO report_items VALUES ('report-1','old',1,'brief');`);
+  assert.equal((await revise(db, { item_ids: ['new'] })).status, 200);
+  assert.deepEqual(db.db.prepare('SELECT item_id FROM report_items').all().map(row => row.item_id), ['new']);
+  const audit = db.db.prepare('SELECT before_json FROM audit_events').get()!;
+  assert.deepEqual(JSON.parse(String(audit.before_json)).item_ids, ['old']);
 });
 
 test("stale revision and a change between lookup and atomic batch cannot overwrite or add audit", async () => {

@@ -99,7 +99,8 @@ export async function getPendingAnalysis({ env, url }: AuthContext): Promise<Api
   const limit = parseLimit(url, 100, 500);
   const targetId = url.searchParams.get("target_id");
   const channelId = url.searchParams.get("channel_id");
-  const rows = await env.DB.prepare(`SELECT i.*, t.slug AS target_slug, c.slug AS channel_slug,
+  const from = requireIsoDate(url.searchParams.get('since') ?? new Date(Date.now()-72*3600000).toISOString(), 'since');
+  const rows = await env.DB.prepare(`WITH eligible AS (SELECT i.*, t.slug AS target_slug, c.slug AS channel_slug,
       GROUP_CONCAT(DISTINCT tg.slug) AS target_tag_slugs,
       GROUP_CONCAT(DISTINCT cg.slug) AS channel_tag_slugs
     FROM items i
@@ -110,12 +111,18 @@ export async function getPendingAnalysis({ env, url }: AuthContext): Promise<Api
     LEFT JOIN channel_tags ct ON ct.channel_id = i.channel_id
     LEFT JOIN tags cg ON cg.id = ct.tag_id
     LEFT JOIN analyses a ON a.item_id = i.id
-    WHERE a.item_id IS NULL AND i.is_baseline = 0
+    WHERE a.item_id IS NULL AND t.enabled=1 AND c.enabled=1
+      AND julianday(i.published_at)>=julianday(?) AND julianday(i.published_at)<=julianday('now')
+      AND (i.enrichment_status IS NULL OR i.enrichment_status='ready')
       AND COALESCE(json_extract(i.raw_metadata_json, '$.discovery_only'), 0) = 0
+      AND (i.enrichment_status='ready'
+        OR (c.channel_type IN ('twitter','x') AND length(trim(COALESCE(i.content_text,'')))>0)
+        OR (length(trim(COALESCE(i.content_text,'')))>=400 AND json_extract(i.raw_metadata_json,'$.content_complete')=1))
       AND (? IS NULL OR i.target_id = ?) AND (? IS NULL OR i.channel_id = ?)
     GROUP BY i.id
-    ORDER BY COALESCE(i.published_at, i.fetched_at), i.id
-    LIMIT ?`).bind(targetId, targetId, channelId, channelId, limit).all();
+    ), ranked AS (SELECT *, ROW_NUMBER() OVER (PARTITION BY target_id ORDER BY published_at DESC,id) AS target_rank FROM eligible)
+    SELECT * FROM ranked ORDER BY target_rank,target_id
+    LIMIT ?`).bind(from, targetId, targetId, channelId, channelId, limit).all();
   return { status: 200, body: { items: rows.results ?? [] } };
 }
 
@@ -125,7 +132,9 @@ export async function writeAnalyses({ env, body }: AuthContext): Promise<ApiResp
     const value = requireObject(entry, `analyses[${index}]`);
     return {
       itemId: requireString(value.item_id, `analyses[${index}].item_id`, { max: 128 })!,
+      contentRevision: value.content_revision ?? 0,
       summary: requireString(value.summary, `analyses[${index}].summary`, { max: 20_000 })!,
+      headline: optionalString(value.headline, `analyses[${index}].headline`, 60),
       keyChange: optionalString(value.key_change, `analyses[${index}].key_change`, 20_000),
       whyItMatters: optionalString(value.why_it_matters, `analyses[${index}].why_it_matters`, 20_000),
       companyImpact: optionalString(value.company_impact, `analyses[${index}].company_impact`, 20_000),
@@ -143,20 +152,41 @@ export async function writeAnalyses({ env, body }: AuthContext): Promise<ApiResp
   for (const analysis of analyses) {
     if (seen.has(analysis.itemId)) throw new ApiError(400, "duplicate_analysis_item", "analyses contains duplicate item_id");
     seen.add(analysis.itemId);
+    const item = await env.DB.prepare('SELECT content_revision FROM items WHERE id=?').bind(analysis.itemId).first<{content_revision:number}>();
+    if (!item || item.content_revision !== analysis.contentRevision) {
+      throw new ApiError(409, 'analysis_revision_conflict', 'Analysis must match current item content_revision');
+    }
   }
   const statements = analyses.map((analysis) => env.DB.prepare(`INSERT INTO analyses
-    (item_id, summary, key_change, why_it_matters, company_impact, importance, confidence,
+    (item_id, headline, summary, key_change, why_it_matters, company_impact, importance, confidence,
      topics_json, watch_next_json, evidence_json, model, prompt_version, analyzed_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(item_id) DO UPDATE SET summary=excluded.summary, key_change=excluded.key_change,
+    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM items WHERE id=? AND content_revision=?
+    ON CONFLICT(item_id) DO UPDATE SET headline=excluded.headline, summary=excluded.summary, key_change=excluded.key_change,
       why_it_matters=excluded.why_it_matters, company_impact=excluded.company_impact,
       importance=excluded.importance, confidence=excluded.confidence, topics_json=excluded.topics_json,
       watch_next_json=excluded.watch_next_json, evidence_json=excluded.evidence_json,
       model=excluded.model, prompt_version=excluded.prompt_version, analyzed_at=excluded.analyzed_at`)
-    .bind(analysis.itemId, analysis.summary, analysis.keyChange, analysis.whyItMatters,
+    .bind(analysis.itemId, analysis.headline, analysis.summary, analysis.keyChange, analysis.whyItMatters,
       analysis.companyImpact, analysis.importance, analysis.confidence, analysis.topicsJson,
       analysis.watchNextJson, analysis.evidenceJson, analysis.model, analysis.promptVersion,
-      analysis.analyzedAt));
-  if (statements.length > 0) await env.DB.batch(statements);
+      analysis.analyzedAt, analysis.itemId, analysis.contentRevision));
+  // Recover recent full native posts accidentally included in initial baseline.
+  // This happens in the same D1 transaction as the matching analysis write.
+  for (const analysis of analyses) statements.push(env.DB.prepare(`UPDATE items SET is_baseline=0
+    WHERE id=? AND content_revision=? AND is_baseline=1
+      AND julianday(published_at)>=julianday('now','-72 hours') AND julianday(published_at)<=julianday('now')
+      AND (enrichment_status IS NULL OR enrichment_status='ready')
+      AND COALESCE(json_extract(raw_metadata_json,'$.discovery_only'),0)=0
+      AND (enrichment_status='ready'
+        OR (EXISTS(SELECT 1 FROM channels c WHERE c.id=items.channel_id AND c.channel_type IN ('twitter','x')) AND length(trim(COALESCE(content_text,'')))>0)
+        OR (length(trim(COALESCE(content_text,'')))>=400 AND json_extract(raw_metadata_json,'$.content_complete')=1))
+      AND EXISTS(SELECT 1 FROM analyses a WHERE a.item_id=items.id AND a.analyzed_at=?)`)
+    .bind(analysis.itemId,analysis.contentRevision,analysis.analyzedAt));
+  if (statements.length > 0) {
+    const results = await env.DB.batch(statements);
+    if (results.slice(0, analyses.length).some(result => result.meta?.changes !== 1)) {
+      throw new ApiError(409, 'analysis_revision_conflict', 'Item changed during analysis; reload before retrying');
+    }
+  }
   return { status: 200, body: { upserted: analyses.length } };
 }

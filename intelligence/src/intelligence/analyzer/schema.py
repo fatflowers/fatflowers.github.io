@@ -33,9 +33,11 @@ class AnalysisResult:
     topics: tuple[str, ...]
     watch_next: tuple[str, ...]
     evidence: tuple[AnalysisEvidence, ...]
+    headline: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "headline": self.headline,
             "summary": self.summary,
             "key_change": self.key_change,
             "why_it_matters": self.why_it_matters,
@@ -112,7 +114,7 @@ def validate_analysis(payload: Mapping[str, Any], *, reject_unknown: bool = True
     if missing:
         raise AnalysisValidationError(f"missing required fields: {', '.join(missing)}")
     if reject_unknown:
-        unknown = sorted(payload.keys() - _REQUIRED)
+        unknown = sorted(payload.keys() - _REQUIRED - {"headline"})
         if unknown:
             raise AnalysisValidationError(f"unknown fields: {', '.join(unknown)}")
 
@@ -145,7 +147,14 @@ def validate_analysis(payload: Mapping[str, Any], *, reject_unknown: bool = True
     if not evidence:
         raise AnalysisValidationError("evidence must contain at least one source")
 
+    headline = payload.get("headline")
+    if headline is not None:
+        headline = _non_empty_string(headline, "headline")
+        if len(headline) > 60 or "\n" in headline or "\r" in headline:
+            raise AnalysisValidationError("headline must be a single line of at most 60 characters")
+
     return AnalysisResult(
+        headline=headline,
         summary=_non_empty_string(payload["summary"], "summary"),
         key_change=_non_empty_string(payload["key_change"], "key_change"),
         why_it_matters=_non_empty_string(payload["why_it_matters"], "why_it_matters"),

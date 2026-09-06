@@ -66,6 +66,8 @@ _INTERNAL_TAGS = {"official", "competitor", "social", "pricing", "high-signal", 
 
 
 def _headline(signal: ReportSignal) -> str:
+    if signal.analysis.headline:
+        return _inline_markdown(signal.analysis.headline, limit=60)
     summary = signal.analysis.summary.strip()
     # Prefer an informative Chinese sentence over an untranslated source title.
     title = re.split(r"[。！？\n]", summary, maxsplit=1)[0] if re.search(r"[\u4e00-\u9fff]", summary) else signal.title
@@ -86,13 +88,20 @@ def _source_links(signal: ReportSignal, *, primary_only: bool = False) -> str:
     )
 
 
-def _signal_markdown(signal: ReportSignal) -> list[str]:
+def _signal_markdown(signal: ReportSignal, report: Report) -> list[str]:
     analysis = signal.analysis
     lines = [f"### {_headline(signal)}", "", _inline_markdown(analysis.summary, limit=320), ""]
+    change = analysis.key_change.strip()
+    if change and change != analysis.summary.strip() and not any(text in change for text in _BOILERPLATE):
+        lines.extend([_inline_markdown(change, limit=180), ""])
     impact = analysis.why_it_matters.strip()
     if impact and impact != analysis.summary.strip() and not any(text in impact for text in _BOILERPLATE):
         lines.extend([f"**读者价值：** {_inline_markdown(impact, limit=180)}", ""])
-    lines.extend([f"来源：{_source_links(signal)} · {signal.published_at.date().isoformat()}", ""])
+    actions = [a for a in analysis.watch_next if not any(p in a for p in ("关注后续", "继续关注", "核验后续更新", "评估其影响"))]
+    if actions:
+        lines.extend([f"**可以做什么：** {_inline_markdown(actions[0], limit=120)}", ""])
+    timing = "观察到页面变化 · " if signal.date_kind == "observed_change" else ("近期补读 · " if signal.published_at < report.window_start else "")
+    lines.extend([f"{timing}{signal.published_at.astimezone(report.generated_at.tzinfo).date().isoformat()} · {_source_links(signal)}", ""])
     return lines
 
 
@@ -147,29 +156,35 @@ def render_hugo_report(report: Report) -> RenderedReport:
         f"period: {_yaml_string(report.period)}",
         "generated: true",
         f"sourcesCount: {len(source_urls)}",
-        f"hiddenInHomeList: {'false' if weekly or any(s.analysis.importance == 5 for s in report.signals) else 'true'}",
+        f"hiddenInHomeList: {'false' if weekly else 'true'}",
         f"reportId: {_yaml_string(report.report_id)}",
         "---",
         "",
     ]
 
-    body = ["## 30 秒速览", ""]
+    body = [f"本期 {len(primary_signals)} 条重点" + (f"、{len(briefs)} 条快讯。" if briefs else "。"), ""]
+    if any(s.published_at < report.window_start for s in selected):
+        body.extend(["标注“近期补读”的内容在本期窗口之前发布、此前未收入日报；保留原始日期，不当作今日新消息。", ""])
+    body.extend(["## 30 秒速览", ""])
     for signal in primary_signals:
-        body.append(f"- {_headline(signal)}。{_source_links(signal, primary_only=True)}")
+        label = "【近期补读】" if signal.published_at < report.window_start else ""
+        body.append(f"- {label}{_headline(signal)}。{_source_links(signal, primary_only=True)}")
     body.extend(["", f"## {_EDITION_LABEL[report.edition]}重点", ""])
     for signal in primary_signals:
-        body.extend(_signal_markdown(signal))
+        body.extend(_signal_markdown(signal, report))
 
     if briefs:
         body.extend(["## 一句话快讯", ""])
         body.extend(
-            f"- {_inline_markdown(signal.analysis.summary, limit=150)} 来源：{_source_links(signal)}"
+            f"- {'【近期补读】' if signal.published_at < report.window_start else ''}{_inline_markdown(signal.analysis.summary, limit=150)} 来源：{_source_links(signal)}"
             for signal in briefs
         )
     body.append("")
 
     filename = f"{_slug(report.period)}-{report.edition.value}.zh.md"
+    from intelligence.publisher.verification import publication_marker
+
     return RenderedReport(
         relative_path=Path("content/posts/intelligence") / filename,
-        markdown="\n".join(front_matter + body),
+        markdown=publication_marker("\n".join(front_matter + body)),
     )

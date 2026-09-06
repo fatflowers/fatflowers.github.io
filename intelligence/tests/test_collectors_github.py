@@ -129,6 +129,33 @@ def test_not_modified_is_an_empty_success():
     assert page.metadata["not_modified"] is True
 
 
+def test_personal_account_uses_public_user_events_endpoint():
+    seen = []
+    def opener(request, timeout):
+        seen.append(request.full_url)
+        return Response([])
+    spec = ChannelSpec("simon-willison", "simon-github", "github-release", "github_api",
+                       url="https://github.com/simonw", config={"user": "simonw"})
+    GitHubCollector(opener=opener).collect(spec)
+    assert seen == ["https://api.github.com/users/simonw/events/public?per_page=100&page=1"]
+
+
+def test_github_profile_fallback_does_not_hide_api_failure():
+    from intelligence.collectors.router import CollectorRouter, RouteStep, CollectionRouteError
+    from intelligence.collectors.base import CollectionPage
+    from intelligence.normalize import NormalizedItem
+    class Failed:
+        def collect(self, channel, cursor):
+            raise RuntimeError("API unavailable")
+    class Profile:
+        def collect(self, channel, cursor):
+            return CollectionPage.of([NormalizedItem(None, "composio", "composio-github", channel.url,
+                                                       "Profile", None, None, "GitHub profile content")])
+    with pytest.raises(CollectionRouteError, match="profile/repository"):
+        CollectorRouter({"github_api": Failed(), "http": Profile()}).collect(
+            channel(), route=[RouteStep("github_api"), RouteStep("http")])
+
+
 def test_rate_limit_has_reset_time():
     def opener(request, timeout):
         raise urllib.error.HTTPError(

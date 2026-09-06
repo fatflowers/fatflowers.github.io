@@ -52,6 +52,7 @@ class ReportSignal:
     published_at: datetime
     analysis: AnalysisResult
     sources: tuple[ReportSource, ...]
+    date_kind: str = "published"
 
 
 @dataclass(frozen=True)

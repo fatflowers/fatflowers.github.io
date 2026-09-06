@@ -60,6 +60,16 @@ class GitPublisher:
             self._check_outgoing_commits(remote, branch)
 
         for command in commands:
+            if command[1] == "commit":
+                diff = self.runner(("git", "diff", "--cached", "--quiet", "--",
+                                    *(path.as_posix() for path in normalized)),
+                                   cwd=self.repository, capture_output=True, text=True, check=False)
+                if diff.returncode == 0:
+                    # A previous push or deployment check may have failed after
+                    # committing this exact artifact. Resume without an empty commit.
+                    continue
+                if diff.returncode != 1:
+                    raise RuntimeError("cannot inspect staged publication artifact")
             completed = self.runner(
                 command,
                 cwd=self.repository,

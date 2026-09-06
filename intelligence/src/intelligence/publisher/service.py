@@ -8,6 +8,7 @@ from intelligence.reporter import Report, ReportStatus, RenderedReport
 
 from .gates import GateContext, GateFailure, GateResult, PublishValidator
 from .git import GitPublishResult, GitPublisher
+from .verification import verify_publication
 
 
 @dataclass(frozen=True)
@@ -18,9 +19,10 @@ class PublicationResult:
 
 
 class PublicationService:
-    def __init__(self, validator: PublishValidator, git_publisher: GitPublisher):
+    def __init__(self, validator: PublishValidator, git_publisher: GitPublisher, *, verifier=verify_publication):
         self.validator = validator
         self.git_publisher = git_publisher
+        self.verifier = verifier
 
     def validate(
         self,
@@ -64,8 +66,9 @@ class PublicationService:
             remote=remote,
             branch=branch,
         )
-        if dry_run:
+        if dry_run or not push:
             return PublicationResult(report, (), git_result)
+        self.verifier(published_url, rendered.markdown)
         published = report.mark_published(
             commit_sha=git_result.commit_sha or "",
             published_url=published_url,

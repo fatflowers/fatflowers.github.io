@@ -16,6 +16,7 @@
     "evidence"
   ],
   "properties": {
+    "headline": { "type": ["string", "null"], "minLength": 1, "maxLength": 60, "pattern": "^[^\\r\\n]+$" },
     "summary": { "type": "string", "minLength": 1 },
     "key_change": { "type": "string", "minLength": 1 },
     "why_it_matters": { "type": "string", "minLength": 1 },

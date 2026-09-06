@@ -24,3 +24,5 @@ intelligence/logs/
 intelligence/browser-profile/
 intelligence/cloudflare/node_modules/
 intelligence/cloudflare/.wrangler/
+.multica/
+intelligence/.analyze-ingest-*.json

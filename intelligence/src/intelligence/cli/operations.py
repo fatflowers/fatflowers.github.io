@@ -14,6 +14,7 @@ import plistlib
 import re
 import subprocess
 import tempfile
+from dataclasses import replace
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
@@ -43,7 +44,7 @@ from intelligence.reporter import (
     render_hugo_report,
 )
 from intelligence.storage import WorkerAPIClient
-from intelligence.reporter.editorial import exclusion_reason
+from intelligence.reporter.editorial import exclusion_reason, verified_observed_change
 
 
 ITEM_NAMESPACE = UUID("2544494d-31e0-4b6a-9e18-2ad2dd2361ed")
@@ -371,6 +372,25 @@ def ingest_collection(
     target_id = stable_id("target", spec.target_slug)
     channel_id = stable_id("channel", spec.channel_slug)
     now = utc_now()
+    if bool(spec.config.get("diff")):
+        remote = client.get_catalog()
+        remote_channel = next((row for row in remote.get("channels", []) if row.get("slug") == channel_slug), {})
+        previous = _json_object(remote_channel.get("cursor_json"))
+        if len(items) > 1:
+            raise CatalogError("page-diff collection requires a single page snapshot")
+        if items:
+            item = items[0]
+            digest = content_hash(item)
+            after = item.content_text[:12000]
+            before = previous.get("content_excerpt")
+            next_cursor = {"content_hash": digest, "content_excerpt": after, "observed_at": now}
+            if not previous.get("content_hash") or previous.get("content_hash") == digest:
+                items = []
+            else:
+                diff = {"before_hash": previous["content_hash"], "after_hash": digest,
+                        "before_text": before, "after_text": after, "observed_at": now,
+                        "previous_observed_at": previous.get("observed_at"), "excerpt_limit": 12000}
+                items = [replace(item, metadata={**item.metadata, "web_diff": diff, "date_kind": "observed_change"})]
     records = [
         normalized_item_record(item, target_id=target_id, channel_id=channel_id, now=now)
         for item in items
@@ -664,21 +684,28 @@ def normalized_item_record(
     item: NormalizedItem, *, target_id: str, channel_id: str, now: str
 ) -> Dict[str, Any]:
     key_type, key_value = dedupe_key(item)
+    metadata = dict(item.metadata)
+    if "web_diff" in metadata:
+        metadata["date_kind"] = "observed_change"
+    diff = verified_observed_change(metadata)
+    if diff:
+        key_type, key_value = "observed_change", "%s:%s:%s" % (channel_id, item.canonical_url, diff["after_hash"])
+        metadata["date_kind"] = "observed_change"
     return {
         "id": str(uuid5(ITEM_NAMESPACE, "%s:%s" % (key_type, key_value))),
         "target_id": target_id,
         "channel_id": channel_id,
-        "external_id": item.external_id,
+        "external_id": "diff:%s" % diff["after_hash"] if diff else item.external_id,
         "url": item.url,
         "canonical_url": item.canonical_url,
         "title": item.title,
         "author": item.author,
-        "published_at": item.published_at,
+        "published_at": diff["observed_at"] if diff else item.published_at,
         "fetched_at": item.fetched_at or now,
         "content_text": item.content_text,
         "content_hash": content_hash(item),
         "language": item.language,
-        "raw_metadata": dict(item.metadata),
+        "raw_metadata": metadata,
         "created_at": now,
     }
 
@@ -755,6 +782,7 @@ def ingest_analyses(
         analysis_payload = {
             key: raw[key]
             for key in (
+                "headline",
                 "summary",
                 "key_change",
                 "why_it_matters",
@@ -777,6 +805,8 @@ def ingest_analyses(
                 "analyzed_at": str(raw.get("analyzed_at") or now),
             }
         )
+        if "content_revision" in raw:
+            record["content_revision"] = raw["content_revision"]
         records.append(record)
     if len(records) > 100:
         raise CatalogError("one analysis batch cannot exceed 100 records")
@@ -864,16 +894,20 @@ def build_report(
     start, end = report_window(
         edition, report_date, from_value=from_value, to_value=to_value
     )
+    # Allow late-collected, as-yet-unreported events to be useful. Their true
+    # event date remains visible and the renderer labels these as catch-up.
+    research_start = start if from_value or edition in {ReportEdition.WEEKLY, ReportEdition.AD_HOC} else (end - timedelta(days=3)).replace(hour=0, minute=0, second=0, microsecond=0)
     response = client.get_report_input(
-        window_start=start.isoformat(),
+        window_start=research_start.isoformat(),
         window_end=end.isoformat(),
         min_importance=1,
         target_id=stable_id("target", target_slug) if target_slug else None,
         tag=tag,
+        include_reported=edition in {ReportEdition.WEEKLY, ReportEdition.AD_HOC},
     )
     signals = tuple(
         _report_signal(row) for row in response.get("items", [])
-        if exclusion_reason(row, start, end) is None
+        if exclusion_reason(row, research_start, end) is None
     )
     decision = ReportPolicy().decide(edition, signals)
     period = (
@@ -921,6 +955,25 @@ def build_report(
     return report, rendered, decision
 
 
+def _already_published(client: WorkerAPIClient, options: Mapping[str, Any],
+                       command_run_id: str, *, record_run: bool) -> Optional[Dict[str, Any]]:
+    edition = ReportEdition(options["edition_value"])
+    report_date = date.fromisoformat(options["date_value"]) if options.get("date_value") else datetime.now(ZoneInfo("Asia/Shanghai")).date()
+    start, end = report_window(edition, report_date, from_value=options.get("from_value"), to_value=options.get("to_value"))
+    period = "%d-w%02d" % report_date.isocalendar()[:2] if edition is ReportEdition.WEEKLY else report_date.isoformat()
+    identity = "%s:%s:%s" % (edition.value, start.isoformat(), end.isoformat()) if edition is ReportEdition.AD_HOC else "%s:%s" % (edition.value, period)
+    report_id = str(uuid5(REPORT_NAMESPACE, identity))
+    existing = client.get_report(report_id).get("report")
+    if not existing or existing.get("report_status") != "published":
+        return None
+    if record_run:
+        client.update_run(command_run_id, {"run_status": "skipped", "item_count": 0,
+                          "metadata": {"reason": "already_published", "report_id": report_id}},
+                          idempotency_key="run:skip:%s" % command_run_id)
+    return {"pipeline_run_id": command_run_id, "report_id": report_id, "status": "skipped",
+            "reason": "already_published", "published_url": existing.get("published_url")}
+
+
 def generate_report(
     repository: CatalogRepository,
     client: WorkerAPIClient,
@@ -944,6 +997,9 @@ def generate_report(
             idempotency_key="run:create:%s" % command_run_id,
         )
     try:
+        existing = _already_published(client, report_options, command_run_id, record_run=not dry_run)
+        if existing:
+            return existing
         report, rendered, decision = build_report(client, **report_options)
     except Exception as exc:
         if not dry_run:
@@ -1077,6 +1133,9 @@ def publish_report(
             idempotency_key="run:create:%s" % command_run_id,
         )
     try:
+        existing = _already_published(client, report_options, command_run_id, record_run=execute)
+        if existing:
+            return existing
         report, rendered, decision = build_report(client, **report_options)
     except Exception as exc:
         if execute:
@@ -1266,6 +1325,7 @@ def scheduler_apply(repository: CatalogRepository, *, dry_run: bool) -> Dict[str
 def _report_signal(row: Mapping[str, Any]) -> ReportSignal:
     analysis = validate_analysis(
         {
+            "headline": row.get("headline"),
             "summary": row.get("summary"),
             "key_change": row.get("key_change"),
             "why_it_matters": row.get("why_it_matters"),
@@ -1290,6 +1350,7 @@ def _report_signal(row: Mapping[str, Any]) -> ReportSignal:
         published_at=_datetime(str(row["published_at"])),
         analysis=analysis,
         sources=sources,
+        date_kind="observed_change" if verified_observed_change(_json_object(row.get("raw_metadata_json", row.get("raw_metadata")))) else "published",
     )
 
 

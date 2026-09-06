@@ -1,8 +1,8 @@
 """Conservative report eligibility; discovery records are not news events.
 
 This catches deterministic defects, not factual truth. Editorial analysis must
-still verify the source. No collector currently records a verified before/after
-diff, so an unknown publication time cannot be replaced with the fetch time.
+still verify the source. Observation time is usable only with a verified
+before/after snapshot difference; it is never an inferred publication time.
 """
 from __future__ import annotations
 
@@ -11,6 +11,27 @@ import re
 from datetime import datetime
 from typing import Any, Mapping
 from urllib.parse import parse_qs, urlsplit
+
+
+def verified_observed_change(metadata: Any) -> Mapping[str, Any] | None:
+    if not isinstance(metadata, Mapping):
+        return None
+    diff = metadata.get("web_diff")
+    if not isinstance(diff, Mapping):
+        return None
+    before_hash, after_hash = diff.get("before_hash"), diff.get("after_hash")
+    if not all(isinstance(value, str) and re.fullmatch(r"[a-f0-9]{64}", value) for value in (before_hash, after_hash)):
+        return None
+    before, after = diff.get("before_text"), diff.get("after_text")
+    if before_hash == after_hash or not isinstance(before, str) or not isinstance(after, str):
+        return None
+    if not before.strip() or not after.strip() or before == after:
+        return None
+    try:
+        observed = datetime.fromisoformat(str(diff.get("observed_at", "")).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return diff if observed.tzinfo is not None else None
 
 
 def exclusion_reason(row: Mapping[str, Any], start: datetime, end: datetime) -> str | None:
@@ -23,10 +44,13 @@ def exclusion_reason(row: Mapping[str, Any], start: datetime, end: datetime) -> 
         return "invalid_metadata"
     if isinstance(metadata, Mapping) and metadata.get("discovery_only"):
         return "discovery_only"
+    observed_change = verified_observed_change(metadata)
+    if isinstance(metadata, Mapping) and metadata.get("date_kind") == "observed_change" and not observed_change:
+        return "unverified_observed_change"
     for key in ("canonical_url", "url"):
-        if row.get(key) and is_discovery_url(str(row[key])):
+        if row.get(key) and is_discovery_url(str(row[key])) and not observed_change:
             return "discovery_url"
-    value = row.get("published_at")
+    value = observed_change["observed_at"] if observed_change else row.get("published_at")
     if not value:
         return "unknown_publication_time"
     try:
@@ -40,7 +64,8 @@ def exclusion_reason(row: Mapping[str, Any], start: datetime, end: datetime) -> 
     body = str(row.get("content_text") or "").strip()
     title = str(row.get("title") or "").strip()
     # Short social posts can be useful; title-only search results cannot.
-    if len(body) < 40 or body.casefold() == title.casefold():
+    complete_social = isinstance(metadata, Mapping) and metadata.get("source_content_kind") == "complete_social_post"
+    if len(body) < 40 or (body.casefold() == title.casefold() and not complete_social):
         return "insufficient_source_content"
     summary = str(row.get("summary") or "").strip()
     if not summary or summary.casefold().rstrip("。.") == title.casefold().rstrip("。."):

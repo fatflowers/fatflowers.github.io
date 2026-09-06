@@ -2,51 +2,17 @@
 
 from __future__ import annotations
 
-import html
 import re
 import urllib.request
 from collections.abc import Mapping
+from dataclasses import replace
 from datetime import datetime, timezone
-from html.parser import HTMLParser
 from typing import Any, Callable
 
+from intelligence.enrichment import enrich_article
 from intelligence.normalize import NormalizedItem, content_hash
 
 from .base import ChannelSpec, CollectionPage
-
-
-class _DocumentParser(HTMLParser):
-    def __init__(self) -> None:
-        super().__init__(convert_charrefs=True)
-        self.title: list[str] = []
-        self.text: list[str] = []
-        self.canonical = ""
-        self._ignored = 0
-        self._in_title = False
-
-    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        attributes = dict(attrs)
-        if tag in {"script", "style", "svg", "noscript", "template"}:
-            self._ignored += 1
-        if tag == "title":
-            self._in_title = True
-        if tag == "link" and attributes.get("rel") == "canonical" and attributes.get("href"):
-            self.canonical = str(attributes["href"])
-        if tag in {"p", "div", "article", "section", "li", "h1", "h2", "h3", "br"}:
-            self.text.append("\n")
-
-    def handle_endtag(self, tag: str) -> None:
-        if tag in {"script", "style", "svg", "noscript", "template"} and self._ignored:
-            self._ignored -= 1
-        if tag == "title":
-            self._in_title = False
-
-    def handle_data(self, data: str) -> None:
-        if self._ignored:
-            return
-        if self._in_title:
-            self.title.append(data)
-        self.text.append(data)
 
 
 class HTTPCollector:
@@ -72,21 +38,19 @@ class HTTPCollector:
         charset_match = re.search(r"charset=([^; ]+)", headers.get("Content-Type", ""), re.I)
         charset = charset_match.group(1) if charset_match else "utf-8"
         document = payload.decode(charset, "replace")
-        parser = _DocumentParser()
-        parser.feed(document)
-        text = html.unescape(" ".join(parser.text))
+        article = enrich_article(channel.url, html=document)
         item = NormalizedItem(
             external_id=headers.get("ETag") or headers.get("Last-Modified"),
             target_slug=channel.target_slug,
             channel_slug=channel.channel_slug,
             url=channel.url,
-            canonical_url=parser.canonical or channel.url,
-            title=" ".join(parser.title) or channel.channel_slug,
+            canonical_url=article["canonical_url"],
+            title=article["title"] or channel.channel_slug,
             author=None,
-            published_at=headers.get("Last-Modified"),
-            content_text=text,
+            published_at=article["published_at"],
+            content_text=article["content_text"],
             language=None,
-            metadata={"platform": "web", "headers": {k: v for k, v in headers.items() if k.lower() in {"etag", "last-modified", "content-type"}}},
+            metadata={"platform": "web", "headers": {k: v for k, v in headers.items() if k.lower() in {"etag", "last-modified", "content-type"}}, **{key: article[key] for key in ("publication_precision", "publication_evidence", "page_kind", "body_provenance", "discovered_links")}},
             fetched_at=datetime.now(timezone.utc),
         )
         return CollectionPage.of([item], metadata={"content_hash": content_hash(item)})
@@ -103,7 +67,17 @@ class WebDiffCollector:
         if not page.items:
             return page
         digest = content_hash(page.items[0])
-        next_cursor = {**dict(cursor or {}), "content_hash": digest}
+        observed_at = datetime.now(timezone.utc).isoformat()
+        previous_hash = (cursor or {}).get("content_hash")
+        # Keep a bounded excerpt for an auditable difference. Long-page changes
+        # outside it are explicitly unverified until complete evidence is read.
+        after = page.items[0].content_text[:12000]
+        before = (cursor or {}).get("content_excerpt")
+        next_cursor = {**dict(cursor or {}), "content_hash": digest, "content_excerpt": after, "observed_at": observed_at}
         if (cursor or {}).get("content_hash") == digest:
             return CollectionPage.of([], next_cursor=next_cursor, raw_count=1, metadata={"changed": False})
-        return CollectionPage.of(list(page.items), next_cursor=next_cursor, raw_count=1, metadata={"changed": True})
+        if not previous_hash:
+            return CollectionPage.of([], next_cursor=next_cursor, raw_count=1, metadata={"changed": False, "baseline": True})
+        diff = {"before_hash": previous_hash, "after_hash": digest, "before_text": before, "after_text": after, "observed_at": observed_at, "previous_observed_at": (cursor or {}).get("observed_at"), "excerpt_changed": before is not None and before != after, "excerpt_limit": 12000}
+        item = replace(page.items[0], metadata={**page.items[0].metadata, "changed": True, "baseline": False, "web_diff": diff})
+        return CollectionPage.of([item], next_cursor=next_cursor, raw_count=1, metadata={"changed": True, "web_diff": diff})

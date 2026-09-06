@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from typing import Any
+from urllib.parse import urlsplit
 
 from intelligence.mcp.errors import MCPAuthenticationError, MCPContractError
 
@@ -51,6 +52,13 @@ class CollectorRouter:
                 candidate = replace(channel, **updates, config=config, collector_type=step.collector_type)
             try:
                 result = collector.collect(candidate, cursor)
+                if channel.collector_type == "github_api" and step.collector_type != "github_api":
+                    # An HTML profile is a discovery page, never a successful
+                    # replacement for a release/event feed.
+                    for item in result.items:
+                        parsed = urlsplit(item.canonical_url)
+                        if parsed.hostname in {"github.com", "www.github.com"} and len(parsed.path.strip("/").split("/")) <= 2:
+                            raise ValueError("GitHub fallback returned a profile/repository page, not an event")
                 return CollectionPage(
                     result.items,
                     result.next_cursor,

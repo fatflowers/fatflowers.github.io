@@ -105,7 +105,8 @@ class GitHubCollector:
 
     def collect(self, channel: ChannelSpec, cursor: Mapping[str, Any] | None = None) -> CollectionPage:
         config = dict(channel.config)
-        organization = str(config.get("organization") or "").strip()
+        account_type = "user" if config.get("user") else "organization"
+        organization = str(config.get("user") or config.get("organization") or "").strip()
         if not organization:
             organization = self._organization_from_url(channel.url)
         if not organization:
@@ -133,6 +134,7 @@ class GitHubCollector:
                 page=page,
                 per_page=per_page,
                 etag=request_etag if offset == 0 else "",
+                account_type=account_type,
             )
             if not_modified:
                 return CollectionPage.of([], next_cursor=state, metadata={"not_modified": True, "organization": organization})
@@ -190,10 +192,12 @@ class GitHubCollector:
         return parts[0] if urllib.parse.urlsplit(url).hostname in {"github.com", "www.github.com"} and parts else ""
 
     def _get_events(
-        self, organization: str, *, page: int, per_page: int, etag: str
+        self, organization: str, *, page: int, per_page: int, etag: str, account_type: str = "organization"
     ) -> tuple[list[Mapping[str, Any]], Mapping[str, Any], bool]:
         query = urllib.parse.urlencode({"per_page": per_page, "page": page})
-        url = f"https://api.github.com/orgs/{urllib.parse.quote(organization, safe='')}/events?{query}"
+        owner = urllib.parse.quote(organization, safe='')
+        endpoint = f"users/{owner}/events/public" if account_type == "user" else f"orgs/{owner}/events"
+        url = f"https://api.github.com/{endpoint}?{query}"
         headers = {
             "Accept": "application/vnd.github+json",
             "User-Agent": USER_AGENT,

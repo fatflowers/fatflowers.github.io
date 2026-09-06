@@ -28,7 +28,7 @@ tools:
     description: 获取已解析 numeric userId 的公开用户时间线
     input_template:
       userId: "{{ channel.config.resolved_user_id }}"
-      cursor: "{{ cursor.next }}"
+      cursor: ""
       includeReplies: "{{ channel.config.include_replies }}"
       includeParentTweet: "{{ channel.config.include_parent_tweet }}"
     output_adapter: twitter_posts_v1
@@ -36,6 +36,8 @@ tools:
       type: cursor
       request_field: cursor
       response_field: cursor
+      scope: within_run_only
+      max_pages_per_run: 3
     limitations:
       max_items_per_page: 20
       accepts_handle: false

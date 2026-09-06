@@ -12,7 +12,7 @@ class Client:
         self.calls = []
 
     def call_tool(self, name, arguments):
-        self.calls.append((name, arguments))
+        self.calls.append((name, dict(arguments)))
         if len(self.calls) <= self.failures:
             raise MCPTransientError("try again")
         return self.response
@@ -42,12 +42,49 @@ def test_twitter_adapter_and_cursor_with_retry():
     )
     channel = ChannelSpec("composio", "composio-twitter", "twitter", "mcp", handle="composio", tool_binding="fixed-v1", config={"resolved_user_id": "100"})
     collector = MCPCollector(client, registry("twitter_posts_v1"), retry_policy=RetryPolicy(max_attempts=2, initial_delay=0))
-    page = collector.collect(channel, {"next": "old"})
+    page = collector.collect(channel, {"next": "old", "last_external_id": "7"})
     assert len(client.calls) == 2
-    assert client.calls[-1] == ("fixed_tool", {"userId": "100", "cursor": "old"})
+    assert client.calls[-1] == ("fixed_tool", {"userId": "100", "cursor": ""})
     assert page.items[0].external_id == "7"
     assert page.items[0].url == "https://x.com/composio/status/7"
-    assert page.next_cursor == {"next": "next"}
+    assert page.next_cursor == {"last_external_id": "7"}
+
+
+def test_twitter_paginates_in_run_but_next_poll_starts_newest():
+    class Timeline:
+        def __init__(self):
+            self.cursors = []
+
+        def call_tool(self, name, arguments):
+            token = arguments["cursor"]
+            self.cursors.append(token)
+            return {"tweets": [{"id": "10" if not token else "9", "text": "A complete announcement"}],
+                    "next_cursor": "older" if not token else ""}
+
+    client = Timeline()
+    spec = ChannelSpec("company", "twitter", "twitter", "mcp", tool_binding="fixed-v1", config={"resolved_user_id": "1"})
+    collector = MCPCollector(client, registry("twitter_posts_v1"))
+    first = collector.collect(spec, {"next": "stale-backfill"})
+    second = collector.collect(spec, first.next_cursor)
+    assert client.cursors == ["", "older", ""]
+    assert [item.external_id for item in first.items] == ["10", "9"]
+    assert second.next_cursor == {"last_external_id": "10"}
+
+
+def test_twitter_full_text_reply_filter_and_poll_safe_adapter():
+    from intelligence.collectors.adapters import twitter_posts_v1
+    spec = ChannelSpec("company", "twitter", "twitter", "mcp", config={"include_replies": False})
+    items, cursor = twitter_posts_v1({"tweets": [
+        {"id": "3", "text": "reply", "isReply": True},
+        {"id": "2", "text": "truncated", "full_text": "Complete\nannouncement", "created_at": "2026-09-06T00:00:00Z"},
+        {"id": "1", "text": "reply too", "in_reply_to_status_id": "7"},
+    ], "next_cursor": "historical"}, spec)
+    assert len(items) == 1
+    assert items[0].title == "Complete announcement"
+    assert items[0].content_text == "Complete\nannouncement"
+    assert items[0].metadata["source_content_kind"] == "complete_social_post"
+    assert items[0].metadata["pagination"] == {"within_run_only": True, "next": "historical"}
+    assert cursor == {"last_external_id": "3"}
 
 
 def test_reddit_adapter_accepts_listing_shape():

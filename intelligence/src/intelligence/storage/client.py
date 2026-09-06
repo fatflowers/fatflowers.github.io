@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -119,6 +120,7 @@ class WorkerAPIClient:
         limit: int = 500,
         target_id: Optional[str] = None,
         tag: Optional[str] = None,
+        include_reported: bool = False,
     ) -> Dict[str, Any]:
         return self._request(
             "GET",
@@ -131,9 +133,13 @@ class WorkerAPIClient:
                     "limit": limit,
                     "target_id": target_id,
                     "tag": tag,
+                    "include_reported": "true" if include_reported else "false",
                 },
             ),
         )
+
+    def get_report(self, report_id: str) -> Dict[str, Any]:
+        return self._request("GET", "/v1/reports/%s" % urllib.parse.quote(report_id, safe=""))
 
     def create_report(
         self, report: Mapping[str, Any], *, idempotency_key: str
@@ -272,14 +278,22 @@ class WorkerAPIClient:
             headers=request_headers,
             method=method,
         )
-        try:
-            with urllib.request.urlopen(request, timeout=self.timeout_seconds) as response:
-                payload = response.read().decode("utf-8")
-                return json.loads(payload) if payload else {}
-        except urllib.error.HTTPError as exc:
-            body_text = exc.read().decode("utf-8", errors="replace")[:1000]
-            raise StorageClientError(
-                "Worker API returned HTTP %d: %s" % (exc.code, body_text)
-            ) from exc
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-            raise StorageClientError("Worker API request failed: %s" % exc) from exc
+        attempts = 3 if method == "GET" or request.get_header("Idempotency-key") else 1
+        for attempt in range(attempts):
+            try:
+                with urllib.request.urlopen(request, timeout=self.timeout_seconds) as response:
+                    payload = response.read().decode("utf-8")
+                    return json.loads(payload) if payload else {}
+            except urllib.error.HTTPError as exc:
+                if exc.code in {429, 502, 503, 504} and attempt + 1 < attempts:
+                    time.sleep(0.5 * (attempt + 1))
+                    continue
+                body_text = exc.read().decode("utf-8", errors="replace")[:1000]
+                raise StorageClientError("Worker API returned HTTP %d: %s" % (exc.code, body_text)) from exc
+            except (urllib.error.URLError, TimeoutError) as exc:
+                if attempt + 1 < attempts:
+                    time.sleep(0.5 * (attempt + 1))
+                    continue
+                raise StorageClientError("Worker API request failed: %s" % exc) from exc
+            except json.JSONDecodeError as exc:
+                raise StorageClientError("Worker API returned invalid JSON") from exc

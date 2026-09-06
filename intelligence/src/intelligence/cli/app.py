@@ -18,6 +18,7 @@ from intelligence.catalog import (
 )
 from intelligence.observability import emit_event, new_run_id
 from intelligence.storage import StorageClientError, WorkerAPIClient
+from .research import research_plan, research_hydrate, research_ingest, research_coverage, research_run, research_discover, resolve_mcp_fallbacks
 
 from .operations import (
     collection_plan,
@@ -156,6 +157,23 @@ def build_parser() -> argparse.ArgumentParser:
     collect_local_selection.add_argument("--channel")
     collect_local_parser.add_argument("--run-id", help="existing pipeline run to finish")
     collect_local_parser.add_argument("--limit", type=int, default=100)
+
+    research = commands.add_parser("research")
+    research_commands = research.add_subparsers(dest="research_command", required=True)
+    for action in ("discover", "plan", "run", "hydrate", "ingest", "coverage"):
+        command = research_commands.add_parser(action)
+        command.add_argument("--since", help="ISO publication cutoff; default last 72 hours")
+        if action in ("run", "hydrate", "discover"):
+            command.add_argument("--mcp", action="store_true", help="execute fixed Firecrawl fallbacks through authenticated Codex MCP capture")
+        if action in ("plan", "run"):
+            command.add_argument("--limit", type=int, default=30)
+            command.add_argument("--target")
+        if action == "discover":
+            command.add_argument("--target")
+        if action in ("hydrate", "ingest"):
+            command.add_argument("--item-id", required=True)
+        if action == "ingest":
+            command.add_argument("--input", type=Path)
 
     analyze = commands.add_parser("analyze")
     analyze.add_argument("--pending", action="store_true", dest="legacy_pending")
@@ -427,6 +445,23 @@ def execute(args: argparse.Namespace) -> Any:
             limit=limit,
             command_run_id=args.execution_run_id,
         )
+
+    if args.command == "research":
+        if args.research_command == "discover":
+            result = research_discover(repository, client, target=args.target)
+            return resolve_mcp_fallbacks(client, result, since=args.since) if args.mcp else result
+        if args.research_command == "run":
+            result = research_run(client, since=args.since, limit=args.limit, target=args.target)
+            return resolve_mcp_fallbacks(client, result, since=args.since) if args.mcp else result
+        if args.research_command == "plan":
+            return research_plan(client, since=args.since, limit=args.limit, target=args.target)
+        if args.research_command == "coverage":
+            return research_coverage(client, since=args.since)
+        if args.research_command == "hydrate":
+            result = research_hydrate(client, item_id=args.item_id, since=args.since)
+            return resolve_mcp_fallbacks(client, result, since=args.since) if args.mcp else result
+        return research_ingest(client, item_id=args.item_id, since=args.since,
+                               payload=load_json_input(args.input))
 
     if args.command == "analyze":
         if args.analyze_command == "pending" or args.legacy_pending:

@@ -1,4 +1,7 @@
 from intelligence.storage import WorkerAPIClient
+import json
+import urllib.error
+from unittest.mock import patch
 
 
 def recorder(client):
@@ -66,3 +69,15 @@ def test_all_worker_write_routes_set_idempotency_keys():
     ]
     assert calls[3]["path"] == "/v1/reports/r%2Fone/status"
     assert calls[5]["path"] == "/v1/runs/run%2Fone"
+
+
+def test_transient_write_retries_identical_request_and_idempotency_key():
+    from unittest.mock import MagicMock
+    response = MagicMock()
+    response.__enter__.return_value.read.return_value = b'{"upserted":1}'
+    with patch("urllib.request.urlopen", side_effect=[urllib.error.URLError("temporary EOF"), response]) as call, patch("time.sleep"):
+        result = WorkerAPIClient("https://worker.example", "token").write_analyses([], idempotency_key="stable")
+    assert result["upserted"] == 1
+    first, second = [c.args[0] for c in call.call_args_list]
+    assert first is second
+    assert first.get_header("Idempotency-key") == "stable"

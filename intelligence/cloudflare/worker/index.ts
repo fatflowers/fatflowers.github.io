@@ -2,11 +2,13 @@ import { getCatalog, getDueChannels, syncCatalog } from "./catalog.ts";
 import { ApiError, constantTimeEqual, errorResponse, jsonResponse, requireObject, sha256Hex } from "./http.ts";
 import { getPendingAnalysis, writeAnalyses, writeItems } from "./items.ts";
 import { revisePublishedReport } from "./revisions.ts";
+import { pendingEnrichment, enrichItem, coverage, getItem } from "./enrichment.ts";
 import {
   createAuditEvent,
   createReport,
   createRun,
   getReportInput,
+  getReport,
   getRun,
   listRuns,
   listAuditEvents,
@@ -33,9 +35,14 @@ const routes: Route[] = [
   { method: "POST", pattern: /^\/v1\/catalog\/sync$/, handler: syncCatalog, write: true },
   { method: "GET", pattern: /^\/v1\/channels\/due$/, handler: getDueChannels, write: false },
   { method: "POST", pattern: /^\/v1\/items\/batch$/, handler: writeItems, write: true },
+  { method: "GET", pattern: /^\/v1\/items\/pending-enrichment$/, handler: pendingEnrichment, write: false },
+  { method: "POST", pattern: /^\/v1\/items\/(?<id>[^/]+)\/enrichment$/, handler: enrichItem, write: true },
+  { method: "GET", pattern: /^\/v1\/coverage$/, handler: coverage, write: false },
   { method: "GET", pattern: /^\/v1\/items\/pending-analysis$/, handler: getPendingAnalysis, write: false },
+  { method: "GET", pattern: /^\/v1\/items\/(?<id>[^/]+)$/, handler: getItem, write: false },
   { method: "POST", pattern: /^\/v1\/analyses\/batch$/, handler: writeAnalyses, write: true },
   { method: "GET", pattern: /^\/v1\/reports\/input$/, handler: getReportInput, write: false },
+  { method: "GET", pattern: /^\/v1\/reports\/(?<id>[^/]+)$/, handler: getReport, write: false },
   { method: "POST", pattern: /^\/v1\/reports$/, handler: createReport, write: true },
   { method: "PATCH", pattern: /^\/v1\/reports\/(?<id>[^/]+)\/editorial-revision$/, handler: revisePublishedReport, write: true },
   { method: "PATCH", pattern: /^\/v1\/reports\/(?<id>[^/]+)\/status$/, handler: updateReportStatus, write: true },

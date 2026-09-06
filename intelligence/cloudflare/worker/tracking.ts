@@ -5,6 +5,12 @@ const REPORT_EDITIONS = ["morning", "midday", "evening", "weekly", "ad-hoc"] as 
 const REPORT_STATUSES = ["draft", "validating", "ready", "published", "failed"] as const;
 const RUN_STATUSES = ["pending", "running", "succeeded", "failed", "skipped"] as const;
 
+export async function getReport({ env, params }: AuthContext): Promise<ApiResponse> {
+  const id = requireString(params.id, "id", { max: 128 })!;
+  const report = await env.DB.prepare("SELECT * FROM reports WHERE id = ?").bind(id).first();
+  return { status: 200, body: { report } };
+}
+
 export async function getReportInput({ env, url }: AuthContext): Promise<ApiResponse> {
   const from = requireIsoDate(url.searchParams.get("from"), "from");
   const to = requireIsoDate(url.searchParams.get("to"), "to");
@@ -14,7 +20,8 @@ export async function getReportInput({ env, url }: AuthContext): Promise<ApiResp
   const limit = parseLimit(url, 500, 1_000);
   const targetId = url.searchParams.get("target_id");
   const tag = url.searchParams.get("tag");
-  const rows = await env.DB.prepare(`SELECT i.*, a.summary, a.key_change, a.why_it_matters,
+  const includeReported = url.searchParams.get("include_reported") === "true";
+  const rows = await env.DB.prepare(`SELECT i.*, a.headline, a.summary, a.key_change, a.why_it_matters,
       a.company_impact, a.importance, a.confidence, a.topics_json, a.watch_next_json,
       a.evidence_json, a.model, a.prompt_version, a.analyzed_at,
       t.slug AS target_slug, t.name AS target_name, c.slug AS channel_slug, c.name AS channel_name
@@ -23,10 +30,15 @@ export async function getReportInput({ env, url }: AuthContext): Promise<ApiResp
     JOIN targets t ON t.id = i.target_id
     JOIN channels c ON c.id = i.channel_id
     WHERE i.is_baseline = 0
+      AND (i.enrichment_status IS NULL OR i.enrichment_status='ready')
       AND COALESCE(json_extract(i.raw_metadata_json, '$.discovery_only'), 0) = 0
       AND datetime(i.published_at) >= datetime(?)
       AND datetime(i.published_at) < datetime(?)
       AND a.importance >= ?
+      AND (? = 1 OR NOT EXISTS (
+        SELECT 1 FROM report_items ri JOIN reports r ON r.id=ri.report_id
+        WHERE ri.item_id=i.id AND r.report_status='published' AND r.edition IN ('morning','midday','evening')
+      ))
       AND (? IS NULL OR i.target_id = ?)
       AND (? IS NULL OR EXISTS (
         SELECT 1 FROM target_tags tt JOIN tags tg ON tg.id = tt.tag_id
@@ -36,7 +48,7 @@ export async function getReportInput({ env, url }: AuthContext): Promise<ApiResp
         WHERE ct.channel_id = i.channel_id AND cg.slug = ?
       ))
     ORDER BY a.importance DESC, i.published_at DESC, i.id
-    LIMIT ?`).bind(from, to, minImportance, targetId, targetId, tag, tag, tag, limit).all();
+    LIMIT ?`).bind(from, to, minImportance, includeReported ? 1 : 0, targetId, targetId, tag, tag, tag, limit).all();
   return { status: 200, body: { window: { from, to }, items: rows.results ?? [] } };
 }
 

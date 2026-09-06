@@ -67,6 +67,17 @@ def test_weekly_report_appears_on_home_page() -> None:
     assert rendered.relative_path.name == "2026-w36-weekly.zh.md"
 
 
+def test_explicit_headline_used_without_changing_source_title_or_summary() -> None:
+    report = make_report()
+    signal = report.signals[0]
+    signal = replace(signal, analysis=replace(signal.analysis, headline="Composio 新增稳定接口"))
+    rendered = render_hugo_report(replace(report, signals=(signal,)))
+    assert "### Composio 新增稳定接口" in rendered.markdown
+    assert signal.analysis.summary in rendered.markdown
+    assert signal.title == "新接口"
+    assert "[原文](https://example.com/news)" in rendered.markdown
+
+
 def test_lifecycle_enforces_publish_sequence() -> None:
     report = make_report()
     with pytest.raises(ReportLifecycleError):
@@ -142,7 +153,7 @@ def test_renderer_uses_short_source_labels_even_for_long_titles() -> None:
 
     markdown = render_hugo_report(replace(report, signals=(signal,))).markdown
 
-    source_line = next(line for line in markdown.splitlines() if line.startswith("来源："))
+    source_line = next(line for line in markdown.splitlines() if "2026-09-05 · [原文]" in line)
     assert "](https://example.com/long)" in source_line
     assert "[原文](https://example.com/long)" in source_line
     assert long_title not in markdown

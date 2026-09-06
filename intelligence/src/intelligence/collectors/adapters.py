@@ -79,11 +79,15 @@ def _cursor(payload: Any, *names: str) -> dict[str, Any]:
 
 def twitter_posts_v1(payload: Any, channel: ChannelSpec) -> tuple[list[NormalizedItem], dict[str, Any]]:
     rows = _records(payload, ("tweets", "data.tweets", "items", "statuses", "data"))
+    continuation = _cursor(payload, "next_cursor", "nextCursor", "cursor")
     items: list[NormalizedItem] = []
     for row in rows:
+        is_reply = bool(_first(row, "in_reply_to_status_id", "in_reply_to_status_id_str", "inReplyToId", "inReplyToStatusId", "legacy.in_reply_to_status_id_str", "isReply", default=False))
+        if is_reply and not channel.config.get("include_replies", False):
+            continue
         tweet_id = _first(row, "id", "id_str", "tweet_id", "rest_id")
         user = _first(row, "user.screen_name", "author.userName", "author.username", "username", default=channel.handle)
-        text = str(_first(row, "text", "full_text", "legacy.full_text", "content", default=""))
+        text = str(_first(row, "note_tweet.note_tweet_results.result.text", "full_text", "legacy.full_text", "text", "content", default=""))
         url = _first(row, "url", "tweet_url", "link")
         if not url and tweet_id:
             url = f"https://x.com/{user or 'i'}/status/{tweet_id}"
@@ -95,15 +99,23 @@ def twitter_posts_v1(payload: Any, channel: ChannelSpec) -> tuple[list[Normalize
                 target_slug=channel.target_slug,
                 channel_slug=channel.channel_slug,
                 url=str(url),
-                title=normalize_text(text)[:160],
+                title=" ".join(normalize_text(text).split())[:160],
                 author=str(user) if user else None,
                 published_at=_first(row, "created_at", "createdAt", "date", "timestamp"),
                 content_text=text,
                 language=_first(row, "lang", "language"),
-                metadata={"platform": "twitter", "raw": dict(row)},
+                metadata={
+                    "platform": "twitter", "raw": dict(row), "is_reply": is_reply,
+                    "source_content_kind": "truncated_social_post" if row.get("truncated") else "complete_social_post",
+                    "pagination": {"within_run_only": True, "next": continuation.get("next")},
+                },
             )
         )
-    return items, _cursor(payload, "cursor", "next_cursor", "nextCursor")
+    # A provider continuation points backwards. Persist a watermark, never the
+    # older-page token: every recurring poll must begin at the newest page.
+    newest = next((str(_first(row, "id", "id_str", "tweet_id", "rest_id")) for row in rows
+                   if _first(row, "id", "id_str", "tweet_id", "rest_id")), None)
+    return items, {"last_external_id": newest} if newest else {}
 
 
 def reddit_posts_v1(payload: Any, channel: ChannelSpec) -> tuple[list[NormalizedItem], dict[str, Any]]:

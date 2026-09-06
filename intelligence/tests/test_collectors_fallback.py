@@ -36,8 +36,9 @@ def test_web_diff_emits_only_changed_page():
     collector = WebDiffCollector(HTTPCollector(fetcher=lambda url, timeout: response))
     first = collector.collect(channel("web_diff", "https://example.com/pricing"))
     second = collector.collect(channel("web_diff", "https://example.com/pricing"), first.next_cursor)
-    assert len(first.items) == 1
-    assert first.metadata["changed"] is True
+    assert first.items == ()
+    assert first.metadata["baseline"] is True
+    assert first.metadata["changed"] is False
     assert second.items == ()
     assert second.metadata["changed"] is False
 

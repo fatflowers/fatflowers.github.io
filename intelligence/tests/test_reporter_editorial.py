@@ -46,6 +46,19 @@ def test_fetch_or_first_diff_flag_does_not_make_undated_page_news():
     assert exclusion_reason(event(published_at=None, raw_metadata={"changed": True}), START, END) == "unknown_publication_time"
 
 
+def test_observed_page_change_requires_before_after_evidence():
+    diff = {"before_hash": "a" * 64, "after_hash": "b" * 64,
+            "before_text": "Old pricing at $20", "after_text": "New pricing at $10",
+            "observed_at": "2026-09-05T06:00:00Z"}
+    row = event(url="https://example.com/docs", published_at=None,
+                raw_metadata={"date_kind": "observed_change", "web_diff": diff})
+    assert exclusion_reason(row, START, END) is None
+    for override in ({"before_hash": "b" * 64}, {"before_text": ""},
+                     {"after_text": diff["before_text"]}, {"observed_at": "2026-09-05"}):
+        invalid = {**row, "raw_metadata": {"date_kind": "observed_change", "web_diff": {**diff, **override}}}
+        assert exclusion_reason(invalid, START, END) == "unverified_observed_change"
+
+
 @pytest.mark.parametrize("url", [
     "https://github.com/simonw", "https://github.com/composiohq/composio",
     "https://example.com/blog/", "https://example.com/docs/", "https://example.com/",

@@ -57,6 +57,9 @@ class FakeClient:
         self.calls.append(("report_input", kwargs))
         return {"items": self.report_items}
 
+    def get_report(self, report_id):
+        return {"report": None}
+
 
 def project(tmp_path: Path):
     root = tmp_path / "site"
@@ -141,6 +144,32 @@ def test_collection_ingest_normalizes_and_tracks_run(tmp_path):
     assert item_call[1][0]["content_hash"]
     assert item_call[2]["succeeded"] is True
     assert client.calls[-1][2]["run_status"] == "succeeded"
+
+
+def test_mcp_diff_baseline_unchanged_and_distinct_observed_changes(tmp_path):
+    root, repository = project(tmp_path)
+    path = root / "intelligence/config/catalog.yaml"
+    catalog = yaml.safe_load(path.read_text())
+    catalog["targets"][0]["channels"][0]["config"] = {"diff": True}
+    path.write_text(yaml.safe_dump(catalog))
+    client = FakeClient()
+    def collect(body, run):
+        result = ingest_collection(repository, client, channel_slug="composio-blog",
+            payload={"data": {"markdown": body, "metadata": {"sourceURL": "https://composio.dev/pricing", "title": "Pricing"}}},
+            command_run_id=run)
+        call = [call for call in client.calls if call[0] == "items"][-1]
+        client.remote_channels = [{"slug": "composio-blog", "cursor_json": json.dumps(call[2]["cursor"])}]
+        return result, call[1]
+    assert collect("The old pricing includes twenty tools and costs $20 monthly.", "baseline")[0]["normalized"] == 0
+    assert collect("The old pricing includes twenty tools and costs $20 monthly.", "unchanged")[0]["normalized"] == 0
+    _, first = collect("New pricing includes forty tools and costs $10 monthly.", "change1")
+    _, second = collect("New pricing includes sixty tools and costs $5 monthly.", "change2")
+    assert len(first) == len(second) == 1
+    assert first[0]["id"] != second[0]["id"]
+    assert first[0]["external_id"] != second[0]["external_id"]
+    assert first[0]["published_at"] == first[0]["raw_metadata"]["web_diff"]["observed_at"]
+    assert first[0]["raw_metadata"]["date_kind"] == "observed_change"
+    assert "$20" in first[0]["raw_metadata"]["web_diff"]["before_text"]
 
 
 class LocalSuccess:
@@ -421,3 +450,19 @@ def test_failed_report_can_regenerate_unchanged_text(tmp_path, monkeypatch):
         dry_run=False, report_options={"edition_value": "morning"})
     assert first["status"] == "failed"
     assert second["status"] == client.state == "ready"
+
+
+def test_published_edition_skips_before_rebuilding_or_touching_artifact(tmp_path, monkeypatch):
+    from intelligence.cli import operations
+    _, repository = project(tmp_path)
+    client = FakeClient()
+    client.get_report = lambda report_id: {"report": {"report_status": "published", "published_url": "https://example.com"}}
+    monkeypatch.setattr(operations, "build_report", lambda *a, **kw: (_ for _ in ()).throw(AssertionError("must not rebuild")))
+    generated = operations.generate_report(repository, client, command_run_id="repeat-generate",
+        dry_run=False, report_options={"edition_value": "morning", "date_value": "2026-09-06"})
+    published = operations.publish_report(repository, client, command_run_id="repeat-publish",
+        execute=True, push=True, published_url="https://example.com", remote="origin", branch="main",
+        report_options={"edition_value": "morning", "date_value": "2026-09-06"})
+    assert generated["reason"] == published["reason"] == "already_published"
+    assert generated["report_id"] == published["report_id"]
+    assert [call[2]["run_status"] for call in client.calls if call[0] == "update_run"] == ["skipped", "skipped"]

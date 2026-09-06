@@ -128,3 +128,75 @@ pending -> failed | skipped
 ```
 
 Terminal run states are immutable.
+# Candidate enrichment API
+
+`GET /v1/items/:id` returns `{ "item": {...} }` including `content_revision`.
+`GET /v1/reports/input` excludes items used by published morning/midday/evening reports
+by default. Weekly reports and explicit editorial corrections must pass
+`include_reported=true` when they intentionally need previously reported material.
+
+Apply migration `0003_article_enrichment.sql` before deploying this Worker version.
+
+`GET /v1/items/pending-enrichment?since=<ISO>&limit=100&target_id=<optional>`
+returns discovery-only records, including initial baseline discoveries, from enabled
+targets/channels. Default `since` is seven days before now; limit is capped at 500.
+It also recovers recent (72-hour publication window) or undated snippets under 400
+characters and placeholder analyses beginning `公开来源显示`, even when they were
+previously treated as complete. Known old non-discovery articles are not rehydrated.
+Ordering interleaves targets, newest candidate first per target, so a large sitemap
+cannot monopolize the queue. Failed attempts are retried up to three times; rejected
+or ready candidates leave the queue. The returned `content_revision` is the optimistic
+concurrency token. `since` filters discovery retrieval, not event publication: callers
+must reject old articles after reading their actual publication evidence.
+
+Pending analysis defaults to a 72-hour publication window (optional `since`), never
+uses fetch time as publication time, and interleaves targets newest-first. Recent
+baseline items can be recovered only when ready or complete native platform/feed
+content. Native Twitter/X text is accepted; feed bodies require at least 400 characters
+and explicit `content_complete: true` metadata. Failed/rejected or unknown-date items
+cannot enter analysis. `ready` still requires enrichment's evidence validation.
+
+`POST /v1/items/:id/enrichment` requires Bearer and Idempotency-Key headers, with:
+
+```json
+{
+  "expected_revision": 0,
+  "status": "ready",
+  "reason": "Fetched full original article and extracted publication metadata",
+  "title": "Article title",
+  "content_text": "Full article body (at least 200 nonblank characters)",
+  "final_url": "https://example.com/article",
+  "published_at": "2026-09-06T00:00:00Z",
+  "fetched_at": "2026-09-06T01:00:00Z",
+  "tool_name": "configured-scrape-tool",
+  "date_evidence": {
+    "kind": "article_metadata",
+    "value": "2026-09-06T00:00:00Z",
+    "source_url": "https://example.com/article"
+  }
+}
+```
+
+Allowed evidence kinds: `article_metadata`, `article_text`, `feed`, `platform`.
+Optional `publication_precision` is `day` or `second` (default); preserve `day` for
+source dates without a time instead of presenting invented precision to readers.
+These identify source evidence, not a guarantee of factual correctness: the caller
+must extract evidence from the original response and the editor must inspect it.
+The Worker rejects missing evidence, unsupported kinds and future dates relative to
+retrieval, and does not accept a caller-supplied `verified` flag as proof.
+`failed`/`rejected` require only expected revision, status and a nonblank reason.
+
+Each accepted attempt atomically archives original fields and the previous analysis
+in `item_enrichments`, increments `content_revision`, and invalidates old analysis.
+Ready replaces body/title/canonical URL/date on the same item, computes SHA-256 on the
+server, clears discovery/baseline flags, and retains provenance in raw metadata.
+Original discovery URLs and archived fields remain recoverable. No INSERT OR IGNORE
+operation is used for hydration. Revision conflicts return 409.
+
+`POST /v1/analyses/batch` accepts `content_revision` on each analysis; it must match
+the item. Omission means revision zero for compatibility with un-enriched records.
+Clients must carry the revision read alongside the body; stale analysis returns 409.
+
+`GET /v1/coverage?since=<ISO>` returns per-enabled-target discovered, enriched,
+rejected, failed, pending_enrichment and analyzed counts. Default window is seven days.
+Pending includes exhausted failures so incomplete research remains visible to operators.

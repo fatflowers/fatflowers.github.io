@@ -29,6 +29,31 @@ def test_validate_analysis_returns_immutable_contract() -> None:
     assert result.confidence == 0.86
     assert result.topics == ("MCP", "Agent Infrastructure")
     assert result.evidence[0].url == "https://example.com/post"
+    assert result.headline is None
+
+
+def test_headline_round_trips_separately_from_summary() -> None:
+    payload = {**valid_payload(), "headline": "Composio 新增 Agent 工具授权接口"}
+    result = validate_analysis(payload)
+    assert result.to_dict()["headline"] == payload["headline"]
+    assert validate_analysis(result.to_dict()) == result
+    assert result.summary == payload["summary"]
+
+
+@pytest.mark.parametrize("headline", ["", " ", "字" * 61, "新闻\n另一条", 12])
+def test_invalid_editorial_headline_rejected(headline: object) -> None:
+    with pytest.raises(AnalysisValidationError, match="headline"):
+        validate_analysis({**valid_payload(), "headline": headline})
+
+
+def test_generation_schema_requires_headline_but_storage_accepts_legacy() -> None:
+    root = Path(__file__).parents[1]
+    batch_schema = json.loads((root / "schemas/analysis-batch.schema.json").read_text())
+    value = {**valid_payload(), "item_id": "item-1", "content_revision": 0}
+    validator = Draft202012Validator(batch_schema)
+    assert list(validator.iter_errors({"analyses": [value]}))
+    validator.validate({"analyses": [{**value, "headline": "Composio 新增授权接口"}]})
+    assert validate_analysis(valid_payload()).headline is None
 
 
 @pytest.mark.parametrize(
