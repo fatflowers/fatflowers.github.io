@@ -155,6 +155,7 @@ def render_hugo_report(report: Report) -> RenderedReport:
         f"reportType: {_yaml_string(report.edition.value)}",
         f"period: {_yaml_string(report.period)}",
         "generated: true",
+        "isCJKLanguage: true",
         f"sourcesCount: {len(source_urls)}",
         f"hiddenInHomeList: {'false' if weekly else 'true'}",
         f"reportId: {_yaml_string(report.report_id)}",

@@ -1,5 +1,5 @@
 version: 1
-updated_at: "2026-09-06T01:27:00+08:00"
+updated_at: "2026-09-06T11:43:12+08:00"
 
 cloudflare:
   database:
@@ -8,11 +8,13 @@ cloudflare:
     migrations:
       - 0001_initial.sql
       - 0002_baseline_items.sql
+      - 0003_article_enrichment.sql
+      - 0004_analysis_headline.sql
     status: deployed
   worker:
     name: personal-intelligence-api
     url: https://personal-intelligence-api.sunliumin.workers.dev
-    version_id: 76911a3c-d08c-4239-bab7-7fc6f5ec46a6
+    version_id: 767be9d3-b88f-4a2d-b84a-f9ed74e27fc8
     status: deployed
 
 multica:

@@ -55,6 +55,7 @@ def test_render_is_deterministic_and_has_required_front_matter() -> None:
     assert first.relative_path.as_posix() == "content/posts/intelligence/2026-09-05-morning.zh.md"
     assert 'reportType: "morning"' in first.markdown
     assert "sourcesCount: 1" in first.markdown
+    assert "isCJKLanguage: true" in first.markdown
     assert "hiddenInHomeList: true" in first.markdown
     assert "## 30 秒速览" in first.markdown
     assert "## 早报重点" in first.markdown
