@@ -218,3 +218,17 @@ def test_additional_evidence_is_linked_with_its_event() -> None:
     assert "https://example.com/news" in overview
     assert "https://example.com/spec" not in overview
     assert "sourcesCount: 2" in markdown
+
+
+def test_importance_two_daily_signal_is_brief_not_lead() -> None:
+    report = make_report()
+    low = replace(
+        report.signals[0],
+        item_id="item-low",
+        analysis=replace(report.signals[0].analysis, importance=2),
+    )
+    markdown = render_hugo_report(replace(report, signals=(low,))).markdown
+    assert "本期 0 条重点、1 条快讯" in markdown
+    assert "## 早报重点" not in markdown
+    assert "## 一句话快讯" in markdown
+    assert low.analysis.summary in markdown

@@ -35,7 +35,7 @@ class PolicyDecision:
 class ReportPolicy:
     """Deterministic daily and weekly report selection policy."""
 
-    def __init__(self, *, midday_min_importance: int = 4, low_priority_max: int = 2):
+    def __init__(self, *, midday_min_importance: int = 4, low_priority_max: int = 1):
         if not 1 <= midday_min_importance <= 5:
             raise ValueError("midday_min_importance must be between 1 and 5")
         self.midday_min_importance = midday_min_importance
@@ -89,7 +89,7 @@ class ReportPolicy:
                 signal for signal in ordered if signal.analysis.importance > self.low_priority_max
             )
             if not high_value:
-                return PolicyDecision(False, (), ordered, "low_value_deferred_to_evening", RunStatus.SKIPPED)
+                return PolicyDecision(False, (), ordered, "no_publishable_signal", RunStatus.SKIPPED)
             selected = reading_budget(high_value)
             deferred = tuple(signal for signal in ordered if signal not in selected)
             return PolicyDecision(True, selected, deferred, "new_content", RunStatus.SUCCEEDED)

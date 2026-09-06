@@ -718,6 +718,7 @@ def pending_analysis(
     limit: int,
     target_slug: Optional[str],
     channel_slug: Optional[str],
+    since: Optional[str] = None,
 ) -> Dict[str, Any]:
     now = utc_now()
     client.create_run(
@@ -738,6 +739,7 @@ def pending_analysis(
             limit=limit,
             target_id=stable_id("target", target_slug) if target_slug else None,
             channel_id=stable_id("channel", channel_slug) if channel_slug else None,
+            since=since,
         )
     except Exception as exc:
         _fail_run(client, command_run_id, "pending_analysis_query_failed", str(exc))
@@ -898,7 +900,7 @@ def build_report(
     )
     # Allow late-collected, as-yet-unreported events to be useful. Their true
     # event date remains visible and the renderer labels these as catch-up.
-    research_start = start if from_value or edition in {ReportEdition.WEEKLY, ReportEdition.AD_HOC} else (end - timedelta(days=3)).replace(hour=0, minute=0, second=0, microsecond=0)
+    research_start = start if from_value or edition in {ReportEdition.WEEKLY, ReportEdition.AD_HOC} else (end - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0)
     response = client.get_report_input(
         window_start=research_start.isoformat(),
         window_end=end.isoformat(),

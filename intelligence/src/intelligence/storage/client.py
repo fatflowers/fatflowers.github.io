@@ -89,12 +89,13 @@ class WorkerAPIClient:
         limit: int = 100,
         target_id: Optional[str] = None,
         channel_id: Optional[str] = None,
+        since: Optional[str] = None,
     ) -> Dict[str, Any]:
         return self._request(
             "GET",
             self._path(
                 "/v1/items/pending-analysis",
-                {"limit": limit, "target_id": target_id, "channel_id": channel_id},
+                {"limit": limit, "target_id": target_id, "channel_id": channel_id, "since": since},
             ),
         )
 

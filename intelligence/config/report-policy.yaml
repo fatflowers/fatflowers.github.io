@@ -57,6 +57,11 @@ carry_forward:
   importance_below: 4
   never_duplicate_published_items: true
 
+daily_selection:
+  minimum_importance: 2
+  importance_2_section: briefs_only
+  unreported_lookback_days: 7
+
 validation_gates:
   - id: public-sources-only
     description: 所有引用必须是无需登录即可访问的公共来源

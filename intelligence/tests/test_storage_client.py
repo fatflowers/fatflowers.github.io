@@ -28,7 +28,7 @@ def test_all_worker_read_routes_use_expected_query_contracts():
     calls = recorder(client)
 
     client.get_due_channels(limit=7, now="2026-09-06T00:00:00Z", target_id="target")
-    client.get_pending_analysis(limit=8, target_id="target", channel_id="channel")
+    client.get_pending_analysis(limit=8, target_id="target", channel_id="channel", since="2026-09-01T00:00:00Z")
     client.get_report_input(
         window_start="2026-09-05T00:00:00Z",
         window_end="2026-09-06T00:00:00Z",
@@ -41,6 +41,7 @@ def test_all_worker_read_routes_use_expected_query_contracts():
     assert "target_id=target" in calls[0]["path"]
     assert calls[1]["path"].startswith("/v1/items/pending-analysis?")
     assert "channel_id=channel" in calls[1]["path"]
+    assert "since=2026-09-01T00%3A00%3A00Z" in calls[1]["path"]
     assert calls[2]["path"].startswith("/v1/reports/input?")
     assert "min_importance=4" in calls[2]["path"]
     assert calls[3]["path"].startswith("/v1/audit-events?")

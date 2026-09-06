@@ -49,10 +49,10 @@ def test_midday_selects_only_four_star_or_higher() -> None:
     assert [item.item_id for item in decision.deferred] == ["1"]
 
 
-def test_daily_low_value_only_is_deferred() -> None:
+def test_daily_importance_two_is_published() -> None:
     decision = ReportPolicy().decide(ReportEdition.MORNING, [signal("1", 2)])
-    assert decision.run_status == "skipped"
-    assert decision.deferred[0].item_id == "1"
+    assert decision.should_generate
+    assert decision.selected[0].item_id == "1"
 
 
 def test_weekly_orders_signals_by_importance() -> None:
@@ -72,3 +72,4 @@ def test_daily_drops_low_value_and_caps_reading_budget() -> None:
     assert len(decision.selected) == 12
     assert len(decision.deferred) == 4
     assert all(item.analysis.importance >= 3 for item in decision.selected)
+    assert decision.deferred[-1].analysis.importance == 2

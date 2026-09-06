@@ -4,7 +4,7 @@
 
 执行仓库日报编辑规则：最多 3 个重点与 9 条快讯，每条紧邻原文。无可核验日期或正文、目录页、旧闻和模板化分析不得出刊；没有合格新事件则跳过。
 
-1. 完整执行 `analyze-pending.md` 的逐目标发现、正文补抓及分析，核对覆盖缺口。近三个日历日内未在日报发布的合格补读仍需达到午报阈值，并保留真实日期和“近期补读”标记。
+1. 完整执行 `analyze-pending.md` 的逐目标发现、正文补抓及分析，核对覆盖缺口。日报补漏时把七天前的时间作为 `research run --since <ISO>` 和 `analyze pending --since <ISO>` 的共同 cutoff。近七个日历日内未在日报发布的合格补读仍需达到午报阈值，并保留真实日期和“近期补读”标记。午报继续保持 importance>=4，不应用早晚报的放宽规则。
 2. 执行 `intelligence/scripts/intelctl-secure report generate --edition midday`。
 3. 若无 importance ≥ 4 的未发布条目，将 Run 标记 `skipped`，原因写 `importance_threshold_not_met`，保持静默且不创建空文章。
 4. 若达到阈值，完成 evidence、敏感信息、Front Matter、Hugo build、Git diff 和变更路径检查。

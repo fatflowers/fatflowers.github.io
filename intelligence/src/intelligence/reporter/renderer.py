@@ -127,8 +127,13 @@ def render_hugo_report(report: Report) -> RenderedReport:
         seen_urls.update(urls)
         if len(selected) == MAX_REPORT_SIGNALS:
             break
-    primary_signals = tuple(selected[:3])
-    briefs = tuple(selected[3:MAX_REPORT_SIGNALS])
+    if report.edition in {ReportEdition.WEEKLY, ReportEdition.AD_HOC}:
+        primary_signals = tuple(selected[:3])
+    else:
+        primary_signals = tuple(signal for signal in selected if signal.analysis.importance >= 3)[:3]
+    primary_ids = {signal.item_id for signal in primary_signals}
+    briefs = tuple(signal for signal in selected if signal.item_id not in primary_ids)
+    overview_signals = tuple(selected[:3])
     tags = sorted(
         {
             value
@@ -168,12 +173,13 @@ def render_hugo_report(report: Report) -> RenderedReport:
     if any(s.published_at < report.window_start for s in selected):
         body.extend(["标注“近期补读”的内容在本期窗口之前发布；本次按实际日期补充收录，不当作今日新消息。", ""])
     body.extend(["## 30 秒速览", ""])
-    for signal in primary_signals:
+    for signal in overview_signals:
         label = "【近期补读】" if signal.published_at < report.window_start else ""
         body.append(f"- {label}{_headline(signal)}。{_source_links(signal, primary_only=True)}")
-    body.extend(["", f"## {_EDITION_LABEL[report.edition]}重点", ""])
-    for signal in primary_signals:
-        body.extend(_signal_markdown(signal, report))
+    if primary_signals:
+        body.extend(["", f"## {_EDITION_LABEL[report.edition]}重点", ""])
+        for signal in primary_signals:
+            body.extend(_signal_markdown(signal, report))
 
     if briefs:
         body.extend(["## 一句话快讯", ""])

@@ -183,6 +183,7 @@ def build_parser() -> argparse.ArgumentParser:
     analyze_pending.add_argument("--limit", type=int, default=100)
     analyze_pending.add_argument("--target")
     analyze_pending.add_argument("--channel")
+    analyze_pending.add_argument("--since", help="ISO publication cutoff; default last 72 hours")
     analyze_ingest = analyze_commands.add_parser("ingest")
     analyze_ingest.add_argument("--input", type=Path, help="JSON file; omit or use - for stdin")
     analyze_ingest.add_argument("--run-id", help="pipeline run returned by analyze pending")
@@ -482,6 +483,7 @@ def execute(args: argparse.Namespace) -> Any:
                 limit=limit,
                 target_slug=target,
                 channel_slug=channel,
+                since=args.since if args.analyze_command == "pending" else None,
             )
         if args.analyze_command is None:
             raise CatalogError("use analyze pending, analyze --pending, or analyze ingest")
