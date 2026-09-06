@@ -104,6 +104,11 @@ def test_sources_page_reads_current_catalog_and_navigation(tmp_path: Path) -> No
                 binding = channel["tool_binding"]
                 assert f"AIsa · {registry['tools'][binding]['tool_name']}" in html
                 assert binding in html
+                price = registry["tools"][binding].get("pricing", {}).get("usd", 0)
+                if price:
+                    assert f"${price}/{'次' if language else 'request'}" in html
+        assert "source-row-price" in html
+        assert "$0/" not in html
         assert html.count('data-layout=compact-cards') + html.count('data-layout="compact-cards"') == len(catalog['targets'])
         assert sum(c["data-enabled"] == "true" for c in page.channels) == active
         assert all(channel["url"] in page.links for channel in channels)

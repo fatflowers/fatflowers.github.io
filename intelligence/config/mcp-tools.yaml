@@ -144,6 +144,11 @@ tools:
       version: 1
       verified_at: "2026-09-06T00:27:05+08:00"
       fixture: inline-shape:data,success
+    pricing:
+      type: per_request
+      usd: 0.005
+      source: aisa-runtime-overlay
+      verified_at: "2026-09-06T23:29:47+08:00"
 
   firecrawl-search-v1:
     status: schema_verified
@@ -184,6 +189,11 @@ tools:
       version: 1
       verified_at: null
       fixture: null
+    pricing:
+      type: per_request
+      usd: 0.0029
+      source: aisa-runtime-overlay
+      verified_at: "2026-09-06T23:29:47+08:00"
 
   youtube-video-info-v1:
     status: schema_verified
