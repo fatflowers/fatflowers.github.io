@@ -8,7 +8,9 @@ function since(url: URL): string {
 export async function pendingEnrichment({env, url}: AuthContext): Promise<ApiResponse> {
   const target = url.searchParams.get('target_id');
   const result = await env.DB.prepare(`WITH candidates AS (
-    SELECT i.*, ROW_NUMBER() OVER (PARTITION BY i.target_id ORDER BY i.published_at DESC, i.fetched_at DESC, i.id) AS target_rank
+    SELECT i.*, ROW_NUMBER() OVER (PARTITION BY i.target_id ORDER BY
+      CASE WHEN json_extract(i.raw_metadata_json,'$.discovered_from') IS NOT NULL THEN 0 ELSE 1 END,
+      i.fetched_at DESC, i.published_at DESC, i.id) AS target_rank
     FROM items i JOIN targets t ON t.id=i.target_id JOIN channels c ON c.id=i.channel_id
     WHERE t.enabled=1 AND c.enabled=1 AND julianday(i.fetched_at)>=julianday(?)
       AND (COALESCE(json_extract(i.raw_metadata_json,'$.discovery_only'),0)=1 OR (

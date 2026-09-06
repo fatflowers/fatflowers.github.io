@@ -37,7 +37,17 @@ export async function getReportInput({ env, url }: AuthContext): Promise<ApiResp
       AND a.importance >= ?
       AND (? = 1 OR NOT EXISTS (
         SELECT 1 FROM report_items ri JOIN reports r ON r.id=ri.report_id
-        WHERE ri.item_id=i.id AND r.report_status='published' AND r.edition IN ('morning','midday','evening')
+        JOIN items prior ON prior.id=ri.item_id
+        WHERE r.report_status='published' AND r.edition IN ('morning','midday','evening')
+          AND (ri.item_id=i.id OR (
+            NULLIF(i.canonical_url, '') = prior.canonical_url
+            AND NOT (
+              COALESCE(json_extract(i.raw_metadata_json, '$.date_kind'), '') = 'observed_change'
+              AND length(COALESCE(json_extract(i.raw_metadata_json, '$.web_diff.after_hash'), '')) = 64
+              AND json_extract(i.raw_metadata_json, '$.web_diff.after_hash') !=
+                  COALESCE(json_extract(prior.raw_metadata_json, '$.web_diff.after_hash'), '')
+            )
+          ))
       ))
       AND (? IS NULL OR i.target_id = ?)
       AND (? IS NULL OR EXISTS (

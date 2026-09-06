@@ -46,6 +46,13 @@ test('baseline discovery candidates are queued fairly across targets and bounded
   const newer=await call(db,'/v1/items/pending-enrichment?since=2026-09-07T00:00:00Z');
   assert.equal((await newer.json() as any).items.length,0);
 });
+test('new article links outrank dated baseline backlog without starving other targets',async()=>{
+  const db=new SqliteD1();
+  db.db.exec(`UPDATE items SET published_at='2026-09-05T23:00:00Z' WHERE id='a1';
+    UPDATE items SET raw_metadata_json='{"discovery_only":true,"discovered_from":"https://example.com/blog"}' WHERE id='a2';`);
+  const response=await call(db,'/v1/items/pending-enrichment?since=2026-09-05T00:00:00Z&limit=2');
+  assert.deepEqual((await response.json() as any).items.map((i:any)=>i.id),['a2','b1']);
+});
 test('hydration replaces same item, archives discovery, enters analysis queue, and retry is idempotent',async()=>{
   const db=new SqliteD1();
   assert.equal((await call(db,'/v1/items/a1/enrichment',payload)).status,200);
