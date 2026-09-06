@@ -166,7 +166,7 @@ def render_hugo_report(report: Report) -> RenderedReport:
 
     body = [f"本期 {len(primary_signals)} 条重点" + (f"、{len(briefs)} 条快讯。" if briefs else "。"), ""]
     if any(s.published_at < report.window_start for s in selected):
-        body.extend(["标注“近期补读”的内容在本期窗口之前发布、此前未收入日报；保留原始日期，不当作今日新消息。", ""])
+        body.extend(["标注“近期补读”的内容在本期窗口之前发布；本次按实际日期补充收录，不当作今日新消息。", ""])
     body.extend(["## 30 秒速览", ""])
     for signal in primary_signals:
         label = "【近期补读】" if signal.published_at < report.window_start else ""

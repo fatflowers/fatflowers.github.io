@@ -1,0 +1,10 @@
+.main:has(.post-single:not(.sources-page)) {
+  width: calc(80vw + var(--gap) * 2);
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .main:has(.post-single:not(.sources-page)) {
+    width: 100%;
+  }
+}
