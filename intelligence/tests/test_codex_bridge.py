@@ -130,7 +130,7 @@ def test_invalid_model_never_starts_subprocess(monkeypatch):
 
 def test_partial_success_kept_if_other_call_times_out(monkeypatch):
     monkeypatch.setattr("intelligence.mcp.codex_bridge._run_bounded", lambda *args: (event(), "capture_timeout"))
-    calls = [*CALLS, {"call_id": "second", "tool_name": "post_firecrawl_map", "arguments": {"url": "https://example.com"}}]
+    calls = [*CALLS, {"call_id": "second", "tool_name": "get_twitter_user_tweet_timeline", "arguments": {"userId": "1"}}]
     result = capture_batch(calls)
     assert "article-1" in result.payloads
     assert result.diagnostics == {"second": "capture_timeout"}

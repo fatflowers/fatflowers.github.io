@@ -18,7 +18,7 @@ from typing import Any
 from intelligence.model_config import resolve_codex_model
 
 ALLOWED_TOOLS = frozenset({
-    "post_firecrawl_scrape", "post_firecrawl_map", "get_twitter_user_tweet_timeline",
+    "post_firecrawl_scrape", "get_twitter_user_tweet_timeline",
 })
 
 

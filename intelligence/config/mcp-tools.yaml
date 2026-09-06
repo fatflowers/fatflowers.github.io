@@ -145,25 +145,6 @@ tools:
       verified_at: "2026-09-06T00:27:05+08:00"
       fixture: inline-shape:data,success
 
-  firecrawl-site-map-v1:
-    status: verified
-    tool_name: post_firecrawl_map
-    channel_types: [blog, documentation, web_diff]
-    description: 发现公开站点 URL；正文仍由 scrape 工具获取
-    input_template:
-      url: "{{ channel.url }}"
-      limit: "{{ channel.config.map_limit }}"
-    output_adapter: firecrawl_urls_v1
-    pagination:
-      type: none
-    limitations:
-      returns_page_content: false
-      max_limit: 100000
-    contract:
-      version: 1
-      verified_at: "2026-09-06T00:27:05+08:00"
-      fixture: inline-shape:id,links[url,title,description],success
-
   firecrawl-search-v1:
     status: schema_verified
     tool_name: post_firecrawl_search
