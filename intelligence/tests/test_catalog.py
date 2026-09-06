@@ -127,8 +127,11 @@ def test_project_catalog_validates_when_present():
     project_catalog = Path(__file__).parents[1] / "config" / "catalog.yaml"
     if project_catalog.exists():
         catalog = CatalogRepository(project_catalog, SCHEMA).load()
-        assert len(catalog.targets) == 5
-        assert sum(len(target.channels) for target in catalog.targets) == 32
+        assert len(catalog.targets) == 9
+        assert sum(len(target.channels) for target in catalog.targets) == 38
+        for slug in ('grok', 'manus', 'deepseek', 'openrouter'):
+            target = next(t for t in catalog.targets if t.slug == slug)
+            assert target.enabled and all(c.enabled for c in target.channels)
         channels = {channel.slug: channel for target in catalog.targets for channel in target.channels}
         for slug in ('openai-engineering', 'openai-developer-blog', 'anthropic-engineering', 'claude-blog'):
             assert channels[slug].enabled and channels[slug].channel_type == 'blog'

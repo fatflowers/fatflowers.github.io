@@ -562,3 +562,129 @@ targets:
         tool_binding: reddit-subreddit-v1
         config:
           subreddit: mcp
+
+  - slug: grok
+    name: Grok / xAI
+    type: product
+    description: Grok 模型、开发者 API 与多模态产品动态
+    priority: high
+    enabled: true
+    tags: [model-layer, agent-platform, developer-platform]
+    channels:
+      - slug: grok-news
+        name: Official News
+        type: blog
+        collector: mcp
+        url: https://x.ai/news
+        interval_minutes: 60
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, product-update]
+        tool_binding: firecrawl-page-scrape-v1
+        config:
+          article_path_prefixes: [/news/]
+        fallbacks:
+          - {collector: http}
+      - slug: grok-api-release-notes
+        name: API Release Notes
+        type: changelog
+        collector: mcp
+        url: https://docs.x.ai/developers/release-notes
+        interval_minutes: 60
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, release, documentation]
+        tool_binding: firecrawl-page-scrape-v1
+        config:
+          diff: true
+        fallbacks:
+          - {collector: http}
+
+  - slug: manus
+    name: Manus
+    type: product
+    description: 通用 Agent、工具连接与任务自动化产品动态
+    priority: high
+    enabled: true
+    tags: [agent-platform, tool-integration, ai-engineering]
+    channels:
+      - slug: manus-blog
+        name: Official Blog
+        type: blog
+        collector: mcp
+        url: https://manus.im/blog
+        interval_minutes: 60
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, product-update, ai-engineering]
+        tool_binding: firecrawl-page-scrape-v1
+        config:
+          article_path_prefixes: [/blog/]
+        fallbacks:
+          - {collector: http}
+
+  - slug: deepseek
+    name: DeepSeek
+    type: company
+    description: DeepSeek 模型发布、开放研究与开发者 API 更新
+    priority: high
+    enabled: true
+    tags: [model-layer, developer-platform, open-source]
+    channels:
+      - slug: deepseek-news
+        name: Research and News
+        type: blog
+        collector: mcp
+        url: https://deepseek.com/en/news/
+        interval_minutes: 60
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, product-update, open-source]
+        tool_binding: firecrawl-page-scrape-v1
+        config:
+          article_path_prefixes: [/en/news/]
+        fallbacks:
+          - {collector: http}
+      - slug: deepseek-api-updates
+        name: API Change Log
+        type: changelog
+        collector: mcp
+        url: https://api-docs.deepseek.com/updates
+        interval_minutes: 60
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, release, documentation]
+        tool_binding: firecrawl-page-scrape-v1
+        config:
+          diff: true
+        fallbacks:
+          - {collector: http}
+
+  - slug: openrouter
+    name: OpenRouter
+    type: company
+    description: 多模型路由、API 平台、模型可用性与工程实践
+    priority: high
+    enabled: true
+    tags: [agent-infrastructure, developer-platform, tool-integration]
+    channels:
+      - slug: openrouter-blog
+        name: Official Blog
+        type: blog
+        collector: mcp
+        url: https://openrouter.ai/blog/
+        interval_minutes: 60
+        priority: high
+        enabled: true
+        tier: core
+        tags: [official, product-update, ai-engineering]
+        tool_binding: firecrawl-page-scrape-v1
+        config:
+          article_path_prefixes: [/blog/]
+        fallbacks:
+          - {collector: http}
