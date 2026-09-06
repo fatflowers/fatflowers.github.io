@@ -58,6 +58,22 @@ def test_git_publisher_rejects_paths_outside_allowlist(tmp_path: Path) -> None:
         GitPublisher(tmp_path).publish((Path("hugo.toml"),), message="bad")
 
 
+def test_publisher_blocks_unrelated_snapshot_commits_before_staging(tmp_path: Path) -> None:
+    commands = []
+
+    def runner(command, **kwargs):
+        commands.append(tuple(command))
+        output = ".claude/settings.json\0" if command[1] == "log" else ""
+        return subprocess.CompletedProcess(command, 0, output, "")
+
+    with pytest.raises(RuntimeError, match="outgoing commit outside publish allowlist"):
+        GitPublisher(tmp_path, runner=runner).publish(
+            (Path("content/posts/intelligence/report.zh.md"),),
+            message="publish", dry_run=False, push=True,
+        )
+    assert not any(command[1] in {"add", "commit", "push"} for command in commands)
+
+
 def test_publication_service_moves_draft_to_ready_then_dry_runs(tmp_path: Path) -> None:
     report = make_report()
     rendered = render_hugo_report(report)

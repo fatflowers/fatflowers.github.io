@@ -56,6 +56,9 @@ class GitPublisher:
         if dry_run:
             return GitPublishResult(True, False, None, normalized, tuple(commands))
 
+        if push:
+            self._check_outgoing_commits(remote, branch)
+
         for command in commands:
             completed = self.runner(
                 command,
@@ -77,3 +80,21 @@ class GitPublisher:
         if completed.returncode:
             raise RuntimeError((completed.stderr or "failed to read commit SHA").strip())
         return GitPublishResult(False, push, completed.stdout.strip(), normalized, tuple(commands))
+
+    def _check_outgoing_commits(self, remote: str, branch: str) -> None:
+        """Explicit staging does not exclude earlier worktree snapshot commits."""
+        for command in (
+            ("git", "fetch", "--", remote, branch),
+            ("git", "log", "--format=", "--name-only", "--diff-merges=first-parent",
+             "-z", f"{remote}/{branch}..HEAD", "--"),
+        ):
+            result = self.runner(command, cwd=self.repository, capture_output=True,
+                                 text=True, check=False)
+            if result.returncode:
+                raise RuntimeError("cannot verify outgoing publication commits")
+        for name in result.stdout.split("\0"):
+            name = name.strip()
+            if name and not name.startswith((
+                "content/posts/intelligence/", "static/images/intelligence/"
+            )):
+                raise RuntimeError(f"outgoing commit outside publish allowlist: {name}")

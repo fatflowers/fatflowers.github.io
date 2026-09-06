@@ -6,6 +6,7 @@ project:
   name: 个人信息站点
   repository: fatflowers/fatflowers.github.io
   working_directory: /Users/simon/Documents/GitHub/fatflowers.github.io
+  execution_mode: in_place
   runtime_selector:
     platform: macOS
     host_role: mac-mini
