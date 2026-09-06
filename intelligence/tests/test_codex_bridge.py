@@ -73,8 +73,9 @@ def test_rejects_duplicate_correlations():
 
 def test_subprocess_uses_explicit_model_no_shell_and_never_returns_prose(monkeypatch):
     def run(argv, prompt, timeout, max_bytes):
-        assert argv[argv.index("--model") + 1] == "gpt-5.6-sol"
+        assert argv[argv.index("--model") + 1] == "gpt-5.6-terra"
         assert 'model_provider="openai"' in argv
+        assert 'model_reasoning_effort="medium"' in argv
         assert "--json" in argv and "--ephemeral" in argv
         assert CALLS[0]["tool_name"] in prompt
         return json.dumps({"type": "item.completed", "item": {"type": "agent_message", "text": "OK"}}), None
@@ -89,6 +90,27 @@ def test_bounded_process_timeout_and_output_limit():
     output, failure = _run_bounded([sys.executable, "-c", "print('x' * 100000)"], "", 2, 4096)
     assert failure == "capture_output_limit"
     assert len(output) <= 4096
+
+
+def test_explicit_mcp_model_and_effort_reach_subprocess(monkeypatch):
+    monkeypatch.setenv("INTELLIGENCE_MCP_MODEL", "gpt-5.6-luna")
+    monkeypatch.setenv("INTELLIGENCE_MCP_REASONING_EFFORT", "low")
+    def run(argv, *args):
+        assert argv[argv.index("--model") + 1] == "gpt-5.6-luna"
+        assert 'model_reasoning_effort="low"' in argv
+        assert 'model_provider="openai"' in argv
+        return event(), None
+    monkeypatch.setattr("intelligence.mcp.codex_bridge._run_bounded", run)
+    assert capture_batch(CALLS).payloads
+
+
+def test_invalid_model_never_starts_subprocess(monkeypatch):
+    monkeypatch.setenv("INTELLIGENCE_MCP_MODEL", "")
+    def forbidden(*args):
+        pytest.fail("invalid configuration must not start Codex")
+    monkeypatch.setattr("intelligence.mcp.codex_bridge._run_bounded", forbidden)
+    with pytest.raises(ValueError, match="INTELLIGENCE_MCP_MODEL"):
+        capture_batch(CALLS)
 
 
 def test_partial_success_kept_if_other_call_times_out(monkeypatch):

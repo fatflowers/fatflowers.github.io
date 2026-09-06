@@ -1,0 +1,7 @@
+{{- /* Only emit public HTTP(S) links. Never expose query credentials or userinfo. */ -}}
+{{- $url := replaceRE `[?#].*$` "" (. | default "") -}}
+{{- $public := "" -}}
+{{- if and (findRE `^https?://[A-Za-z0-9](?:[A-Za-z0-9-]*\.)+[A-Za-z]{2,}(?::[0-9]+)?(?:/[^\s]*)?$` $url) (not (findRE `(?i)^https?://[^/]+\.(?:local|internal|localhost)(?::|/|$)` $url)) -}}
+  {{- $public = $url -}}
+{{- end -}}
+{{- return $public -}}

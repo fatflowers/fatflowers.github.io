@@ -14,6 +14,8 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
+from intelligence.model_config import resolve_codex_model
+
 ALLOWED_TOOLS = frozenset({
     "post_firecrawl_scrape", "post_firecrawl_map", "get_twitter_user_tweet_timeline",
 })
@@ -199,7 +201,8 @@ def capture_batch(
     )
     if search_id:
         prompt += " Use existing search_id " + json.dumps(search_id) + "; no discovery needed."
-    argv = [executable, "exec", "--model", "gpt-5.6-sol", "-c", 'model_provider="openai"',
+    model_config = resolve_codex_model(role="mcp")
+    argv = [executable, "exec", *model_config.argv(),
             "--approve-for-me", "--ephemeral", "--json", "-"]
     try:
         events, failure = _run_bounded(argv, prompt, timeout, max_bytes)

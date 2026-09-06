@@ -69,6 +69,11 @@ defaultContentLanguageInSubdir = false
     weight = 2
 
   [[languages.en.menus.main]]
+    name = "Sources"
+    url = "/sources/"
+    weight = 3
+
+  [[languages.en.menus.main]]
     name = "Cat"
     url = "/tags/cat"
     weight = 3
@@ -125,6 +130,11 @@ defaultContentLanguageInSubdir = false
     name = "情报报告"
     url = "/zh/categories/intelligence"
     weight = 3
+
+  [[languages.zh.menus.main]]
+    name = "信息源"
+    url = "/zh/sources/"
+    weight = 4
 
   [[languages.zh.menus.main]]
     name = "猫咪"

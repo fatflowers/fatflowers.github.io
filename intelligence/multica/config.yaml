@@ -17,12 +17,11 @@ agent:
   instructions_file: intelligence/multica/agent-instructions.md
   skill_directory: intelligence/multica/skill
   access: only_me
-  model: gpt-5.6-sol
+  model: gpt-5.6-terra
+  thinking_level: medium
   custom_args:
     - -c
     - 'model_provider="openai"'
-    - -c
-    - 'model="gpt-5.6-sol"'
 
 autopilots:
   - id: collect-due
@@ -64,5 +63,7 @@ autopilots:
 desired_state: configured
 actual_state: deployed
 notes:
+  - agent.model 与 agent.thinking_level 是项目模型配置来源，嵌套 MCP 调用读取相同配置；变更后需同步 Multica Cloud Agent，不会自动继承 Cloud 界面的独立修改。
+  - 不在 custom_args 重复设置 model 或 model_reasoning_effort，避免覆盖模型字段。嵌套调用仅允许显式 INTELLIGENCE_CODEX_MODEL / INTELLIGENCE_CODEX_REASONING_EFFORT 及 MCP 专用 INTELLIGENCE_MCP_MODEL / INTELLIGENCE_MCP_REASONING_EFFORT 环境变量覆盖；默认不启用，不自动回退到更昂贵模型。
   - 该文件是可迁移的声明，不保存 Multica 资源 ID 或凭据。
   - 平台返回的非敏感 ID 与验收证据记录在 deployment-status.yaml。
