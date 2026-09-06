@@ -60,6 +60,9 @@ def test_public_source_gate_rejects_private_source(tmp_path: Path) -> None:
         "Authorization: Bearer abcdefghijklmnopqrstuvwxyz",
         "api_key=abcdefghijklmnopqrstuv",
         "https://127.0.0.1:8787/private",
+        "sk-" + "A1b2" * 8,
+        "api_key=sk-proj-" + "A1b2" * 12,
+        "https://example.com/?key=sk-" + "A1b2" * 8,
     ],
 )
 def test_secrets_gate_rejects_sensitive_content(tmp_path: Path, secret: str) -> None:
@@ -73,6 +76,13 @@ def test_front_matter_gate_rejects_missing_required_field(tmp_path: Path) -> Non
     markdown = ctx.rendered.markdown.replace('reportType: "morning"\n', "")
     ctx = replace(ctx, rendered=replace(ctx.rendered, markdown=markdown))
     assert FrontMatterGate().check(ctx).passed is False
+
+
+def test_secrets_gate_allows_sk_inside_an_ordinary_url_word(tmp_path: Path) -> None:
+    ctx = context(tmp_path)
+    markdown = ctx.rendered.markdown + "\n[Report](https://example.com/risk-progress-and-capability-updates)\n"
+    ctx = replace(ctx, rendered=replace(ctx.rendered, markdown=markdown))
+    assert SecretsGate().check(ctx).passed
 
 
 def test_hugo_gate_reports_build_failure(tmp_path: Path) -> None:

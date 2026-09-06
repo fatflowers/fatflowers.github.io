@@ -87,7 +87,7 @@ class SecretsGate:
         ("cookie header", re.compile(r"(?i)(?:set-)?cookie\s*:\s*[^\n]{8,}")),
         ("generic secret", re.compile(r"(?i)(?:api[_-]?key|client[_-]?secret|access[_-]?token)\s*[:=]\s*['\"]?[A-Za-z0-9._~+/-]{12,}")),
         ("GitHub token", re.compile(r"gh[pousr]_[A-Za-z0-9]{20,}")),
-        ("OpenAI key", re.compile(r"sk-[A-Za-z0-9_-]{20,}")),
+        ("OpenAI key", re.compile(r"(?<![A-Za-z0-9_])sk-[A-Za-z0-9_-]{20,}")),
         ("local URL", re.compile(r"https?://(?:localhost|127\.0\.0\.1|0\.0\.0\.0)(?::\d+)?", re.I)),
     )
 
