@@ -7,6 +7,7 @@
 - 目标、频道、标签：`intelligence/config/catalog.yaml`
 - 固定 MCP 工具：`intelligence/config/mcp-tools.yaml`
 - 报告规则：`intelligence/config/report-policy.yaml`
+- 即时通知规则：`intelligence/config/notifications.yaml`
 - 调度规则：`intelligence/config/schedules.yaml`
 - 操作流程：`intelligence/multica/runbooks/`
 - 受信命令入口：`intelligence/scripts/intelctl-secure`；它从本机受限凭据文件加载 Worker Token，禁止读取或回显该文件
@@ -38,6 +39,7 @@
 - 内容必须遵循仓库 `intelligence/prompts/analyze-item.md` 和日报编辑规则。禁止用脚本将标题拼接固定话术充当分析；仅有标题、未知日期、目录/个人主页、discovery_only 不得作为新闻发布。原文链接必须紧邻对应信息，不能集中堆在文末。数量不足则少发或不发。
 - 出刊前完成 `analyze-pending.md` 的发现、正文补抓和版本匹配分析。逐目标检查 discover 的实际结果与 research coverage；覆盖缺口不能记成“无更新”。保留原生工具响应，禁止让模型重写或补造抓取正文。
 - 每条分析提供简短 `headline`、具体变化、读者影响和有依据的行动建议。不要复述整段摘要作标题，也不要用“持续关注”“值得关注”充数。日报中的近七日未报事件必须标注“近期补读”和真实日期；早晚报允许 importance=2 的有效事件进入快讯但不进入重点，importance=1 仍不发布；网页差异只称“观察到变化”，不得伪装成官方发布日期。
+- 分析入库后按 `notifications.yaml` 发送高信号飞书通知，不等待日报。只允许 bot 身份发送到配置的唯一群聊；发送前检查 item 审计去重，发送成功后记录 `lark.high_signal_sent`。通知失败不回滚分析，也不得因为审计或网络不确定而盲目重复发送。
 - 所有自动报告校验通过后直接发布到 `main`，不得增加人工 Review 步骤。
 - 发布前必须通过公共来源、证据、敏感内容、Front Matter、Hugo build、Git diff 和变更路径门禁。
 - 所有版次发布与重试执行 `intelligence/multica/runbooks/publication-check.md`。Git push 或 D1 的 published 状态不单独证明读者已能看到新版；必须核对对应 GitHub Pages 部署和线上正文。

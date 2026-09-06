@@ -1,0 +1,22 @@
+version: 1
+timezone: Asia/Shanghai
+
+high_signal_lark:
+  enabled: true
+  delivery_stage: post_analysis
+  identity: bot
+  chat_id: oc_6a65bd218e5dd85031c2d04814de54e1
+  minimum_importance: 4
+  require_evidence: true
+  require_verified_publication_date: true
+  suppress_if_recently_published: true
+  audit_action: lark.high_signal_sent
+  retry_limit: 2
+  message_fields:
+    - headline
+    - target
+    - published_at
+    - summary
+    - why_it_matters
+    - primary_source_url
+
