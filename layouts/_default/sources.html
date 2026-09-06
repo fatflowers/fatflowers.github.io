@@ -13,7 +13,7 @@
     <h1 class="post-title">{{ .Title }}</h1>
     <p class="post-description">{{ .Description }}</p>
   </header>
-  <div class="post-content sources-intro">{{ .Content }}</div>
+  <details class="sources-about"><summary>{{ if $zh }}配置说明与更新方式{{ else }}About this configuration snapshot{{ end }}</summary><div class="post-content sources-intro">{{ .Content }}</div></details>
   <div class="sources-summary" aria-label="{{ if $zh }}配置统计{{ else }}Configuration totals{{ end }}">
     <span><strong>{{ len $catalog.targets }}</strong> {{ if $zh }}个目标{{ else }}targets{{ end }}</span>
     <span><strong>{{ $total }}</strong> {{ if $zh }}个频道{{ else }}channels{{ end }}</span>
@@ -40,8 +40,10 @@
         <h2>{{ .name }}</h2>
         <span class="source-status {{ if .enabled }}is-enabled{{ end }}">{{ if .enabled }}{{ if $zh }}目标已启用{{ else }}Target enabled{{ end }}{{ else }}{{ if $zh }}目标未启用{{ else }}Target disabled{{ end }}{{ end }}</span>
       </header>
+      <details class="source-target-info"><summary>{{ if $zh }}目标说明与标签{{ else }}Description and tags{{ end }}</summary>
       <p class="source-description">{{ .description }}</p>
       <ul class="source-tags" aria-label="{{ if $zh }}目标标签{{ else }}Target tags{{ end }}">{{ range .tags }}<li>{{ if $zh }}{{ index $tags . | default . }}{{ else }}{{ . }}{{ end }}</li>{{ end }}</ul>
+      </details>
       <div class="source-channels">
         {{ range .channels }}
         {{- $active := and $target.enabled .enabled -}}
@@ -49,10 +51,16 @@
         {{- range .tags }}{{ $channelTags = $channelTags | append (printf "%s %s" . (index $tags . | default .)) }}{{ end -}}
         {{- $publicURL := partial "source-public-url.html" .url -}}
         <article class="source-channel" data-enabled="{{ $active }}" data-search="{{ .name }} {{ .type }} {{ .collector }} {{ delimit $channelTags " " }} {{ $publicURL }}">
-          <div class="source-channel-heading">
-            <h3>{{ if $publicURL }}<a href="{{ $publicURL }}" rel="noopener noreferrer">{{ .name }} <span aria-hidden="true">↗</span></a>{{ else }}{{ .name }}{{ end }}</h3>
+          <details class="source-details">
+          <summary class="source-channel-heading" title="{{ if $zh }}展开详细配置{{ else }}Expand configuration{{ end }}">
+            <span class="source-name">{{ if $publicURL }}<a href="{{ $publicURL }}" rel="noopener noreferrer">{{ .name }} <span aria-hidden="true">↗</span></a>{{ else }}{{ .name }}{{ end }}</span>
+            <span class="source-row-type" title="{{ if $zh }}频道类型{{ else }}Channel type{{ end }}">{{ .type }}</span>
+            <span class="source-row-collector" title="{{ if $zh }}采集方式{{ else }}Collector{{ end }}">{{ .collector }}</span>
+            <span class="source-row-interval" title="{{ if $zh }}配置间隔{{ else }}Configured interval{{ end }}">{{ .interval_minutes }} {{ if $zh }}分{{ else }}min{{ end }}</span>
             <span class="source-status {{ if $active }}is-enabled{{ end }}">{{ if $active }}{{ if $zh }}已启用{{ else }}Enabled{{ end }}{{ else }}{{ if $zh }}未启用{{ else }}Disabled{{ end }}{{ end }}</span>
-          </div>
+            <span class="source-chevron" aria-hidden="true">›</span>
+          </summary>
+          <div class="source-detail-body">
           {{ if not $target.enabled }}<p class="source-note">{{ if $zh }}目标已停用；此频道不会采集。{{ else }}Parent target is disabled; this channel will not run.{{ end }}</p>{{ end }}
           {{ if $publicURL }}<a class="source-url" href="{{ $publicURL }}" rel="noopener noreferrer">{{ $publicURL }}</a>{{ end }}
           <dl class="source-settings">
@@ -70,6 +78,8 @@
             {{ end }}
           </dl>
           <ul class="source-tags" aria-label="{{ if $zh }}频道标签{{ else }}Channel tags{{ end }}">{{ range .tags }}<li>{{ if $zh }}{{ index $tags . | default . }}{{ else }}{{ . }}{{ end }}</li>{{ end }}</ul>
+          </div>
+          </details>
         </article>
         {{ end }}
       </div>

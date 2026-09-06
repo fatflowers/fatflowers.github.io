@@ -18,6 +18,7 @@ class Page(HTMLParser):
         self.links: list[str] = []
         self.channels: list[dict[str, str | None]] = []
         self.targets = 0
+        self.details: list[dict[str, str | None]] = []
         self.script_text: list[str] = []
         self.unsafe_images = 0
         self.in_script = False
@@ -25,6 +26,8 @@ class Page(HTMLParser):
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         data = dict(attrs)
+        if tag == "details":
+            self.details.append(data)
         if tag == "script":
             self.in_script = True
         if tag == "img" and "onerror" in data:
@@ -80,6 +83,11 @@ def test_sources_page_reads_current_catalog_and_navigation(tmp_path: Path) -> No
         page = Page(html)
         assert page.targets == len(catalog["targets"])
         assert len(page.channels) == len(channels)
+        channel_details = [item for item in page.details if item.get("class") == "source-details"]
+        assert len(channel_details) == len(channels)
+        assert all("open" not in item for item in channel_details)
+        assert len([item for item in page.details if item.get("class") == "source-target-info"]) == len(catalog["targets"])
+        assert 'source-row-interval' in html and 'source-row-collector' in html
         assert sum(c["data-enabled"] == "true" for c in page.channels) == active
         assert all(channel["url"] in page.links for channel in channels)
         assert "https://openai.com/news/rss.xml" in page.links
