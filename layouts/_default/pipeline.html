@@ -1,0 +1,73 @@
+{{ define "main" }}
+{{- $zh := eq .Lang "zh" -}}
+{{- $catalog := os.ReadFile "intelligence/config/catalog.yaml" | transform.Unmarshal -}}
+{{- $schedules := os.ReadFile "intelligence/config/schedules.yaml" | transform.Unmarshal -}}
+{{- $total := 0 -}}{{- $enabled := 0 -}}{{- $collectors := newScratch -}}
+{{- range $catalog.targets -}}
+  {{- $targetEnabled := .enabled -}}
+  {{- range .channels -}}
+    {{- $total = add $total 1 -}}
+    {{- if and $targetEnabled .enabled -}}{{- $enabled = add $enabled 1 -}}{{- $collectors.Add .collector 1 -}}{{- end -}}
+  {{- end -}}
+{{- end -}}
+<article class="pipeline-page">
+  <header class="pipeline-hero">
+    <p class="pipeline-kicker">PERSONAL INTELLIGENCE PIPELINE · {{ if $zh }}架构与数据流{{ else }}ARCHITECTURE & DATA FLOW{{ end }}</p>
+    <h1>{{ .Title }}</h1><p>{{ .Description }} {{ if $zh }}统计值在构建时直接读取项目 YAML，不是运行时监控指标。{{ else }}Counts come from project YAML at build time, not live telemetry.{{ end }}</p>
+  </header>
+  <section class="pipeline-metrics" aria-label="{{ if $zh }}当前配置统计{{ else }}Current configuration{{ end }}">
+    <div><strong>{{ len $catalog.targets }}</strong><span>{{ if $zh }}目标（{{ len $catalog.tags }} 个标签）{{ else }}targets ({{ len $catalog.tags }} tags){{ end }}</span></div>
+    <div><strong>{{ $enabled }} / {{ $total }}</strong><span>{{ if $zh }}启用频道 / 全部频道{{ else }}enabled / total channels{{ end }}</span></div>
+    <div><strong>30 min</strong><span>{{ if $zh }}到期频道扫描周期{{ else }}due-channel scan cadence{{ end }}</span></div>
+    <div><strong>1 h</strong><span>{{ if $zh }}待分析队列处理周期{{ else }}analysis queue cadence{{ end }}</span></div>
+  </section>
+
+  <section class="pipeline-section" aria-labelledby="architecture-title">
+    <div class="pipeline-section-head"><p>01 / ARCHITECTURE</p><h2 id="architecture-title">{{ if $zh }}组件架构与控制流{{ else }}Components and control flow{{ end }}</h2></div>
+    <div class="architecture-flow" role="img" aria-label="{{ if $zh }}从 Multica 调度到 GitHub Pages 的系统架构图{{ else }}Architecture from Multica scheduling to GitHub Pages{{ end }}">
+      <div class="arch-node arch-control"><b>Multica Cloud</b><span>Autopilot / Agent</span><code>schedules.yaml</code></div><i>→</i>
+      <div class="arch-node"><b>intelctl</b><span>CLI orchestration</span><code>collect · research · analyze · report</code></div><i>→</i>
+      <div class="arch-node"><b>Cloudflare Worker</b><span>Authenticated REST API</span><code>/v1/*</code></div><i>⇄</i>
+      <div class="arch-node arch-store"><b>Cloudflare D1</b><span>State + artifacts + audit</span><code>items · analyses · reports</code></div>
+      <div class="arch-break" aria-hidden="true">↓ DATA PLANE ↓</div>
+      <div class="arch-node arch-source"><b>{{ if $zh }}公开来源{{ else }}Public sources{{ end }}</b><span>RSS / websites / GitHub / X</span><code>{{ if $zh }}只读采集{{ else }}read-only collection{{ end }}</code></div><i>→</i>
+      <div class="arch-node"><b>{{ if $zh }}采集路由器{{ else }}Collector router{{ end }}</b><span>MCP / RSS / HTTP / GitHub API</span><code>primary → fallback</code></div><i>→</i>
+      <div class="arch-node arch-model"><b>LLM Analyzer</b><span>structured analysis</span><code>reader-v4 JSON schema</code></div><i>→</i>
+      <div class="arch-node arch-publish"><b>Hugo + GitHub Pages</b><span>Markdown → static HTML</span><code>build → deploy → GET verify</code></div>
+    </div>
+    <p class="pipeline-note">{{ if $zh }}控制面由 Multica 触发，数据面由固定采集器和 Worker API 执行。模型不直接写 Git 或 D1；写入经过 Schema、幂等键和发布门禁。{{ else }}Multica triggers the control plane; fixed collectors and the Worker API execute the data plane. Model writes pass schema, idempotency, and publication gates.{{ end }}</p>
+  </section>
+
+  <section class="pipeline-section" aria-labelledby="sequence-title">
+    <div class="pipeline-section-head"><p>02 / SEQUENCE</p><h2 id="sequence-title">{{ if $zh }}一次完整运行：输入、处理、输出{{ else }}One complete run: inputs, processing, outputs{{ end }}</h2></div>
+    <ol class="technical-flow">
+      <li><span>1</span><div><h3>{{ if $zh }}调度与到期查询{{ else }}Schedule and due query{{ end }}</h3><p>{{ if $zh }}每 30 分钟触发 <code>collect-due</code>。Worker 根据 <code>enabled</code>、<code>interval_minutes</code>、<code>last_checked_at</code> 返回到期频道；overlap=skip 防止任务重叠。{{ else }}Every 30 minutes, <code>collect-due</code> queries channels due from enabled state, interval, and last check time.{{ end }}</p><dl><div><dt>Input</dt><dd>catalog + channel cursor</dd></div><div><dt>Output</dt><dd><code>GET /v1/channels/due</code></dd></div></dl></div></li>
+      <li><span>2</span><div><h3>{{ if $zh }}固定路由采集{{ else }}Fixed-route collection{{ end }}</h3><p>{{ if $zh }}每个频道绑定明确的 collector 与参数模板。MCP 绑定预先验证；主方式失败时按配置尝试 fallback，不在运行时临时选择供应商。{{ else }}Each channel has a fixed collector and template. MCP bindings are pre-verified and configured fallbacks run on failure.{{ end }}</p><dl><div><dt>{{ if $zh }}启用采集器{{ else }}Enabled collectors{{ end }}</dt><dd>MCP {{ $collectors.Get "mcp" | default 0 }} · RSS {{ $collectors.Get "rss" | default 0 }} · GitHub API {{ $collectors.Get "github_api" | default 0 }} · HTTP {{ $collectors.Get "http" | default 0 }}</dd></div><div><dt>Output</dt><dd><code>CollectionPage(items, next_cursor)</code></dd></div></dl></div></li>
+      <li><span>3</span><div><h3>{{ if $zh }}标准化、时间证据与去重{{ else }}Normalize, date evidence, deduplicate{{ end }}</h3><p>{{ if $zh }}统一 URL、正文和时间。去重顺序为 <code>channel + external_id</code> → canonical URL → <code>channel + content_hash</code>。目录页只作线索，正文和发布日期未核验前不得进入报告。{{ else }}Normalize URL, body, and time. Dedupe order: channel + external ID, canonical URL, channel + content hash.{{ end }}</p><dl><div><dt>Write</dt><dd><code>POST /v1/items/batch</code></dd></div><div><dt>{{ if $zh }}游标{{ else }}Cursor{{ end }}</dt><dd>{{ if $zh }}写入成功后才推进{{ else }}advances after successful write{{ end }}</dd></div></dl></div></li>
+      <li><span>4</span><div><h3>{{ if $zh }}正文补全与待分析队列{{ else }}Enrichment and pending queue{{ end }}</h3><p>{{ if $zh }}研究任务补抓完整正文、最终 URL 和发布日期证据。只允许近 72 小时、正文完整、非 discovery-only、且当前 content revision 尚无分析的条目进入队列。{{ else }}Research resolves full text, final URL, and date evidence. Only recent, complete items without analysis for the current revision enter the queue.{{ end }}</p><dl><div><dt>Read</dt><dd><code>GET /v1/items/pending-analysis</code></dd></div><div><dt>Guard</dt><dd><code>content_revision</code> compare-and-swap</dd></div></dl></div></li>
+      <li><span>5</span><div><h3>{{ if $zh }}结构化分析{{ else }}Structured analysis{{ end }}</h3><p>{{ if $zh }}模型阅读全文并返回严格 JSON：headline、summary、key_change、why_it_matters、importance、confidence、topics、watch_next 和逐事实 evidence。importance（1–5）与 confidence（0–1）仅用于内部排序。{{ else }}The model returns strict JSON for headline, summary, change, impact, scores, topics, next checks, and evidence. Scores are internal ranking signals.{{ end }}</p><dl><div><dt>Validate</dt><dd><code>analysis-batch.schema.json</code></dd></div><div><dt>Write</dt><dd><code>POST /v1/analyses/batch</code></dd></div></dl></div></li>
+      <li><span>6</span><div><h3>{{ if $zh }}确定性选稿与生成{{ else }}Deterministic selection and rendering{{ end }}</h3><p>{{ if $zh }}按重要度、置信度和时间排序，再按 item ID 与来源 URL 去重；最多 12 条，其中最多 3 条重点。午间版只收 importance ≥ 4；无有效新内容则 skipped。{{ else }}Sort by importance, confidence, and time; dedupe by item ID and source URL. Budget: 12 items, up to 3 leads. Midday requires importance ≥ 4.{{ end }}</p><dl><div><dt>{{ if $zh }}窗口{{ else }}Windows{{ end }}</dt><dd>08:15 / 12:45 / 18:45 / weekly 7d</dd></div><div><dt>Output</dt><dd><code>content/posts/intelligence/*.zh.md</code></dd></div></dl></div></li>
+      <li><span>7</span><div><h3>{{ if $zh }}发布门禁与线上验收{{ else }}Publication gates and live verification{{ end }}</h3><p>{{ if $zh }}检查公共来源、证据、敏感信息、Front Matter、Hugo 构建、Git diff 和允许路径；之后提交并推送。Actions 成功后仍会 GET 页面并核对 64 位 artifact 指纹。{{ else }}Public-source, evidence, secret, front matter, Hugo, diff, and path gates run before push. The live page and artifact fingerprint are verified afterward.{{ end }}</p><dl><div><dt>Status</dt><dd>draft → validating → ready → published</dd></div><div><dt>Failure</dt><dd>{{ if $zh }}保留草稿并记录 Run / Issue{{ else }}keep draft; record Run / Issue{{ end }}</dd></div></dl></div></li>
+    </ol>
+  </section>
+
+  <section class="pipeline-grid">
+    <div class="pipeline-section"><div class="pipeline-section-head"><p>03 / STORAGE</p><h2>{{ if $zh }}D1 核心数据模型{{ else }}Core D1 data model{{ end }}</h2></div>
+      <div class="data-model"><code>targets 1 ── N channels</code><code>channels 1 ── N items</code><code>items 1 ── 1 analyses</code><code>reports N ── N items</code><code>pipeline_runs</code><code>audit_events</code></div>
+      <table><thead><tr><th>{{ if $zh }}表{{ else }}Table{{ end }}</th><th>{{ if $zh }}保存内容{{ else }}Purpose{{ end }}</th></tr></thead><tbody>
+        <tr><td><code>channels</code></td><td>{{ if $zh }}采集配置、游标、最近成功/错误、连续失败次数{{ else }}config, cursor, health, failures{{ end }}</td></tr><tr><td><code>items</code></td><td>{{ if $zh }}原始条目、正文哈希、发布时间、来源元数据{{ else }}items, hashes, dates, metadata{{ end }}</td></tr><tr><td><code>analyses</code></td><td>{{ if $zh }}结构化分析、模型、提示词版本、证据{{ else }}analysis, model, prompt version, evidence{{ end }}</td></tr><tr><td><code>reports</code></td><td>{{ if $zh }}窗口、版次、Markdown、状态、提交和 URL{{ else }}window, edition, Markdown, state, commit, URL{{ end }}</td></tr>
+      </tbody></table>
+    </div>
+    <div class="pipeline-section"><div class="pipeline-section-head"><p>04 / SCHEDULE</p><h2>{{ if $zh }}生产调度{{ else }}Production schedule{{ end }}</h2></div>
+      <table><thead><tr><th>Job</th><th>{{ if $zh }}频率{{ else }}Cadence{{ end }}</th><th>{{ if $zh }}作用{{ else }}Purpose{{ end }}</th></tr></thead><tbody>
+        <tr><td><code>collect-due</code></td><td>*/30 min</td><td>{{ if $zh }}采集到期频道{{ else }}collect due{{ end }}</td></tr><tr><td><code>analyze-pending</code></td><td>hourly :05</td><td>{{ if $zh }}补全并分析{{ else }}enrich/analyze{{ end }}</td></tr><tr><td><code>morning</code></td><td>08:30</td><td>{{ if $zh }}早报{{ else }}morning{{ end }}</td></tr><tr><td><code>midday</code></td><td>13:00</td><td>{{ if $zh }}高重要度快讯{{ else }}high-signal brief{{ end }}</td></tr><tr><td><code>evening</code></td><td>19:00</td><td>{{ if $zh }}晚报{{ else }}evening{{ end }}</td></tr><tr><td><code>weekly</code></td><td>Sun 20:00</td><td>{{ if $zh }}7 天周报{{ else }}7-day review{{ end }}</td></tr>
+      </tbody></table><p class="pipeline-note">{{ if $zh }}时区：{{ $schedules.timezone }}。调度与报告策略分别保存在 <code>schedules.yaml</code> 和 <code>report-policy.yaml</code>。{{ else }}Timezone: {{ $schedules.timezone }}. Schedule and report policy remain separate.{{ end }}</p>
+    </div>
+  </section>
+
+  <section class="pipeline-section"><div class="pipeline-section-head"><p>05 / FAILURE PATHS</p><h2>{{ if $zh }}失败时系统如何收敛{{ else }}How failures converge{{ end }}</h2></div>
+    <div class="failure-grid"><div><b>{{ if $zh }}采集失败{{ else }}Collector failure{{ end }}</b><p>primary → fallback → retry / last_error → health review</p></div><div><b>{{ if $zh }}正文或日期不足{{ else }}Incomplete body/date{{ end }}</b><p>discovery_only / rejected → enrichment → max attempts</p></div><div><b>Schema {{ if $zh }}失败{{ else }}failure{{ end }}</b><p>one repair retry → run failed → exact error in issue</p></div><div><b>{{ if $zh }}发布失败{{ else }}Publish failure{{ end }}</b><p>stop → keep draft → preserve Git/D1 evidence → no duplicate run</p></div></div>
+  </section>
+  <footer class="pipeline-foot"><a href="{{ if $zh }}/zh/sources/{{ else }}/sources/{{ end }}">{{ if $zh }}查看目标、频道与采集配置 →{{ else }}Inspect targets, channels, and collectors →{{ end }}</a><p>{{ if $zh }}配置版本 {{ $catalog.version }} · 构建快照（UTC）{{ else }}Catalog v{{ $catalog.version }} · Snapshot UTC {{ end }}{{ now.UTC.Format "2006-01-02 15:04" }}</p></footer>
+</article>
+{{ end }}

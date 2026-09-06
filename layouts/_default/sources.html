@@ -55,8 +55,7 @@
           <summary class="source-channel-heading" title="{{ if $zh }}展开详细配置{{ else }}Expand configuration{{ end }}">
             <span class="source-name" title="{{ .name }}">{{ if $publicURL }}<a href="{{ $publicURL }}" rel="noopener noreferrer">{{ .name }} <span aria-hidden="true">↗</span></a>{{ else }}{{ .name }}{{ end }}</span>
             <span class="source-row-type" title="{{ if $zh }}频道类型{{ else }}Channel type{{ end }}">{{ .type }}</span>
-            <span class="source-row-collector" title="{{ if $zh }}采集方式{{ else }}Collector{{ end }}">{{ .collector }}</span>
-            <span class="source-row-interval" title="{{ if $zh }}配置间隔{{ else }}Configured interval{{ end }}">{{ .interval_minutes }} {{ if $zh }}分{{ else }}min{{ end }}</span>
+            <span class="source-row-collector" title="{{ if $zh }}采集方式{{ else }}Collector{{ end }}">{{ if $zh }}采集方式：{{ else }}Collector: {{ end }}{{ .collector }}</span>
             <span class="source-status {{ if $active }}is-enabled{{ end }}">{{ if $active }}{{ if $zh }}已启用{{ else }}Enabled{{ end }}{{ else }}{{ if $zh }}未启用{{ else }}Disabled{{ end }}{{ end }}</span>
             <span class="source-chevron" aria-hidden="true">›</span>
           </summary>

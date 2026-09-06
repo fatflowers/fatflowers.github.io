@@ -29,9 +29,9 @@
 .source-channel-heading:hover { background: var(--code-bg); }
 .source-name { grid-column: 1 / -1; font-size: .77rem; font-weight: 500; line-height: 1.4; min-height: 2.8em; margin: 0; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .source-channel a:hover { text-decoration: underline; }
-.source-row-type, .source-row-collector, .source-row-interval { font-size: .65rem; color: var(--secondary); overflow-wrap: anywhere; }
-.source-row-type, .source-row-collector { display: none; }
-.source-row-interval { grid-column: 1; grid-row: 2; }
+.source-row-type, .source-row-collector { font-size: .65rem; color: var(--secondary); overflow-wrap: anywhere; }
+.source-row-type { display: none; }
+.source-row-collector { grid-column: 1; grid-row: 2; }
 .source-channel-heading .source-status { grid-column: 2; grid-row: 2; }
 .source-channel-heading .source-chevron { grid-column: 3; grid-row: 2; }
 .source-chevron { color: var(--secondary); font-size: 1rem; transition: transform .15s; }

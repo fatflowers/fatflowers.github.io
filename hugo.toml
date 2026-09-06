@@ -74,13 +74,8 @@ defaultContentLanguageInSubdir = false
     weight = 3
 
   [[languages.en.menus.main]]
-    name = "Cat"
-    url = "/tags/cat"
-    weight = 3
-
-  [[languages.en.menus.main]]
-    name = "Coffee"
-    url = "/tags/coffee"
+    name = "How It Works"
+    url = "/how-it-works/"
     weight = 4
 
   [[languages.en.menus.main]]
@@ -137,13 +132,8 @@ defaultContentLanguageInSubdir = false
     weight = 4
 
   [[languages.zh.menus.main]]
-    name = "猫咪"
-    url = "/zh/tags/cat"
-    weight = 4
-
-  [[languages.zh.menus.main]]
-    name = "咖啡"
-    url = "/zh/tags/coffee"
+    name = "工作流程"
+    url = "/zh/how-it-works/"
     weight = 5
 
   [[languages.zh.menus.main]]

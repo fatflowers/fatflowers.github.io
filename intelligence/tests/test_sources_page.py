@@ -59,11 +59,15 @@ def build(tmp_path: Path, catalog: dict) -> Path:
         shutil.copytree(ROOT / directory, source / directory)
     (source / "themes").symlink_to(ROOT / "themes", target_is_directory=True)
     (source / "content").mkdir()
-    for filename in ("sources.md", "sources.zh.md"):
+    for filename in ("sources.md", "sources.zh.md", "how-it-works.md", "how-it-works.zh.md"):
         shutil.copy(ROOT / "content" / filename, source / "content" / filename)
     (source / "intelligence/config").mkdir(parents=True)
     (source / "intelligence/config/catalog.yaml").write_text(
         yaml.safe_dump(catalog, allow_unicode=True), encoding="utf-8"
+    )
+    shutil.copy(
+        ROOT / "intelligence/config/schedules.yaml",
+        source / "intelligence/config/schedules.yaml",
     )
     destination = tmp_path / "public"
     subprocess.run(
@@ -87,7 +91,9 @@ def test_sources_page_reads_current_catalog_and_navigation(tmp_path: Path) -> No
         assert len(channel_details) == len(channels)
         assert all("open" not in item for item in channel_details)
         assert len([item for item in page.details if item.get("class") == "source-target-info"]) == len(catalog["targets"])
-        assert 'source-row-interval' in html and 'source-row-collector' in html
+        assert 'source-row-collector' in html
+        assert 'source-row-interval' not in html
+        assert ('采集方式：' if language else 'Collector:') in html
         assert html.count('data-layout=compact-cards') + html.count('data-layout="compact-cards"') == len(catalog['targets'])
         assert sum(c["data-enabled"] == "true" for c in page.channels) == active
         assert all(channel["url"] in page.links for channel in channels)
@@ -101,6 +107,28 @@ def test_sources_page_reads_current_catalog_and_navigation(tmp_path: Path) -> No
         assert ("配置快照" if language else "configured snapshot") in html
         home = Page((destination / language / "index.html").read_text())
         assert f"https://example.org/{language + '/' if language else ''}sources/" in home.links
+        assert f"https://example.org/{language + '/' if language else ''}how-it-works/" in home.links
+
+
+def test_pipeline_page_uses_current_catalog_counts_and_explains_all_steps(tmp_path: Path) -> None:
+    catalog = yaml.safe_load((ROOT / "intelligence/config/catalog.yaml").read_text())
+    destination = build(tmp_path, catalog)
+    total = sum(len(target["channels"]) for target in catalog["targets"])
+    enabled = sum(
+        bool(target["enabled"] and channel["enabled"])
+        for target in catalog["targets"]
+        for channel in target["channels"]
+    )
+    html = (destination / "zh/how-it-works/index.html").read_text()
+
+    assert f"<strong>{len(catalog['targets'])}</strong><span>目标" in html
+    assert f"<strong>{enabled} / {total}</strong><span>启用频道 / 全部频道" in html
+    assert html.count("<li><span>") == 7
+    assert "GET /v1/channels/due" in html
+    assert "POST /v1/analyses/batch" in html
+    assert "content_revision" in html and "artifact" in html
+    assert "pipeline_runs" in html and "GitHub Pages" in html
+    assert "/zh/sources/" in html
 
 
 def test_sources_page_whitelists_fields_escapes_html_and_disables_children(tmp_path: Path) -> None:
