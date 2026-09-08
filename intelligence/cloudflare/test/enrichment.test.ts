@@ -32,6 +32,21 @@ class SqliteD1 implements D1Database {
   }
 }
 const TOKEN='a-long-test-token-with-24-characters';
+test('pending analysis retains both tag sets without multiplying candidate rows',async()=>{
+  const db=new SqliteD1();
+  db.db.exec(`UPDATE items SET published_at=datetime('now','-1 hour'),enrichment_status='ready',raw_metadata_json='{}';`);
+  for(let i=0;i<8;i++) {
+    db.db.prepare("INSERT INTO tags(id,slug,name,tag_type,created_at) VALUES(?,?,?,'signal','2026-09-06')").run('tag'+i,'tag'+i,'tag'+i);
+    db.db.prepare('INSERT INTO target_tags VALUES(?,?)').run('a','tag'+i);
+    db.db.prepare('INSERT INTO channel_tags VALUES(?,?)').run('a','tag'+i);
+  }
+  const response=await call(db,'/v1/items/pending-analysis?limit=2');
+  const items=(await response.json() as any).items;
+  assert.equal(items.length,2);
+  assert.deepEqual(items.map((i:any)=>i.target_id),['a','b']);
+  assert.equal(items[0].target_tag_slugs.split(',').length,8);
+  assert.equal(items[0].channel_tag_slugs.split(',').length,8);
+});
 const payload={expected_revision:0,status:'ready',reason:'Read original article',title:'Full article',content_text:'A concrete article with dated source evidence. '.repeat(8),
   published_at:'2026-09-06T00:00:00Z',fetched_at:'2026-09-06T01:00:00Z',final_url:'https://example.com/article',tool_name:'firecrawl',
   date_evidence:{kind:'article_metadata',value:'2026-09-06T00:00:00Z',source_url:'https://example.com/article'}};

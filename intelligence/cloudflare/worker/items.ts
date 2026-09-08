@@ -100,16 +100,10 @@ export async function getPendingAnalysis({ env, url }: AuthContext): Promise<Api
   const targetId = url.searchParams.get("target_id");
   const channelId = url.searchParams.get("channel_id");
   const from = requireIsoDate(url.searchParams.get('since') ?? new Date(Date.now()-72*3600000).toISOString(), 'since');
-  const rows = await env.DB.prepare(`WITH eligible AS (SELECT i.*, t.slug AS target_slug, c.slug AS channel_slug,
-      GROUP_CONCAT(DISTINCT tg.slug) AS target_tag_slugs,
-      GROUP_CONCAT(DISTINCT cg.slug) AS channel_tag_slugs
+  const rows = await env.DB.prepare(`WITH eligible AS (SELECT i.*, t.slug AS target_slug, c.slug AS channel_slug
     FROM items i
     JOIN targets t ON t.id = i.target_id
     JOIN channels c ON c.id = i.channel_id
-    LEFT JOIN target_tags tt ON tt.target_id = i.target_id
-    LEFT JOIN tags tg ON tg.id = tt.tag_id
-    LEFT JOIN channel_tags ct ON ct.channel_id = i.channel_id
-    LEFT JOIN tags cg ON cg.id = ct.tag_id
     LEFT JOIN analyses a ON a.item_id = i.id
     WHERE a.item_id IS NULL AND t.enabled=1 AND c.enabled=1
       AND julianday(i.published_at)>=julianday(?) AND julianday(i.published_at)<=julianday('now')
@@ -119,10 +113,14 @@ export async function getPendingAnalysis({ env, url }: AuthContext): Promise<Api
         OR (c.channel_type IN ('twitter','x') AND length(trim(COALESCE(i.content_text,'')))>0)
         OR (length(trim(COALESCE(i.content_text,'')))>=400 AND json_extract(i.raw_metadata_json,'$.content_complete')=1))
       AND (? IS NULL OR i.target_id = ?) AND (? IS NULL OR i.channel_id = ?)
-    GROUP BY i.id
     ), ranked AS (SELECT *, ROW_NUMBER() OVER (PARTITION BY target_id ORDER BY published_at DESC,id) AS target_rank FROM eligible)
-    SELECT * FROM ranked ORDER BY target_rank,target_id
-    LIMIT ?`).bind(from, targetId, targetId, channelId, channelId, limit).all();
+    , selected AS MATERIALIZED (SELECT * FROM ranked ORDER BY target_rank,target_id LIMIT ?)
+    SELECT s.*,
+      (SELECT GROUP_CONCAT(DISTINCT tg.slug) FROM target_tags tt JOIN tags tg ON tg.id=tt.tag_id
+        WHERE tt.target_id=s.target_id) AS target_tag_slugs,
+      (SELECT GROUP_CONCAT(DISTINCT cg.slug) FROM channel_tags ct JOIN tags cg ON cg.id=ct.tag_id
+        WHERE ct.channel_id=s.channel_id) AS channel_tag_slugs
+    FROM selected s ORDER BY target_rank,target_id`).bind(from, targetId, targetId, channelId, channelId, limit).all();
   // Cross-channel retellings do not necessarily share a URL. Give the analyst
   // bounded, actually-published context to distinguish repetition from new facts.
   // Scope by report publication time (not source date) so recent catch-up counts.
@@ -135,6 +133,7 @@ export async function getPendingAnalysis({ env, url }: AuthContext): Promise<Api
       AND julianday(r.published_at)>=julianday('now','-7 days')
       AND julianday(r.published_at)<=julianday('now')
     GROUP BY i.id ORDER BY MAX(r.published_at) DESC, i.id LIMIT 100`).all();
+  console.log(JSON.stringify({event:'d1_query_cost',query:'pending_analysis',rows_read:rows.meta?.rows_read,returned:rows.results?.length ?? 0}));
   return { status: 200, body: { items: rows.results ?? [], recent_published_events: recent.results ?? [] } };
 }
 
