@@ -329,7 +329,8 @@ def resolve_mcp_fallbacks(client, result, *, since=None):
     return {**effective, "mcp_completed": completed, "fallback_plans": unresolved,
             "unresolved_items": unresolved_items,
             "batch_complete": not unresolved and not unresolved_items and not result.get("remaining_in_batch", 0),
-            "coverage": research_coverage(client, since=since)}
+            "coverage": (result["coverage"] if "coverage" in result and not completed
+                         else research_coverage(client, since=since))}
 
 
 def research_discover(repository, client, *, target=None):

@@ -315,10 +315,12 @@ class WorkerAPIClient:
                     payload = response.read().decode("utf-8")
                     return json.loads(payload) if payload else {}
             except urllib.error.HTTPError as exc:
+                body_text = exc.read().decode("utf-8", errors="replace")[:1000]
+                if "d1_daily_read_limit" in body_text:
+                    raise StorageClientError("D1 daily read quota exhausted; wait until the reset time in the response: " + body_text) from exc
                 if exc.code in {429, 502, 503, 504} and attempt + 1 < attempts:
                     time.sleep(0.5 * (attempt + 1))
                     continue
-                body_text = exc.read().decode("utf-8", errors="replace")[:1000]
                 raise StorageClientError("Worker API returned HTTP %d: %s" % (exc.code, body_text)) from exc
             except (urllib.error.URLError, TimeoutError) as exc:
                 if attempt + 1 < attempts:

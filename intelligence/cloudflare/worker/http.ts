@@ -30,6 +30,16 @@ export function jsonResponse(response: ApiResponse): Response {
 }
 
 export function errorResponse(error: unknown, requestId: string): Response {
+  if (error instanceof Error && /exceeded.*(?:daily.*row read limit|D1.*read)|daily.*read.*limit/i.test(error.message)) {
+    const reset = new Date();
+    reset.setUTCHours(24, 0, 0, 0);
+    const response = jsonResponse({status: 503, body: {
+      error: {code: 'd1_daily_read_limit', message: 'Daily D1 read quota exhausted', reset_at: reset.toISOString()},
+      request_id: requestId,
+    }});
+    response.headers.set('Retry-After', String(Math.max(1, Math.ceil((reset.getTime()-Date.now())/1000))));
+    return response;
+  }
   if (error instanceof ApiError) {
     return jsonResponse({
       status: error.status,
