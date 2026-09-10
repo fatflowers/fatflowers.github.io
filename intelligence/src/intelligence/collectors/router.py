@@ -10,6 +10,7 @@ from urllib.parse import urlsplit
 from intelligence.mcp.errors import MCPAuthenticationError, MCPContractError
 
 from .base import ChannelSpec, CollectionPage, Collector
+from .github import GitHubRateLimitError
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,6 +69,9 @@ class CollectorRouter:
             except (MCPAuthenticationError, MCPContractError):
                 # Authentication and schema failures require operator action;
                 # silently falling back could hide a broken production binding.
+                raise
+            except GitHubRateLimitError:
+                # Rate limiting is not a signal to parse HTML profiles as RSS.
                 raise
             except Exception as exc:
                 errors.append((step.collector_type, exc))

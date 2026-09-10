@@ -137,7 +137,7 @@ test('hydration replaces same item, archives discovery, enters analysis queue, a
   assert.equal(JSON.parse(String(item.raw_metadata_json)).discovery_only,false);
   const audit=db.db.prepare('SELECT * FROM item_enrichments').get()!;
   assert.equal(JSON.parse(String(audit.before_json)).content_text,'Snippet');
-  const pending=await call(db,'/v1/items/pending-analysis');
+  const pending=await call(db,'/v1/items/pending-analysis?since=2026-09-05T00:00:00Z');
   assert.equal((await pending.json() as any).items[0].id,'a1');
   assert.equal((await call(db,'/v1/items/a1/enrichment',payload)).headers.get('x-idempotent-replay'),'true');
   const stats=await call(db,'/v1/coverage?since=2026-09-05T00:00:00Z');

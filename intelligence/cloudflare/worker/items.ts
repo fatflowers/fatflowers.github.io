@@ -106,6 +106,8 @@ export async function getPendingAnalysis({ env, url }: AuthContext): Promise<Api
     JOIN channels c ON c.id = i.channel_id
     LEFT JOIN analyses a ON a.item_id = i.id
     WHERE a.item_id IS NULL AND t.enabled=1 AND c.enabled=1
+      AND c.collector_type != 'mcp_registry_api'
+      AND COALESCE(json_extract(i.raw_metadata_json,'$.platform'),'') != 'mcp_registry'
       AND julianday(i.published_at)>=julianday(?) AND julianday(i.published_at)<=julianday('now')
       AND (i.enrichment_status IS NULL OR i.enrichment_status='ready')
       AND COALESCE(json_extract(i.raw_metadata_json, '$.discovery_only'), 0) = 0

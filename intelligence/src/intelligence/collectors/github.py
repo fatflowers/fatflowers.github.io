@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -192,6 +193,18 @@ class GitHubCollector:
         return parts[0] if urllib.parse.urlsplit(url).hostname in {"github.com", "www.github.com"} and parts else ""
 
     def _get_events(
+        self, organization: str, **kwargs
+    ) -> tuple[list[Mapping[str, Any]], Mapping[str, Any], bool]:
+        for attempt in range(3):
+            try:
+                return self._get_events_once(organization, **kwargs)
+            except GitHubTransientError:
+                if attempt == 2:
+                    raise
+                time.sleep(0.5 * (attempt + 1))
+        raise AssertionError('unreachable')
+
+    def _get_events_once(
         self, organization: str, *, page: int, per_page: int, etag: str, account_type: str = "organization"
     ) -> tuple[list[Mapping[str, Any]], Mapping[str, Any], bool]:
         query = urllib.parse.urlencode({"per_page": per_page, "page": page})

@@ -2,6 +2,10 @@
 
 目的：每小时分析新增且尚未分析的公开情报条目，不发布报告。
 
+执行要求：工具返回 session_id 或 running 只表示进程仍在运行，必须继续读取该进程直到退出并取得最终 JSON。不得把启动事件当作完成，也不得因此重复创建 analyze pending。pending 命令的 Run 是队列查询，返回后即结束；使用返回的候选完成分析，ingest 的实际 Run ID 以其返回值为准。Registry 元数据不属于文章队列。
+
+若研究部分失败，记录失败入口，继续分析本次已经取得的有效正文；不得将部分失败说成无更新，也不得等待旧 Run 状态变化。无需反复查询全量运行历史。终态输出必须分别说明研究、分析和通知的实际结果；Multica completed 仅表示 Agent 退出，不保证业务步骤全部成功。
+
 必须先完成研究：执行 `intelligence/scripts/intelctl-secure research discover --mcp` 从所有启用目标的官方最新索引/Feed 发现候选，再执行 `research run --limit 30 --mcp`。命令会获取正文、保留日期证据、跟随链接博客的原始教程，并通过固定 Firecrawl 回退自动补齐 HTTP 失败页面。只有原生 MCP 工具响应可以成为正文，禁止让模型根据记忆重写“抓取结果”。对返回的 `fallback_plans`/未完成状态记录具体缺口，不得把失败当无新消息。
 
 读取 `intelligence/scripts/intelctl-secure research coverage`，结合本次 discover 的逐目标结果，确认所有启用目标（以目录配置为准）都实际执行了入口检查。coverage 是库存统计，不单独证明本次检查完成。某目标已检查但没有合格新内容可以记无更新；失败、未检查和待补抓必须分别记录，不能用另一个目标的大量数据掩盖缺口。以下分析必须以补抓后的 `content_revision` 为版本，正文变更后的旧分析必须失效。

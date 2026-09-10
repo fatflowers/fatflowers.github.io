@@ -129,6 +129,8 @@ def build_parser() -> argparse.ArgumentParser:
     commands.add_parser("status")
     run = commands.add_parser("run")
     run_commands = run.add_subparsers(dest="run_command", required=True)
+    run_close = run_commands.add_parser("fail-stale-analysis")
+    run_close.add_argument("--execute", action="store_true")
     run_show = run_commands.add_parser("show")
     run_show.add_argument("run_id")
     run_list = run_commands.add_parser("list")
@@ -421,6 +423,15 @@ def execute(args: argparse.Namespace) -> Any:
         return {"local": local, "remote": remote}
 
     if args.command == "run":
+        if args.run_command == "fail-stale-analysis":
+            from datetime import timedelta
+            cutoff = datetime.now(timezone.utc) - timedelta(hours=2)
+            rows = client.list_runs(status="running", limit=500).get("runs", [])
+            ids = [r['id'] for r in rows if r.get('run_type') == 'analyze' and datetime.fromisoformat(r['created_at'].replace('Z','+00:00')) < cutoff]
+            if args.execute:
+                for run_id in ids:
+                    client.update_run(run_id, {"run_status":"failed", "error_code":"analysis_abandoned", "error_summary":"Analysis run exceeded two-hour recovery threshold"}, idempotency_key="abandoned:"+run_id)
+            return {"dry_run":not args.execute,"run_ids":ids,"count":len(ids)}
         if args.run_command == "show":
             return client.get_run(args.run_id)
         return client.list_runs(args.status, args.limit)

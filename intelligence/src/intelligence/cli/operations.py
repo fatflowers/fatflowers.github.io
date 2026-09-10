@@ -745,19 +745,20 @@ def pending_analysis(
         _fail_run(client, command_run_id, "pending_analysis_query_failed", str(exc))
         raise
     items = response.get("items", [])
-    if not items:
-        client.update_run(
-            command_run_id,
-            {
-                "run_status": "skipped",
-                "item_count": 0,
-                "metadata": {"reason": "no_pending_items"},
-            },
-            idempotency_key="run:skip:%s" % command_run_id,
-        )
+    # Pending is a completed queue read, not an active model execution.
+    # Ingestion creates its own run; a returned pending ID is retained as context.
+    client.update_run(
+        command_run_id,
+        {
+            "run_status": "succeeded" if items else "skipped",
+            "item_count": len(items),
+            "metadata": {"reason": "pending_items_returned" if items else "no_pending_items"},
+        },
+        idempotency_key="run:finish:%s" % command_run_id,
+    )
     return {
         "pipeline_run_id": command_run_id,
-        "status": "running" if items else "skipped",
+        "status": "succeeded" if items else "skipped",
         "items": items,
         "recent_published_events": response.get("recent_published_events", []),
     }
@@ -815,6 +816,8 @@ def ingest_analyses(
     if len(records) > 100:
         raise CatalogError("one analysis batch cannot exceed 100 records")
 
+    if external_run_id and client.get_run(external_run_id).get('run', {}).get('run_status') in {'succeeded', 'skipped', 'failed'}:
+        external_run_id = None
     run_id = external_run_id or command_run_id
     if external_run_id is None:
         client.create_run(
