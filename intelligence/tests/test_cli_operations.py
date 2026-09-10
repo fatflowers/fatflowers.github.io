@@ -477,3 +477,7 @@ def test_pending_analysis_preserves_prior_publication_context():
     result = pending_analysis(client, command_run_id="context-run", limit=10, target_slug=None, channel_slug=None)
     assert result["recent_published_events"] == context
     assert result["items"] == [{"id": "new-tweet"}]
+    assert result['status'] == 'succeeded'
+    updates = [call for call in client.calls if call[0] == 'update_run']
+    assert updates[-1][2]['run_status'] == 'succeeded'
+    assert updates[-1][2]['item_count'] == 1
