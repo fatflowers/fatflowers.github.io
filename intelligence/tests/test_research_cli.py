@@ -108,12 +108,13 @@ def test_truncated_native_twitter_is_not_promoted(monkeypatch):
     assert client.writes == []
 
 
-def test_missing_date_is_failed_and_returns_fixed_fallback(monkeypatch):
+def test_missing_date_is_failed_without_paid_fallback(monkeypatch):
     monkeypatch.setattr(research, "fetch_article", lambda url: article(published_at=None, publication_evidence=None))
+    monkeypatch.setattr(research, "fetch_article_with_opencli", lambda *a, **kw: (_ for _ in ()).throw(research.OpenCLIError("offline")))
     client = Client()
     result = research.research_hydrate(client, item_id="one", since="2026-09-01")
     assert result["status"] == "failed"
-    assert result["fallback"]["tool_name"] == "post_firecrawl_scrape"
+    assert "fallback" not in result
     assert "published_at" not in client.writes[0]
 
 
@@ -145,12 +146,14 @@ def test_http_failure_never_claims_success(monkeypatch):
     def fail(url):
         raise OSError("offline")
     monkeypatch.setattr(research, "fetch_article", fail)
+    monkeypatch.setattr(research, "fetch_article_with_opencli", lambda *a, **kw: (_ for _ in ()).throw(research.OpenCLIError("bridge down")))
     result = research.research_hydrate(Client(), item_id="one", since="2026-09-01")
     assert result["status"] == "failed"
-    assert result["fallback"]["arguments"]["formats"] == ["markdown"]
+    assert result["reason"] == "http_and_opencli_fetch_failed"
+    assert "fallback" not in result
 
 
-def test_openai_http_403_uses_free_reader_before_paid_fallback(monkeypatch):
+def test_http_403_uses_opencli_before_paid_fallback(monkeypatch):
     client = Client()
     client.items[0].update(
         url="https://openai.com/index/introducing-the-agents-api/",
@@ -160,9 +163,9 @@ def test_openai_http_403_uses_free_reader_before_paid_fallback(monkeypatch):
         raw_metadata_json={"platform": "rss"},
     )
     monkeypatch.setattr(research, "fetch_article", lambda url: (_ for _ in ()).throw(OSError("403")))
-    monkeypatch.setattr(research, "_openai_reader_article", lambda item: article(
-        title=item["title"],
-        canonical_url=item["canonical_url"],
+    monkeypatch.setattr(research, "fetch_article_with_opencli", lambda url, **kwargs: article(
+        title=kwargs["title"],
+        canonical_url=kwargs["canonical_url"],
         published_at=None,
         publication_evidence=None,
     ))
@@ -171,13 +174,8 @@ def test_openai_http_403_uses_free_reader_before_paid_fallback(monkeypatch):
 
     assert result["status"] == "ready"
     assert "fallback" not in result
-    assert client.writes[0]["tool_name"] == "jina-reader-free"
+    assert client.writes[0]["tool_name"] == "opencli-web-read"
     assert client.writes[0]["date_evidence"]["kind"] == "feed"
-
-
-def test_free_reader_is_restricted_to_openai():
-    with pytest.raises(ValueError, match="only accepts openai.com"):
-        research._openai_reader_article({"url": "https://example.com/article"})
 
 
 def test_discovery_scoped_deduplicated_and_without_fake_date():
@@ -220,15 +218,17 @@ def test_discover_reads_configured_blog_and_queues_twenty(tmp_path, monkeypatch)
     assert not result["fallback_plans"]
 
 
-def test_discover_inaccessible_blog_returns_exact_fixed_plan(tmp_path, monkeypatch):
+def test_discover_inaccessible_blog_uses_opencli_without_paid_plan(tmp_path, monkeypatch):
     from test_cli_operations import project
     _, repository = project(tmp_path)
     def fail(url):
         raise OSError("blocked")
     monkeypatch.setattr(research, "fetch_article", fail)
+    monkeypatch.setattr(research, "fetch_article_with_opencli", lambda url, **kwargs: article(
+        page_kind="index", discovered_links=[{"url": "https://composio.dev/blog/from-browser"}]))
     result = research.research_discover(repository, Client(), target="composio")
-    assert result["fallback_plans"][0]["tool_name"] == "post_firecrawl_scrape"
-    assert result["fallback_plans"][0]["arguments"]["url"] == "https://composio.dev/blog"
+    assert result["results"][0]["status"] == "discovered"
+    assert not result["fallback_plans"]
 
 
 def test_discover_uses_rss_when_no_blog(tmp_path, monkeypatch):
@@ -313,7 +313,7 @@ def test_free_channel_never_creates_paid_firecrawl_fallback(monkeypatch):
     client.items[0]["raw_metadata_json"] = '{"discovery_only":true,"allow_paid_fallback":false}'
     monkeypatch.setattr(research, "fetch_article", lambda url: (_ for _ in ()).throw(OSError("offline")))
     result = research.research_hydrate(client, item_id="one")
-    assert result["reason"] == "http_fetch_failed"
+    assert result["reason"] == "http_and_opencli_fetch_failed"
     assert "fallback" not in result
 
 

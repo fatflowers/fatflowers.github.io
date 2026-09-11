@@ -1,20 +1,20 @@
 # 个人情报系统设计方案
 
 > 文档状态：已实施
-> 当前阶段：生产运行与 7 天观察
-> 版本：v1.0
-> 最后更新：2026-09-06
+> 当前阶段：生产运行
+> 版本：v1.1
+> 最后更新：2026-09-12
 > 部署记录：Cloudflare D1/Worker、Multica Cloud Agent/Skill/Autopilot、Hugo 报告发布链路均已上线。
 
 ## 1. 文档目的
 
-本文档定义一个运行在 Mac mini 上、由 Multica 提供自然语言控制、以 AIsa Tool Router MCP 为主要采集能力、以 Cloudflare D1 为结构化存储、以当前 Hugo 博客为发布端的个人竞争情报系统。
+本文档定义一个运行在 Mac mini 上、由 Multica 提供自然语言控制、以 RSS、官方 API、普通 HTTP 与 OpenCLI 为主要采集能力、以 Cloudflare D1 为结构化存储、以当前 Hugo 博客为发布端的个人情报系统。
 
 文档用于设计评审，重点回答以下问题：
 
 1. 情报对象如何按“目标 → 频道 → 标签”组织。
 2. Multica 如何通过自然语言控制和调整系统。
-3. AIsa Tool Router MCP 如何用于 Twitter、Reddit、Firecrawl 及其他平台。
+3. OpenCLI 如何读取浏览器页面与 X，剩余 AIsa 工具如何用于未启用的补充平台。
 4. 哪些流程必须确定性执行，哪些流程交给 Agent 分析。
 5. Cloudflare D1 存储哪些数据，博客仓库保存哪些数据。
 6. 每份报告如何成为当前 Hugo 站点中的一篇博客文章。
@@ -27,8 +27,8 @@
 - 支持多个情报目标，例如 Composio、OpenAI、Anthropic、Simon Willison。
 - 每个目标支持多个频道，例如 Twitter、Blog、Reddit、GitHub、Pricing、Documentation。
 - 支持给目标和频道附加标签，例如“科技大厂”“竞品”“Agent 资源层”“高信号页面”。
-- 优先通过 AIsa Tool Router MCP 中的固定工具采集内容。
-- 支持 RSS、HTTP、浏览器作为 MCP 之外的回退方式。
+- 优先通过 RSS、官方 API 和普通 HTTP 采集内容。
+- HTTP 失败或正文不完整时使用本机 OpenCLI 浏览器；X 也由 OpenCLI 只读采集。
 - 使用确定性规则完成采集、标准化、去重和状态更新。
 - 使用 Agent 完成重要性判断、影响分析、跨事件关联和报告撰写。
 - 使用 Cloudflare D1 保存目录、采集结果、分析结果、报告记录和运行状态。
@@ -66,19 +66,19 @@ Multica 不直接承担：
 - 内容去重。
 - Hugo 构建。
 
-### 3.2 MCP 是主要外部能力层
+### 3.2 免费本地采集是主要外部能力层
 
-AIsa Tool Router MCP 是平台型数据采集的首选入口。首次完成 OAuth 或 API Key 鉴权后，通过其搜索/发现工具完成一次能力盘点，建立固定工具注册表。
+生产频道按“RSS/官方 API → 普通 HTTP → OpenCLI 浏览器”固定路由。OpenCLI 复用 Mac mini 上的 Chrome 与 Browser Bridge，把动态页面导出为 Markdown，并通过 X Latest 搜索读取指定账号的公开帖子。
 
 日常运行规则：
 
-1. 频道创建时搜索或查询一次适合的 MCP 工具。
-2. 测试工具参数与返回结构。
-3. 将 `tool_name`、参数模板和适配器版本固定到频道配置。
-4. 后续采集直接调用固定工具。
-5. 只有工具失效、Schema 改变或新增平台时才重新发现。
+1. 先寻找官方 RSS 或公开 API。
+2. 没有结构化入口时测试普通 HTTP。
+3. HTTP 被 Cloudflare 拦截、依赖 JavaScript 或正文不足时才进入 `opencli web read`。
+4. X 使用 `opencli twitter search 'from:<handle>' --product live`，保存 tweet ID 水位。
+5. 50 条窗口未覆盖旧水位时失败关闭，不推进游标；任何 OpenCLI 失败都不得回退到付费抓取。
 
-这可以避免每轮采集重复搜索工具、浪费 Token，并减少 Agent 选择错误工具的概率。
+当前目录最坏为 304 次/天网页浏览器后备与 32 次/天 X 查询，共 336 次/天；均无按次供应商费用。
 
 ### 3.3 Agent 只处理需要判断的部分
 
@@ -336,32 +336,38 @@ targets:
       - slug: composio-twitter
         name: Official Twitter
         type: twitter
-        collector: mcp
+        collector: browser
         handle: composio
         interval_minutes: 180
         tags: [official, social]
-        tool_binding: twitter-user-timeline-v1
+        config:
+          include_replies: false
+          opencli_limit: 50
 
       - slug: composio-blog
         name: Official Blog
         type: blog
-        collector: mcp
+        collector: http
         url: https://composio.dev/blog
         interval_minutes: 60
         tags: [official, product-update]
-        tool_binding: firecrawl-page-scrape-v1
+        fallbacks:
+          - collector: browser
 
       - slug: composio-pricing
         name: Pricing
         type: web_diff
-        collector: mcp
+        collector: http
         url: https://composio.dev/pricing
         interval_minutes: 360
         tags: [official, pricing, high-signal]
-        tool_binding: firecrawl-page-scrape-v1
+        config:
+          diff: true
+        fallbacks:
+          - collector: browser
 ```
 
-`tool_binding` 是本系统内部的稳定别名，真实 AIsa MCP 工具名保存在 `mcp-tools.yaml`。一个 MCP 工具可以被多个频道绑定，但每个绑定必须有独立的参数模板、输出适配器和契约版本。
+生产频道不再需要 `tool_binding`。`browser` 表示本机 OpenCLI；未启用的补充平台若仍需 AIsa，才使用 `mcp-tools.yaml` 中的固定绑定。
 
 ### 6.5 v1 首批目标、标签与频道
 
@@ -383,27 +389,27 @@ targets:
 
 | 目标 | 频道 | 地址/账号 | 采集方式 | 建议间隔 |
 |---|---|---|---|---|
-| Composio | Official Blog | `https://composio.dev/blog` | Firecrawl scrape + 本地去重 | 60 分钟 |
-| Composio | Official X | `@composio` | `get_twitter_user_tweet_timeline` | 180 分钟 |
-| Composio | Pricing | `https://composio.dev/pricing` | Firecrawl scrape + 本地 Diff | 360 分钟 |
-| Composio | Documentation | `https://docs.composio.dev` | Firecrawl map/scrape + 本地 Diff | 360 分钟 |
+| Composio | Official Blog | `https://composio.dev/blog` | HTTP → OpenCLI web read | 60 分钟 |
+| Composio | Official X | `@composio` | OpenCLI twitter search | 180 分钟 |
+| Composio | Pricing | `https://composio.dev/pricing` | HTTP → OpenCLI + 本地 Diff | 360 分钟 |
+| Composio | Documentation | `https://docs.composio.dev/llms.txt` | HTTP + 本地 Diff | 360 分钟 |
 | Composio | GitHub | `https://github.com/ComposioHQ` | GitHub API/RSS fallback | 180 分钟 |
 | OpenAI | Official News RSS | `https://openai.com/news/rss.xml` | RSS | 60 分钟 |
-| OpenAI | Official X | `@OpenAI` | `get_twitter_user_tweet_timeline` | 180 分钟 |
-| OpenAI | API Changelog | `https://developers.openai.com/api/docs/changelog` | Firecrawl scrape + 本地 Diff | 60 分钟 |
-| OpenAI | API Pricing | `https://developers.openai.com/api/docs/pricing` | Firecrawl scrape + 本地 Diff | 360 分钟 |
+| OpenAI | Official X | `@OpenAI` | OpenCLI twitter search | 180 分钟 |
+| OpenAI | API Changelog | `https://developers.openai.com/api/docs/changelog` | HTTP → OpenCLI + 本地 Diff | 60 分钟 |
+| OpenAI | API Pricing | `https://developers.openai.com/api/docs/pricing` | HTTP → OpenCLI + 本地 Diff | 360 分钟 |
 | OpenAI | GitHub | `https://github.com/openai` | GitHub API/RSS fallback | 180 分钟 |
-| Anthropic | Official News | `https://www.anthropic.com/news` | Firecrawl map/scrape | 60 分钟 |
-| Anthropic | Official X | `@AnthropicAI` | `get_twitter_user_tweet_timeline` | 180 分钟 |
-| Anthropic | API Release Notes | `https://platform.claude.com/docs/en/release-notes/overview` | Firecrawl scrape + 本地 Diff | 60 分钟 |
-| Anthropic | API Pricing | `https://platform.claude.com/docs/en/about-claude/pricing` | Firecrawl scrape + 本地 Diff | 360 分钟 |
+| Anthropic | Official News | `https://www.anthropic.com/news` | HTTP → OpenCLI | 60 分钟 |
+| Anthropic | Official X | `@AnthropicAI` | OpenCLI twitter search | 180 分钟 |
+| Anthropic | API Release Notes | `https://platform.claude.com/docs/en/release-notes/overview` | HTTP → OpenCLI + 本地 Diff | 60 分钟 |
+| Anthropic | API Pricing | `https://platform.claude.com/docs/en/about-claude/pricing` | HTTP → OpenCLI + 本地 Diff | 360 分钟 |
 | Anthropic | GitHub | `https://github.com/anthropics` | GitHub API/RSS fallback | 180 分钟 |
 | Simon Willison | Everything Atom | `https://simonwillison.net/atom/everything/` | Atom | 60 分钟 |
-| Simon Willison | Official X | `@simonw` | `get_twitter_user_tweet_timeline` | 180 分钟 |
+| Simon Willison | Official X | `@simonw` | OpenCLI twitter search | 180 分钟 |
 | Simon Willison | GitHub | `https://github.com/simonw` | GitHub API/RSS fallback | 360 分钟 |
-| MCP Ecosystem | Official Blog | `https://blog.modelcontextprotocol.io` | Firecrawl map/scrape | 60 分钟 |
-| MCP Ecosystem | Specification | `https://modelcontextprotocol.io/specification/` | Firecrawl scrape + 本地 Diff | 360 分钟 |
-| MCP Ecosystem | Registry | `https://registry.modelcontextprotocol.io` | Firecrawl map + 本地 Diff | 720 分钟 |
+| MCP Ecosystem | Official Blog | `https://blog.modelcontextprotocol.io/index.xml` | RSS | 60 分钟 |
+| MCP Ecosystem | Specification | `https://modelcontextprotocol.io/specification/` | HTTP → OpenCLI + 本地 Diff | 360 分钟 |
+| MCP Ecosystem | Registry | `https://registry.modelcontextprotocol.io/v0.1/servers` | Registry API | 720 分钟 |
 | MCP Ecosystem | GitHub | `https://github.com/modelcontextprotocol` | GitHub API/RSS fallback | 120 分钟 |
 
 #### 补充频道：默认停用
@@ -448,14 +454,14 @@ API Key 不应发送到聊天或写入仓库；如后续改用 API Key，应由�
 
 以下工具名和 Schema 摘要于 2026-09-05 通过 `AISA_SEARCH_TOOL` 与 `AISA_BATCH_GET_SCHEMA` 只读发现得到，盘点期间没有执行内容抓取工具。
 
-#### Twitter / X
+#### 已停用的 AIsa Twitter / X 绑定
 
 | 工具名 | 用途 | 关键输入 | 分页/限制 |
 |---|---|---|---|
 | `get_twitter_user_tweet_timeline` | 获取指定用户自己的时间线 | 实际使用 `userId`；可选 `includeReplies`、`includeParentTweet` | `cursor`；每页最多 20 条；无独立时间范围参数 |
 | `get_twitter_tweet_advanced_search` | 使用关键词和 X 高级语法搜索公开帖子 | `query`、`queryType`（`Latest` 或 `Top`） | `cursor`；日期条件写入 query；无 page size |
 
-说明：目标配置中的 `handle` 必须先解析成平台 numeric `userId`，并将映射缓存；不能假定 timeline 工具直接接受用户名。
+说明：以上绑定仅保留历史设计记录，当前启用频道不再调用。生产路径直接使用 OpenCLI 与目录中的 `handle`。
 
 #### Reddit
 
@@ -465,7 +471,7 @@ API Key 不应发送到聊天或写入仓库；如后续改用 API Key，应由�
 | `get_reddit_subreddit_search` | 在单个 subreddit 内搜索 | `subreddit`；`query` 可选 | `cursor`；subreddit 不带 `r/` |
 | `get_reddit_subreddit` | 获取 subreddit 帖子流 | `subreddit` | `after`；subreddit 名称区分大小写；timeframe 只与 top 配合 |
 
-#### Firecrawl / 网页
+#### 已停用的 Firecrawl / 网页绑定
 
 | 工具名 | 用途 | 关键输入 | 分页/限制 |
 |---|---|---|---|
@@ -473,11 +479,7 @@ API Key 不应发送到聊天或写入仓库；如后续改用 API Key，应由�
 | `post_firecrawl_map` | 发现站点可达 URL，不下载页面正文 | `url`、`limit` | 无分页；limit 1–100000；按发现链接计量 |
 | `post_firecrawl_search` | 返回网页搜索标题、链接和摘要 | `query` | 无分页；limit 1–100；query 最长 500 字符 |
 
-当前未验证到可发布的 Firecrawl crawl 和 structured extract 工具。因此：
-
-- Blog、Documentation、Pricing 使用 `post_firecrawl_scrape` 获取当前内容。
-- 网页哈希、历史快照和 Diff 由本地确定性程序完成。
-- 站点新增页面发现使用 `post_firecrawl_map`，不将 map 当正文抓取。
+以上工具仅保留历史能力盘点，不得进入当前启用频道。Blog、Documentation、Pricing 先用普通 HTTP，失败或不完整时由 `opencli web read` 获取 Markdown；网页哈希、历史快照和 Diff 继续由本地确定性程序完成。
 
 #### YouTube
 
@@ -527,13 +529,13 @@ API Key 不应发送到聊天或写入仓库；如后续改用 API Key，应由�
 | GitHub repositories/releases/commits/issues | GitHub 官方 API、Atom/RSS 或网页抓取 |
 | Hacker News | 官方 Firebase API、RSS 或通用搜索 |
 | Product Hunt | 官方 API/RSS、通用搜索或网页抓取 |
-| Changelog/Documentation/Pricing Diff | `post_firecrawl_scrape` + 本地 hash/diff |
-| Firecrawl crawl | map + 单页 scrape，等待专用工具可用 |
-| Firecrawl structured extract | Markdown scrape + 本地结构化提取 |
+| Changelog/Documentation/Pricing Diff | 普通 HTTP → OpenCLI web read + 本地 hash/diff |
+| 动态或受保护网页 | OpenCLI web read |
+| X 指定账号 | OpenCLI twitter search + tweet ID 水位 |
 
 ### 7.4 MCP 工具注册表
 
-`intelligence/config/mcp-tools.yaml` 保存经过验证的固定映射：
+`intelligence/config/mcp-tools.yaml` 只保存未启用补充平台可能使用的固定映射；Twitter timeline 与 Firecrawl Scrape 已从注册表移除：
 
 ```yaml
 version: 1
@@ -542,23 +544,6 @@ server:
   url: https://tools.aisa.one/mcp
 
 tools:
-  twitter-user-timeline-v1:
-    status: schema_verified
-    channel_types: [twitter]
-    tool_name: get_twitter_user_tweet_timeline
-    input_template:
-      userId: "{{ channel.resolved_user_id }}"
-      cursor: "{{ cursor.next }}"
-      includeReplies: false
-      includeParentTweet: true
-    output_adapter: twitter_posts_v1
-    pagination:
-      type: cursor
-      field: cursor
-    limitations:
-      max_items_per_page: 20
-      time_range_filter: false
-
   twitter-keyword-search-v1:
     status: schema_verified
     channel_types: [twitter_search]
@@ -585,17 +570,6 @@ tools:
       type: cursor
       field: after
 
-  firecrawl-page-scrape-v1:
-    status: schema_verified
-    channel_types: [blog, documentation, pricing, web_diff]
-    tool_name: post_firecrawl_scrape
-    input_template:
-      url: "{{ channel.url }}"
-      proxy: basic
-      formats: [markdown]
-    output_adapter: firecrawl_document_v1
-    pagination:
-      type: none
 ```
 
 `schema_verified` 只表示工具名和输入 Schema 已通过只读能力发现；完成最小真实调用与输出适配器契约测试后，才能改为 `verified`。运行时禁止调用 `unverified` 或 `schema_verified` 的定时绑定。
@@ -996,7 +970,7 @@ Agent 必须遵守：
 
 | 名称 | 模式 | 时间 | 作用 |
 |---|---|---|---|
-| Collect Due Channels | run only | 每 30 分钟 | 使用固定 MCP 工具和本地 collector 采集到期频道 |
+| Collect Due Channels | run only | 每 30 分钟 | 使用 RSS/API/HTTP/OpenCLI 本地 collector 采集到期频道 |
 | Analyze Pending Items | run only | 每小时 | 分析新增条目 |
 | Morning Intelligence | create issue | 08:30 | 生成早报并保留讨论记录 |
 | Midday High Signals | run only/create issue | 13:00 | 仅有高价值变化时生成 |
@@ -1004,7 +978,7 @@ Agent 必须遵守：
 | Weekly Strategic Review | create issue | 周日 20:00 | 七天跨事件分析 |
 | Channel Health Review | run only | 每日 | 检查连续失败频道 |
 
-由于 AIsa OAuth 由 Codex 持有，采集也由 Multica Autopilot 调度。Agent 只负责调用已经固定且验证过的 AIsa 工具；RSS、HTTP 和 GitHub 等本地采集仍由确定性 `intelctl` collector 完成。`schedules.yaml` 是声明来源，修改后同步更新 Multica trigger。
+采集由 Multica Autopilot 调度、Mac mini 原地执行。RSS、HTTP、GitHub、Registry API 与 OpenCLI 均由确定性 `intelctl` collector 调用；当前启用频道不依赖 AIsa OAuth。`schedules.yaml` 是声明来源，修改后同步更新 Multica trigger。
 
 ### 11.6 Multica Cloud 与 self-host 选择
 

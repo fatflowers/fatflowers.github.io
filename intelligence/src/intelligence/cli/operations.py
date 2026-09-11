@@ -29,6 +29,7 @@ from intelligence.collectors import ChannelSpec, CollectorRouter, GitHubCollecto
 from intelligence.collectors.adapters import get_adapter
 from intelligence.collectors.github import environment_token
 from intelligence.collectors.http import HTTPCollector, WebDiffCollector
+from intelligence.collectors.opencli import OpenCLICollector
 from intelligence.collectors.rss import RSSCollector
 from intelligence.mcp import MCPToolRegistry
 from intelligence.models.catalog import stable_id
@@ -455,7 +456,7 @@ def collect_local(
     if due:
         response = client.get_due_channels(limit=limit)
         for row in response.get("channels", []):
-            if str(row.get("collector_type")) not in {"rss", "http", "github_api", "mcp_registry_api"}:
+            if str(row.get("collector_type")) not in {"rss", "http", "browser", "github_api", "mcp_registry_api"}:
                 continue
             target, channel = _raw_channel(repository, str(row["slug"]))
             selections.append((target, channel, _json_object(row.get("cursor_json"))))
@@ -581,11 +582,15 @@ def _collect_local_channel(
     collector_map: Dict[str, Any] = dict(collectors or {})
     if not collector_map:
         page_collector = HTTPCollector()
+        browser_collector = OpenCLICollector()
         collector_map = {
             "rss": RSSCollector(),
             "http": WebDiffCollector(page_collector)
             if bool(spec.config.get("diff"))
             else page_collector,
+            "browser": WebDiffCollector(browser_collector)
+            if bool(spec.config.get("diff")) and spec.channel_type != "twitter"
+            else browser_collector,
             "github_api": GitHubCollector(token_provider=environment_token()),
             "mcp_registry_api": MCPRegistryCollector(),
         }

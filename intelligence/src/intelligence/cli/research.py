@@ -8,10 +8,10 @@ from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
 from typing import Any, Mapping
 from urllib.parse import quote, urlsplit
-from urllib.request import Request, urlopen
 from xml.etree.ElementTree import ParseError
 
 from intelligence.catalog import CatalogError
+from intelligence.collectors.opencli import OpenCLIError, fetch_article_with_opencli
 from intelligence.enrichment import enrich_article, fetch_article
 from intelligence.models.catalog import stable_id
 from intelligence.normalize import NormalizedItem, canonicalize_url
@@ -47,7 +47,7 @@ def research_plan(client, *, since=None, limit=30, target=None):
             if len(selected) == limit:
                 break
     return {"since": since, "items": selected, "selected": len(selected),
-            "next_step": "research hydrate --item-id ID --since SAME_CUTOFF; execute fixed Firecrawl fallback if returned"}
+            "next_step": "research hydrate --item-id ID --since SAME_CUTOFF; HTTP failures use the local OpenCLI browser fallback"}
 
 
 def research_coverage(client, *, since=None):
@@ -60,54 +60,6 @@ def _item(client, item_id):
     if not isinstance(item, Mapping):
         raise CatalogError("Worker did not return the requested item")
     return item
-
-
-def _fallback(url):
-    return {"server": "aisa-tools", "binding": "firecrawl-page-scrape-v1",
-            "tool_name": "post_firecrawl_scrape",
-            "arguments": {"url": url, "proxy": "basic", "formats": ["markdown"]}}
-
-
-def _openai_reader_article(item, *, timeout=45, max_bytes=2_000_000):
-    """Read an OpenAI article through Jina Reader after the origin returns 403.
-
-    OpenAI's RSS feed remains the discovery and publication-date authority.  The
-    reader is an unauthenticated, free body-only fallback and is deliberately
-    restricted to OpenAI article URLs so it cannot become a general proxy.
-    """
-    parsed = urlsplit(item["url"])
-    if parsed.scheme not in {"http", "https"} or parsed.hostname not in {"openai.com", "www.openai.com"}:
-        raise ValueError("Free OpenAI reader only accepts openai.com URLs")
-    path = parsed.path or "/"
-    reader_url = "https://r.jina.ai/http://openai.com" + path
-    if parsed.query:
-        reader_url += "?" + parsed.query
-    request = Request(reader_url, headers={
-        "User-Agent": "PersonalIntelligence/1.0 (+https://fatflowers.github.io)",
-        "Accept": "text/plain,text/markdown",
-    })
-    with urlopen(request, timeout=timeout) as response:
-        media_type = response.headers.get_content_type()
-        if media_type not in {"text/plain", "text/markdown"}:
-            raise ValueError("Free OpenAI reader did not return Markdown")
-        raw = response.read(max_bytes + 1)
-        if len(raw) > max_bytes:
-            raise ValueError("Free OpenAI reader response exceeds byte limit")
-        encoding = response.headers.get_content_charset() or "utf-8"
-        markdown = raw.decode(encoding, errors="replace")
-    marker = "Markdown Content:"
-    if marker in markdown:
-        markdown = markdown.split(marker, 1)[1].strip()
-    article = enrich_article(item["url"], markdown=markdown, metadata={
-        "title": item.get("title") or "",
-        "canonicalUrl": item.get("canonical_url") or item["url"],
-    })
-    article["body_provenance"] = {
-        "source": "jina_reader_markdown",
-        "url": item["url"],
-        "characters": len(markdown),
-    }
-    return article
 
 
 def _paid_fallback_allowed(item):
@@ -266,25 +218,34 @@ def research_hydrate(client, *, item_id, since=None):
                    "publication_evidence": {"source": "platform.github.published_at", "value": item["published_at"]},
                    "page_kind": "article" if len(item.get("content_text") or "") >= 200 else "routine_release"}
         return _persist(client, item, article, since=since, tool_name="github-public-api")
+    http_error = None
     try:
         article = fetch_article(item["url"])
     except (OSError, ValueError, TimeoutError) as exc:
-        if urlsplit(item["url"]).hostname in {"openai.com", "www.openai.com"}:
-            try:
-                article = _openai_reader_article(item)
-            except (OSError, ValueError, TimeoutError):
-                pass
-            else:
-                return _persist(client, item, article, since=since, tool_name="jina-reader-free")
-        result = _persist(client, item, {}, since=since, tool_name="http")
-        result.update(reason="http_fetch_failed", error_type=type(exc).__name__)
-        if metadata.get("allow_paid_fallback", True):
-            result["fallback"] = _fallback(item["url"])
+        http_error = exc
+        article = None
+    if article is not None:
+        feed_date = item.get("published_at") if metadata.get("platform") == "rss" else None
+        needs_browser = (
+            len(article.get("content_text") or "") < 200
+            or (article.get("page_kind") == "index" and not article.get("discovered_links"))
+            or (not article.get("published_at") and not feed_date)
+        )
+        if not needs_browser:
+            return _persist(client, item, article, since=since, tool_name="http")
+    try:
+        article = fetch_article_with_opencli(
+            item["url"],
+            title=item.get("title"),
+            canonical_url=item.get("canonical_url"),
+        )
+    except (OSError, ValueError, TimeoutError, OpenCLIError) as browser_error:
+        exc = http_error or browser_error
+        result = _persist(client, item, {}, since=since, tool_name="http+opencli")
+        result.update(reason="http_and_opencli_fetch_failed", error_type=type(exc).__name__)
         return result
-    result = _persist(client, item, article, since=since, tool_name="http")
-    if result["status"] == "failed" and metadata.get("allow_paid_fallback", True):
-        result["fallback"] = _fallback(item["url"])
-    return result
+    else:
+        return _persist(client, item, article, since=since, tool_name="opencli-web-read")
 
 
 def research_ingest(client, *, item_id, payload, since=None):
@@ -450,16 +411,17 @@ def research_discover(repository, client, *, target=None):
             record = normalized_item_record(seed, target_id=entry.id, channel_id=channel.id, now=now)
             client.write_items([record], idempotency_key="research:seed:" + hashlib.sha256(json.dumps(record, sort_keys=True).encode()).hexdigest())
             try:
-                article = fetch_article(channel.url)
+                try:
+                    article = fetch_article(channel.url)
+                except (OSError, ValueError, TimeoutError):
+                    article = fetch_article_with_opencli(channel.url, title=channel.name)
+                if not article.get("discovered_links"):
+                    article = fetch_article_with_opencli(channel.url, title=channel.name)
                 queued = _queue_children(client, record, article.get("discovered_links", []), limit=20)
-                result = {"target": entry.slug, "channel": channel.slug, "item_id": record["id"],
-                          "status": "discovered" if queued else "needs_fallback", "queued": len(queued)}
-                if not queued and channel.config.get("allow_paid_fallback", True):
-                    fallbacks.append({"item_id": record["id"], **_fallback(channel.url)})
-                results.append(result)
-            except (OSError, ValueError, TimeoutError) as exc:
-                results.append({"target": entry.slug, "channel": channel.slug, "item_id": record['id'], "status": "needs_fallback", "error_type": type(exc).__name__})
-                if channel.config.get("allow_paid_fallback", True):
-                    fallbacks.append({"item_id": record["id"], **_fallback(channel.url)})
+                results.append({"target": entry.slug, "channel": channel.slug, "item_id": record["id"],
+                                "status": "discovered" if queued else "no_matching_articles", "queued": len(queued)})
+            except (OSError, ValueError, TimeoutError, OpenCLIError) as exc:
+                results.append({"target": entry.slug, "channel": channel.slug, "item_id": record['id'],
+                                "status": "failed", "error_type": type(exc).__name__})
     return {"targets_checked": len(targets), "results": results, "fallback_plans": fallbacks,
-            "next_step": "research run; execute fallback plans and research ingest for inaccessible indexes"}
+            "next_step": "research run; local OpenCLI handles inaccessible indexes without paid fallback"}

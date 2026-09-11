@@ -135,3 +135,22 @@ def test_project_catalog_validates_when_present():
         channels = {channel.slug: channel for target in catalog.targets for channel in target.channels}
         for slug in ('openai-engineering', 'openai-developer-blog', 'anthropic-engineering', 'claude-blog'):
             assert channels[slug].enabled and channels[slug].channel_type == 'blog'
+
+
+def test_project_has_no_enabled_aisa_twitter_or_firecrawl_routes():
+    project_catalog = Path(__file__).parents[1] / "config" / "catalog.yaml"
+    registry_path = Path(__file__).parents[1] / "config" / "mcp-tools.yaml"
+    catalog = yaml.safe_load(project_catalog.read_text(encoding="utf-8"))
+    enabled = [
+        channel
+        for target in catalog["targets"] if target.get("enabled", True)
+        for channel in target["channels"] if channel.get("enabled", True)
+    ]
+    assert all(channel.get("collector") != "mcp" for channel in enabled)
+    assert not any(
+        channel.get("tool_binding") in {"twitter-user-timeline-v1", "firecrawl-page-scrape-v1"}
+        for channel in enabled
+    )
+    tools = yaml.safe_load(registry_path.read_text(encoding="utf-8"))["tools"]
+    assert "twitter-user-timeline-v1" not in tools
+    assert "firecrawl-page-scrape-v1" not in tools

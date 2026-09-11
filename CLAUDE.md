@@ -88,3 +88,34 @@ Dark theme selector: `[data-theme="dark"]` on `<html>` (not `body.dark`).
 ### Deployment
 `.github/workflows/hugo.yml` — builds on push to `main`, deploys to GitHub Pages.
 `baseURL = "/"` in `hugo.toml`; the Actions workflow injects the real domain via `--baseURL "${{ steps.pages.outputs.base_url }}/"`.
+
+## Cost-Aware Intelligence Collection
+
+The intelligence pipeline must prefer deterministic, unauthenticated public endpoints over paid discovery tools. `post_firecrawl_map` costs about USD 1 per request and must not be registered, planned, or called. Before adding or changing any scheduled collector, calculate its maximum calls per day and identify whether any primary or fallback route is paid. A paid recurring route requires explicit user approval.
+
+Enabled scheduled channels must not call AIsa `get_twitter_user_tweet_timeline` or `post_firecrawl_scrape`. Web pages use ordinary HTTP first and the local `opencli web read` browser collector only when HTTP fails or returns incomplete content. X channels use `opencli twitter search 'from:<handle>' --product live` directly, with a 50-item window, tweet-ID deduplication, and a fail-closed watermark gap check. OpenCLI runs read-only in a background ephemeral tab; never use its write commands from collection jobs.
+
+The maximum OpenCLI load under the current catalog is 304 web fallbacks plus 32 X polls per day (336 calls/day); all routes have zero per-request vendor cost. OpenCLI availability depends on the Mac mini's Chrome, Browser Bridge, and X login. A missing bridge, expired login, timeout, or exhausted X window is a collection failure that preserves the previous cursor; it must not trigger a paid fallback.
+
+### Free replacements for former Firecrawl Map channels
+
+| Channel | Collector | Public endpoint | Incremental state |
+|---|---|---|---|
+| `composio-documentation` | `http` web diff | `https://docs.composio.dev/llms.txt` | ETag/content hash |
+| `anthropic-news` | `http` web diff and local link discovery | `https://www.anthropic.com/news` | content hash; only `/news/` article paths |
+| `mcp-official-blog` | `rss` | `https://blog.modelcontextprotocol.io/index.xml` | feed item ID/publication time |
+| `mcp-registry` | `mcp_registry_api` | `https://registry.modelcontextprotocol.io/v0.1/servers` | `updated_since` plus cursor pagination |
+
+All four channels must keep `allow_paid_fallback: false`. That flag must propagate from an index/feed item to every discovered child. An HTTP failure, incomplete body, or missing publication date for these channels is recorded as a normal failed/rejected enrichment; it must never silently fall back to Firecrawl Scrape.
+
+The Registry collector is deliberately bounded: use the official unauthenticated read-only API, request at most 100 records per page, process at most 3 pages per run, persist `registry_cursor` when more pages remain, and advance `registry_updated_since` only after the current window is complete. Retry transient 5xx responses at most twice after the initial request; do not discard or skip the saved continuation.
+
+Obvious navigation URLs such as `/tags/`, `/tag/`, `/hashtag/`, `/following`, `/verified_followers`, `/about`, and `/tos` are not article candidates and must not enter enrichment or paid fallback queues. Native X/Twitter records come only from the verified platform collector; X HTML navigation pages must be rejected before any Firecrawl request.
+
+When modifying this policy, validate with:
+
+1. `intelctl catalog validate` and a catalog-sync dry-run.
+2. A real read-only collection for each affected free endpoint.
+3. A final collection plan showing `local_collector`, never `post_firecrawl_map` or another paid fallback.
+4. `opencli web read` against a real protected article and `opencli twitter search` against every enabled X handle.
+5. Collector, research, catalog, and full intelligence test suites.

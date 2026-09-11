@@ -166,7 +166,7 @@ def build_parser() -> argparse.ArgumentParser:
         command = research_commands.add_parser(action)
         command.add_argument("--since", help="ISO publication cutoff; default last 72 hours")
         if action in ("run", "hydrate", "discover"):
-            command.add_argument("--mcp", action="store_true", help="execute fixed Firecrawl fallbacks through authenticated Codex MCP capture")
+            command.add_argument("--mcp", action="store_true", help="deprecated compatibility flag; browser fallback now runs locally through OpenCLI")
         if action in ("plan", "run"):
             command.add_argument("--limit", type=int, default=30)
             command.add_argument("--target")

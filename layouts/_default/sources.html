@@ -59,12 +59,17 @@
         {{- $publicURL := partial "source-public-url.html" .url -}}
         {{- $toolName := "" -}}
         {{- $priceUSD := 0.0 -}}
+        {{- $hasBrowserFallback := false -}}
+        {{- range .fallbacks }}{{- if eq .collector "browser" }}{{- $hasBrowserFallback = true -}}{{- end }}{{- end -}}
         {{- if and (eq .collector "mcp") .tool_binding -}}{{- $toolName = index $mcpTools .tool_binding | default .tool_binding -}}{{- end -}}
         {{- if and (eq .collector "mcp") .tool_binding -}}{{- $priceUSD = index $mcpPrices .tool_binding | default 0.0 -}}{{- end -}}
         {{- $collectorLabel := .collector -}}
         {{- if eq .collector "mcp" -}}{{- $collectorLabel = printf "AIsa · %s" $toolName -}}
         {{- else if eq .collector "rss" -}}{{- $collectorLabel = "RSS" -}}
+        {{- else if and (eq .collector "http") $hasBrowserFallback -}}{{- $collectorLabel = "HTTP → OpenCLI · web read" -}}
         {{- else if eq .collector "http" -}}{{- $collectorLabel = "HTTP" -}}
+        {{- else if and (eq .collector "browser") (eq .type "twitter") -}}{{- $collectorLabel = "OpenCLI · twitter search" -}}
+        {{- else if eq .collector "browser" -}}{{- $collectorLabel = "OpenCLI · web read" -}}
         {{- else if eq .collector "github_api" -}}{{- $collectorLabel = "GitHub API" -}}
         {{- else if eq .collector "mcp_registry_api" -}}{{- $collectorLabel = "MCP Registry API" -}}{{- end -}}
         <article class="source-channel" data-enabled="{{ $active }}" data-search="{{ .name }} {{ .type }} {{ .collector }} {{ $toolName }} {{ delimit $channelTags " " }} {{ $publicURL }}">
@@ -88,7 +93,7 @@
             <div><dt>{{ if $zh }}配置间隔{{ else }}Configured interval{{ end }}</dt><dd>{{ .interval_minutes }} {{ if $zh }}分钟{{ else }}min{{ end }}</dd></div>
             {{ with .priority }}<div><dt>{{ if $zh }}优先级{{ else }}Priority{{ end }}</dt><dd>{{ . }}</dd></div>{{ end }}
             {{ with .tier }}<div><dt>{{ if $zh }}频道层级{{ else }}Channel tier{{ end }}</dt><dd>{{ . }}</dd></div>{{ end }}
-            {{ with .fallbacks }}<div><dt>{{ if $zh }}后备方式{{ else }}Fallbacks{{ end }}</dt><dd>{{ range $i, $fallback := . }}{{ if $i }} → {{ end }}{{ $fallback.collector }}{{ end }}</dd></div>{{ end }}
+            {{ with .fallbacks }}<div><dt>{{ if $zh }}后备方式{{ else }}Fallbacks{{ end }}</dt><dd>{{ range $i, $fallback := . }}{{ if $i }} → {{ end }}{{ if eq $fallback.collector "browser" }}OpenCLI · web read{{ else }}{{ $fallback.collector }}{{ end }}{{ end }}</dd></div>{{ end }}
             {{ with .config }}
               {{ with .feed_url }}{{ $feedURL := partial "source-public-url.html" . }}{{ if $feedURL }}<div class="source-setting-wide"><dt>{{ if $zh }}实际订阅地址{{ else }}Feed URL{{ end }}</dt><dd><a href="{{ $feedURL }}" rel="noopener noreferrer">{{ $feedURL }}</a></dd></div>{{ end }}{{ end }}
               {{ with .include_categories }}<div><dt>{{ if $zh }}订阅分类过滤{{ else }}Feed categories{{ end }}</dt><dd>{{ delimit . ", " }}</dd></div>{{ end }}

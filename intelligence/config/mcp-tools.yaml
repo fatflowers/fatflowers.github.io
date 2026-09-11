@@ -21,32 +21,6 @@ runtime_policy:
   never_store_credentials_in_repository: true
 
 tools:
-  twitter-user-timeline-v1:
-    status: verified
-    tool_name: get_twitter_user_tweet_timeline
-    channel_types: [twitter]
-    description: 获取已解析 numeric userId 的公开用户时间线
-    input_template:
-      userId: "{{ channel.config.resolved_user_id }}"
-      cursor: ""
-      includeReplies: "{{ channel.config.include_replies }}"
-      includeParentTweet: "{{ channel.config.include_parent_tweet }}"
-    output_adapter: twitter_posts_v1
-    pagination:
-      type: cursor
-      request_field: cursor
-      response_field: cursor
-      scope: within_run_only
-      max_pages_per_run: 3
-    limitations:
-      max_items_per_page: 20
-      accepts_handle: false
-      supports_time_range: false
-    contract:
-      version: 1
-      verified_at: "2026-09-06T00:27:05+08:00"
-      fixture: inline-shape:code,data.tweets,has_next_page,next_cursor,msg,status
-
   twitter-keyword-search-v1:
     status: schema_verified
     tool_name: get_twitter_tweet_advanced_search
@@ -124,31 +98,6 @@ tools:
       version: 1
       verified_at: null
       fixture: null
-
-  firecrawl-page-scrape-v1:
-    status: verified
-    tool_name: post_firecrawl_scrape
-    channel_types: [blog, documentation, pricing, changelog, web_diff]
-    description: 将单个公开 HTTPS 页面抓取为 Markdown
-    input_template:
-      url: "{{ channel.url }}"
-      proxy: basic
-      formats: [markdown]
-    output_adapter: firecrawl_document_v1
-    pagination:
-      type: none
-    limitations:
-      pdf_supported: false
-      allowed_formats: [markdown]
-    contract:
-      version: 1
-      verified_at: "2026-09-06T00:27:05+08:00"
-      fixture: inline-shape:data,success
-    pricing:
-      type: per_request
-      usd: 0.005
-      source: aisa-runtime-overlay
-      verified_at: "2026-09-06T23:29:47+08:00"
 
   firecrawl-search-v1:
     status: schema_verified
@@ -295,7 +244,8 @@ fallback_capabilities:
     fallbacks: [rss, web_search, http]
     mcp_binding: null
   web_diff:
-    primary_binding: firecrawl-page-scrape-v1
+    primary: http
+    fallbacks: [browser]
     diff_owner: local_deterministic_pipeline
 
 verification_workflow:

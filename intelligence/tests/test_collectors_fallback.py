@@ -32,7 +32,7 @@ def test_rss_and_cursor_stop_at_last_seen():
 
 
 def test_web_diff_emits_only_changed_page():
-    response = (b"<html><head><title>Price</title></head><body><main>$10</main></body></html>", {"Content-Type": "text/html; charset=utf-8"})
+    response = (b"<html><head><title>Price</title></head><body><main>" + b"The plan costs $10 and includes documented usage limits. " * 8 + b"</main></body></html>", {"Content-Type": "text/html; charset=utf-8"})
     collector = WebDiffCollector(HTTPCollector(fetcher=lambda url, timeout: response))
     first = collector.collect(channel("web_diff", "https://example.com/pricing"))
     second = collector.collect(channel("web_diff", "https://example.com/pricing"), first.next_cursor)
@@ -41,6 +41,20 @@ def test_web_diff_emits_only_changed_page():
     assert first.metadata["changed"] is False
     assert second.items == ()
     assert second.metadata["changed"] is False
+
+
+def test_web_diff_rebaselines_once_when_collector_changes():
+    response = (b"<html><body><main>" + b"Stable public documentation. " * 20 + b"</main></body></html>", {"Content-Type": "text/html"})
+    collector = WebDiffCollector(HTTPCollector(fetcher=lambda url, timeout: response))
+    old_cursor = {"collector": "post_firecrawl_scrape", "content_hash": "old", "content_excerpt": "old"}
+
+    migrated = collector.collect(channel("web_diff", "https://example.com/docs"), old_cursor)
+    steady = collector.collect(channel("web_diff", "https://example.com/docs"), migrated.next_cursor)
+
+    assert migrated.items == ()
+    assert migrated.metadata["collector_migration"] is True
+    assert migrated.next_cursor["collector"] == "http"
+    assert steady.items == ()
 
 
 class Fail:
