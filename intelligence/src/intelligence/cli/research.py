@@ -8,6 +8,7 @@ from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
 from typing import Any, Mapping
 from urllib.parse import quote, urlsplit
+from urllib.request import Request, urlopen
 from xml.etree.ElementTree import ParseError
 
 from intelligence.catalog import CatalogError
@@ -65,6 +66,48 @@ def _fallback(url):
     return {"server": "aisa-tools", "binding": "firecrawl-page-scrape-v1",
             "tool_name": "post_firecrawl_scrape",
             "arguments": {"url": url, "proxy": "basic", "formats": ["markdown"]}}
+
+
+def _openai_reader_article(item, *, timeout=45, max_bytes=2_000_000):
+    """Read an OpenAI article through Jina Reader after the origin returns 403.
+
+    OpenAI's RSS feed remains the discovery and publication-date authority.  The
+    reader is an unauthenticated, free body-only fallback and is deliberately
+    restricted to OpenAI article URLs so it cannot become a general proxy.
+    """
+    parsed = urlsplit(item["url"])
+    if parsed.scheme not in {"http", "https"} or parsed.hostname not in {"openai.com", "www.openai.com"}:
+        raise ValueError("Free OpenAI reader only accepts openai.com URLs")
+    path = parsed.path or "/"
+    reader_url = "https://r.jina.ai/http://openai.com" + path
+    if parsed.query:
+        reader_url += "?" + parsed.query
+    request = Request(reader_url, headers={
+        "User-Agent": "PersonalIntelligence/1.0 (+https://fatflowers.github.io)",
+        "Accept": "text/plain,text/markdown",
+    })
+    with urlopen(request, timeout=timeout) as response:
+        media_type = response.headers.get_content_type()
+        if media_type not in {"text/plain", "text/markdown"}:
+            raise ValueError("Free OpenAI reader did not return Markdown")
+        raw = response.read(max_bytes + 1)
+        if len(raw) > max_bytes:
+            raise ValueError("Free OpenAI reader response exceeds byte limit")
+        encoding = response.headers.get_content_charset() or "utf-8"
+        markdown = raw.decode(encoding, errors="replace")
+    marker = "Markdown Content:"
+    if marker in markdown:
+        markdown = markdown.split(marker, 1)[1].strip()
+    article = enrich_article(item["url"], markdown=markdown, metadata={
+        "title": item.get("title") or "",
+        "canonicalUrl": item.get("canonical_url") or item["url"],
+    })
+    article["body_provenance"] = {
+        "source": "jina_reader_markdown",
+        "url": item["url"],
+        "characters": len(markdown),
+    }
+    return article
 
 
 def _paid_fallback_allowed(item):
@@ -226,6 +269,13 @@ def research_hydrate(client, *, item_id, since=None):
     try:
         article = fetch_article(item["url"])
     except (OSError, ValueError, TimeoutError) as exc:
+        if urlsplit(item["url"]).hostname in {"openai.com", "www.openai.com"}:
+            try:
+                article = _openai_reader_article(item)
+            except (OSError, ValueError, TimeoutError):
+                pass
+            else:
+                return _persist(client, item, article, since=since, tool_name="jina-reader-free")
         result = _persist(client, item, {}, since=since, tool_name="http")
         result.update(reason="http_fetch_failed", error_type=type(exc).__name__)
         if metadata.get("allow_paid_fallback", True):

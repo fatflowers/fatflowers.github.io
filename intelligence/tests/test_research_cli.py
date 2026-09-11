@@ -150,6 +150,36 @@ def test_http_failure_never_claims_success(monkeypatch):
     assert result["fallback"]["arguments"]["formats"] == ["markdown"]
 
 
+def test_openai_http_403_uses_free_reader_before_paid_fallback(monkeypatch):
+    client = Client()
+    client.items[0].update(
+        url="https://openai.com/index/introducing-the-agents-api/",
+        canonical_url="https://openai.com/index/introducing-the-agents-api",
+        title="Introducing the Agents API",
+        published_at="2026-09-10T00:00:00Z",
+        raw_metadata_json={"platform": "rss"},
+    )
+    monkeypatch.setattr(research, "fetch_article", lambda url: (_ for _ in ()).throw(OSError("403")))
+    monkeypatch.setattr(research, "_openai_reader_article", lambda item: article(
+        title=item["title"],
+        canonical_url=item["canonical_url"],
+        published_at=None,
+        publication_evidence=None,
+    ))
+
+    result = research.research_hydrate(client, item_id="one", since="2026-09-01")
+
+    assert result["status"] == "ready"
+    assert "fallback" not in result
+    assert client.writes[0]["tool_name"] == "jina-reader-free"
+    assert client.writes[0]["date_evidence"]["kind"] == "feed"
+
+
+def test_free_reader_is_restricted_to_openai():
+    with pytest.raises(ValueError, match="only accepts openai.com"):
+        research._openai_reader_article({"url": "https://example.com/article"})
+
+
 def test_discovery_scoped_deduplicated_and_without_fake_date():
     client = Client()
     research._queue_children(client, client.items[0], [
