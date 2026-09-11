@@ -1,5 +1,23 @@
 from intelligence.cli import research
 from intelligence.cli.app import build_parser
+import pytest
+
+
+def test_historical_free_channel_honors_current_policy():
+    from intelligence.models.catalog import stable_id
+    assert not research._paid_fallback_allowed({
+        'channel_id': stable_id('channel', 'mcp-official-blog'),
+        'raw_metadata_json': '{}',
+    })
+
+
+def test_registry_hydrate_never_fetches_or_calls_paid_fallback(monkeypatch):
+    client = Client()
+    client.items[0]['url'] = 'https://registry.modelcontextprotocol.io/'
+    monkeypatch.setattr(research, 'fetch_article', lambda *_: pytest.fail('must not fetch registry HTML'))
+    result = research.research_hydrate(client, item_id='one')
+    assert result['reason'] == 'registry_metadata_not_article'
+    assert 'fallback' not in result
 
 
 class Client:

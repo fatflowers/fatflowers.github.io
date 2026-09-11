@@ -67,6 +67,20 @@ def _fallback(url):
             "arguments": {"url": url, "proxy": "basic", "formats": ["markdown"]}}
 
 
+def _paid_fallback_allowed(item):
+    """Current catalog wins over stale metadata on historical discoveries."""
+    from intelligence.catalog import CatalogRepository
+    raw = item.get('raw_metadata_json') or item.get('raw_metadata') or {}
+    metadata = json.loads(raw) if isinstance(raw, str) else raw
+    if metadata.get('allow_paid_fallback') is False:
+        return False
+    for target in CatalogRepository().load().targets:
+        for channel in target.channels:
+            if channel.id == item.get('channel_id'):
+                return channel.config.get('allow_paid_fallback', True) is not False
+    return True
+
+
 def _queue_children(client, item, links, *, limit=30, allowed_hosts=None):
     """Queue only same-site article discoveries; never inherit index dates."""
     from .operations import normalized_item_record
@@ -170,6 +184,9 @@ def research_hydrate(client, *, item_id, since=None):
     since = cutoff(since)
     raw = item.get("raw_metadata_json") or "{}"
     metadata = json.loads(raw) if isinstance(raw, str) else raw
+    if metadata.get('platform') == 'mcp_registry' or urlsplit(item['url']).hostname == 'registry.modelcontextprotocol.io':
+        return {"item_id": item_id, "status": "rejected", "reason": "registry_metadata_not_article", "queued_children": []}
+    metadata['allow_paid_fallback'] = _paid_fallback_allowed(item)
     if urlsplit(item["url"]).hostname in {"x.com", "www.x.com", "twitter.com", "www.twitter.com"} and metadata.get("platform") != "twitter":
         return _persist(
             client,
@@ -300,7 +317,15 @@ def resolve_mcp_fallbacks(client, result, *, since=None):
     """Ingest only actual native MCP responses, never a model's transcription."""
     from intelligence.mcp.codex_bridge import capture_batch
     plans = result.get("fallback_plans") or ([{"item_id": result["item_id"], **result["fallback"]}] if result.get("fallback") else [])
-    unresolved, completed = [], []
+    permitted = []
+    blocked = []
+    for plan in plans:
+        if _paid_fallback_allowed(_item(client, plan['item_id'])):
+            permitted.append(plan)
+        else:
+            blocked.append({**plan, 'diagnostic': 'paid_fallback_disabled'})
+    plans = permitted
+    unresolved, completed = blocked, []
     for offset in range(0, len(plans), 6):
         group = plans[offset:offset + 6]
         calls = [{"call_id": p["item_id"], "tool_name": p["tool_name"], "arguments": p["arguments"]} for p in group]

@@ -13,6 +13,8 @@ export async function pendingEnrichment({env, url}: AuthContext): Promise<ApiRes
       i.fetched_at DESC, i.published_at DESC, i.id) AS target_rank
     FROM items i JOIN targets t ON t.id=i.target_id JOIN channels c ON c.id=i.channel_id
     WHERE t.enabled=1 AND c.enabled=1 AND julianday(i.fetched_at)>=julianday(?)
+      AND c.collector_type != 'mcp_registry_api'
+      AND COALESCE(json_extract(i.raw_metadata_json,'$.platform'),'') != 'mcp_registry'
       AND (COALESCE(json_extract(i.raw_metadata_json,'$.discovery_only'),0)=1 OR (
         (i.published_at IS NULL OR julianday(i.published_at)>=julianday('now','-72 hours'))
         AND (length(COALESCE(i.content_text,''))<400 OR

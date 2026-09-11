@@ -2,6 +2,8 @@
 
 目的：每小时分析新增且尚未分析的公开情报条目，不发布报告。
 
+30 秒只代表工具执行分片，不代表失败。必须使用 session_id 继续等待同一研究进程的最终 JSON；禁止并行重复启动。research 日志 run_id 不是 D1 持久运行标识，不得用 run show 的 run_not_found 推断失败。历史条目也以当前 catalog 的 allow_paid_fallback 为准，Registry 不进入文章补抓。
+
 执行要求：工具返回 session_id 或 running 只表示进程仍在运行，必须继续读取该进程直到退出并取得最终 JSON。不得把启动事件当作完成，也不得因此重复创建 analyze pending。pending 命令的 Run 是队列查询，返回后即结束；使用返回的候选完成分析，ingest 的实际 Run ID 以其返回值为准。Registry 元数据不属于文章队列。
 
 若研究部分失败，记录失败入口，继续分析本次已经取得的有效正文；不得将部分失败说成无更新，也不得等待旧 Run 状态变化。无需反复查询全量运行历史。终态输出必须分别说明研究、分析和通知的实际结果；Multica completed 仅表示 Agent 退出，不保证业务步骤全部成功。
