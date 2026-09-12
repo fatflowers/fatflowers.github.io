@@ -12,6 +12,7 @@ from xml.etree.ElementTree import ParseError
 
 from intelligence.catalog import CatalogError
 from intelligence.collectors.opencli import OpenCLIError, fetch_article_with_opencli
+from intelligence.content_policy import excluded_item, excluded_mapping, excluded_topic
 from intelligence.enrichment import enrich_article, fetch_article
 from intelligence.models.catalog import stable_id
 from intelligence.normalize import NormalizedItem, canonicalize_url
@@ -90,6 +91,8 @@ def _queue_children(client, item, links, *, limit=30, allowed_hosts=None):
     now = datetime.now(timezone.utc).isoformat()
     for link in links:
         url = canonicalize_url(link.get("url", ""))
+        if excluded_topic((url, link.get("title")), stage="collection"):
+            continue
         parsed = urlsplit(url)
         path = parsed.path.rstrip("/").lower()
         navigation = (
@@ -137,7 +140,9 @@ def _persist(client, item, article, *, since, tool_name):
     status, reason = "ready", "article_body_and_publication_date_verified"
     published = article.get("published_at")
     evidence = article.get("publication_evidence")
-    if article.get("page_kind") == "unsupported_social_discovery":
+    if article.get("page_kind") == "excluded_topic":
+        status, reason = "rejected", "user_excluded_topic:%s" % article.get("excluded_topic", "unknown")
+    elif article.get("page_kind") == "unsupported_social_discovery":
         status, reason = "rejected", "unsupported_social_discovery_url"
     elif article.get("page_kind") == "routine_release":
         status, reason = "rejected", "release_has_no_substantive_change_details"
@@ -177,6 +182,15 @@ def _persist(client, item, article, *, since, tool_name):
 def research_hydrate(client, *, item_id, since=None):
     item = _item(client, item_id)
     since = cutoff(since)
+    topic = excluded_mapping(item, stage="enrichment")
+    if topic:
+        return _persist(
+            client,
+            item,
+            {"page_kind": "excluded_topic", "excluded_topic": topic, "content_text": ""},
+            since=since,
+            tool_name="content-policy",
+        )
     raw = item.get("raw_metadata_json") or "{}"
     metadata = json.loads(raw) if isinstance(raw, str) else raw
     if metadata.get('platform') == 'mcp_registry' or urlsplit(item['url']).hostname == 'registry.modelcontextprotocol.io':
@@ -250,6 +264,13 @@ def research_hydrate(client, *, item_id, since=None):
 
 def research_ingest(client, *, item_id, payload, since=None):
     item = _item(client, item_id)
+    topic = excluded_mapping(item, stage="enrichment")
+    if topic:
+        return _persist(
+            client, item,
+            {"page_kind": "excluded_topic", "excluded_topic": topic, "content_text": ""},
+            since=cutoff(since), tool_name="content-policy",
+        )
     data = _firecrawl_document(payload, item)
     article = enrich_article(item["url"], markdown=data["markdown"], metadata=data.get("metadata") or {})
     return _persist(client, item, article, since=cutoff(since), tool_name="post_firecrawl_scrape")
@@ -391,7 +412,11 @@ def research_discover(repository, client, *, target=None):
                 try:
                     page = RSSCollector(timeout=20).collect(ChannelSpec.from_catalog(entry.to_dict(), channel.to_dict()))
                     # Feed order convention is newest first; preserve actual publication dates.
-                    records = [normalized_item_record(item, target_id=entry.id, channel_id=channel.id, now=now) for item in page.items[:20]]
+                    records = [
+                        normalized_item_record(item, target_id=entry.id, channel_id=channel.id, now=now)
+                        for item in page.items[:20]
+                        if not excluded_item(item, stage="collection")
+                    ]
                     for record in records:
                         record["raw_metadata"] = {
                             **dict(record.get("raw_metadata") or {}),

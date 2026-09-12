@@ -10,6 +10,7 @@ from intelligence.cli.operations import (
     collect_local,
     ingest_analyses,
     ingest_collection,
+    pending_analysis,
     report_window,
     scheduler_apply,
 )
@@ -197,6 +198,25 @@ class LocalFailure:
         raise RuntimeError("local source unavailable")
 
 
+class LocalDatasette:
+    def collect(self, channel, cursor=None):
+        return CollectionPage.of(
+            [
+                NormalizedItem(
+                    external_id="datasette-1",
+                    target_slug=channel.target_slug,
+                    channel_slug=channel.channel_slug,
+                    url="https://example.com/datasette-release",
+                    title="Datasette release",
+                    author="Simon Willison",
+                    published_at="2026-09-12T00:00:00Z",
+                    content_text="Datasette published a maintenance release.",
+                )
+            ],
+            next_cursor={"last_external_id": "datasette-1"},
+        )
+
+
 def test_local_collect_executes_declared_fallback_and_commits_cursor(tmp_path):
     _, repository = project(tmp_path)
     client = FakeClient()
@@ -232,6 +252,25 @@ def test_local_collect_failure_updates_channel_health_and_run(tmp_path):
     health_call = next(call for call in client.calls if call[0] == "items")
     assert health_call[2]["succeeded"] is False
     assert client.calls[-1][2]["run_status"] == "failed"
+
+
+def test_local_collect_suppresses_user_excluded_topic_and_advances_cursor(tmp_path):
+    _, repository = project(tmp_path)
+    client = FakeClient()
+    result = collect_local(
+        repository,
+        client,
+        command_run_id="local-excluded",
+        due=False,
+        channel_slug="composio-blog",
+        collectors={"http": LocalDatasette()},
+    )
+
+    assert result["channels"][0]["normalized"] == 0
+    assert result["channels"][0]["suppressed"] == 1
+    item_call = next(call for call in client.calls if call[0] == "items")
+    assert item_call[1] == []
+    assert item_call[2]["cursor"] == {"last_external_id": "datasette-1"}
 
 
 def test_local_collect_due_filters_mcp_and_executes_rss(tmp_path):
@@ -296,6 +335,72 @@ def test_analysis_ingest_validates_before_worker_write():
     record = next(call for call in client.calls if call[0] == "analyses")[1][0]
     assert record["model"] == "codex"
     assert record["item_id"] == "item-1"
+
+
+def test_analysis_ingest_suppresses_excluded_topic_without_worker_write():
+    client = FakeClient()
+    analysis = {
+        "item_id": "datasette-analysis",
+        "headline": "Datasette 发布更新",
+        "summary": "Datasette 发布新的维护版本。",
+        "key_change": "版本发生变化",
+        "why_it_matters": "维护者可能需要升级",
+        "company_impact": "检查部署版本",
+        "importance": 4,
+        "confidence": 0.9,
+        "topics": ["Datasette"],
+        "watch_next": ["版本说明"],
+        "evidence": [{"url": "https://example.com/datasette", "claim": "发布"}],
+    }
+
+    result = ingest_analyses(
+        client,
+        payload=[analysis],
+        command_run_id="excluded-analysis-run",
+        external_run_id=None,
+        model="codex",
+        prompt_version="v1",
+    )
+
+    assert result["validated"] == 0
+    assert result["suppressed_by_content_policy"] == [
+        {"item_id": "datasette-analysis", "topic": "datasette"}
+    ]
+    assert not any(call[0] == "analyses" for call in client.calls)
+    assert client.calls[-1][2]["run_status"] == "skipped"
+
+
+def test_pending_analysis_rejects_excluded_topic_in_storage():
+    class PolicyClient(FakeClient):
+        def get_pending_analysis(self, **kwargs):
+            return {"items": [
+                {"id": "datasette-item", "content_revision": 2, "title": "Datasette security update"},
+                {"id": "agent-item", "content_revision": 1, "title": "Agent API update"},
+            ]}
+
+        def _request(self, method, path, **kwargs):
+            self.calls.append(("request", method, path, kwargs))
+            return {"updated": True}
+
+    client = PolicyClient()
+    result = pending_analysis(
+        client,
+        command_run_id="analysis-policy",
+        limit=50,
+        target_slug=None,
+        channel_slug=None,
+    )
+
+    assert [item["id"] for item in result["items"]] == ["agent-item"]
+    assert result["suppressed_by_content_policy"] == [
+        {"item_id": "datasette-item", "topic": "datasette"}
+    ]
+    rejected = next(call for call in client.calls if call[0] == "request")
+    assert rejected[3]["body"] == {
+        "expected_revision": 2,
+        "status": "rejected",
+        "reason": "user_excluded_topic:datasette",
+    }
 
 
 def test_report_build_is_deterministic_for_generate_then_publish(tmp_path):

@@ -3,6 +3,7 @@ metadata:
   public_only: true
   default_language: zh-CN
   timezone: Asia/Shanghai
+  content_policy: intelligence/config/content-policy.yaml
 
 publication:
   mode: automatic

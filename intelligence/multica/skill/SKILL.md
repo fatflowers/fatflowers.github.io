@@ -18,6 +18,7 @@ description: 通过 intelctl 管理个人公开情报系统的目标、频道、
 | 查看频道 | `intelctl channel list` |
 | 新增或修改频道 | `intelctl channel add/test/set-interval/disable`；只有停用的补充平台才可能需要 `bind-tool` |
 | 管理标签 | `intelctl tag list/add/attach/detach` |
+| 排除主题 | 更新 `config/content-policy.yaml`，验证采集、分析、即时通知与所有报告均命中 |
 | 校验和同步 | `intelctl catalog validate/sync` |
 | MCP 绑定查询与校验 | 仅处理未启用的补充平台；当前生产频道不依赖 AIsa Twitter 或 Firecrawl |
 | 新能力发现 | 优先寻找免费 RSS、官方 API、HTTP 或 OpenCLI 适配器，不临时发现付费工具 |

@@ -20,11 +20,13 @@ from pathlib import Path
 from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
 from uuid import UUID, uuid5
 from zoneinfo import ZoneInfo
+from urllib.parse import quote
 
 import yaml
 
 from intelligence.analyzer import validate_analysis
 from intelligence.catalog import CatalogError, CatalogRepository
+from intelligence.content_policy import excluded_item, excluded_mapping
 from intelligence.collectors import ChannelSpec, CollectorRouter, GitHubCollector, MCPRegistryCollector, RouteStep
 from intelligence.collectors.adapters import get_adapter
 from intelligence.collectors.github import environment_token
@@ -392,6 +394,7 @@ def ingest_collection(
                         "before_text": before, "after_text": after, "observed_at": now,
                         "previous_observed_at": previous.get("observed_at"), "excerpt_limit": 12000}
                 items = [replace(item, metadata={**item.metadata, "web_diff": diff, "date_kind": "observed_change"})]
+    items = [item for item in items if not excluded_item(item, stage="collection")]
     records = [
         normalized_item_record(item, target_id=target_id, channel_id=channel_id, now=now)
         for item in items
@@ -631,9 +634,12 @@ def _collect_local_channel(
 
     target_id = stable_id("target", spec.target_slug)
     channel_id = stable_id("channel", spec.channel_slug)
+    accepted_items = [
+        item for item in page.items if not excluded_item(item, stage="collection")
+    ]
     records = [
         normalized_item_record(item, target_id=target_id, channel_id=channel_id, now=now)
-        for item in page.items
+        for item in accepted_items
     ]
     storage = _write_item_batches(
         client,
@@ -650,6 +656,7 @@ def _collect_local_channel(
         "channel": spec.channel_slug,
         "collector": page.metadata.get("collector_type", spec.collector_type),
         "normalized": len(records),
+        "suppressed": len(page.items) - len(accepted_items),
         "raw_count": page.raw_count,
         "cursor": dict(page.next_cursor),
         "storage": storage,
@@ -749,7 +756,27 @@ def pending_analysis(
     except Exception as exc:
         _fail_run(client, command_run_id, "pending_analysis_query_failed", str(exc))
         raise
-    items = response.get("items", [])
+    candidates = response.get("items", [])
+    items = []
+    suppressed = []
+    for item in candidates:
+        topic = excluded_mapping(item, stage="analysis")
+        if not topic:
+            items.append(item)
+            continue
+        payload = {
+            "expected_revision": int(item.get("content_revision") or 0),
+            "status": "rejected",
+            "reason": "user_excluded_topic:%s" % topic,
+        }
+        digest = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
+        client._request(
+            "POST",
+            "/v1/items/%s/enrichment" % quote(str(item["id"]), safe=""),
+            body=payload,
+            headers={"Idempotency-Key": "content-policy:" + digest},
+        )
+        suppressed.append({"item_id": str(item["id"]), "topic": topic})
     # Pending is a completed queue read, not an active model execution.
     # Ingestion creates its own run; a returned pending ID is retained as context.
     client.update_run(
@@ -757,7 +784,8 @@ def pending_analysis(
         {
             "run_status": "succeeded" if items else "skipped",
             "item_count": len(items),
-            "metadata": {"reason": "pending_items_returned" if items else "no_pending_items"},
+            "metadata": {"reason": "pending_items_returned" if items else "no_pending_items",
+                         "suppressed_by_content_policy": len(suppressed)},
         },
         idempotency_key="run:finish:%s" % command_run_id,
     )
@@ -765,6 +793,7 @@ def pending_analysis(
         "pipeline_run_id": command_run_id,
         "status": "succeeded" if items else "skipped",
         "items": items,
+        "suppressed_by_content_policy": suppressed,
         "recent_published_events": response.get("recent_published_events", []),
     }
 
@@ -783,12 +812,17 @@ def ingest_analyses(
         raise CatalogError("analysis input must be an array or an object with analyses")
     now = utc_now()
     records = []
+    suppressed = []
     for index, raw in enumerate(raw_values):
         if not isinstance(raw, Mapping):
             raise CatalogError("analyses[%d] must be an object" % index)
         item_id = raw.get("item_id")
         if not isinstance(item_id, str) or not item_id:
             raise CatalogError("analyses[%d].item_id is required" % index)
+        topic = excluded_mapping(raw, stage="analysis")
+        if topic:
+            suppressed.append({"item_id": item_id, "topic": topic})
+            continue
         analysis_payload = {
             key: raw[key]
             for key in (
@@ -836,6 +870,17 @@ def ingest_analyses(
             },
             idempotency_key="run:create:%s" % run_id,
         )
+    if not records:
+        client.update_run(
+            run_id,
+            {"run_status": "skipped", "item_count": 0,
+             "metadata": {"reason": "all_items_suppressed_by_content_policy",
+                          "suppressed": suppressed}},
+            idempotency_key="run:skip:%s" % run_id,
+        )
+        return {"pipeline_run_id": run_id, "validated": 0,
+                "suppressed_by_content_policy": suppressed,
+                "storage": {"upserted": 0}}
     try:
         response = client.write_analyses(
             records, idempotency_key="analyses:%s" % run_id
@@ -848,7 +893,8 @@ def ingest_analyses(
     except Exception as exc:
         _fail_run(client, run_id, "analysis_ingest_failed", str(exc))
         raise
-    return {"pipeline_run_id": run_id, "validated": len(records), "storage": response}
+    return {"pipeline_run_id": run_id, "validated": len(records),
+            "suppressed_by_content_policy": suppressed, "storage": response}
 
 
 def report_window(

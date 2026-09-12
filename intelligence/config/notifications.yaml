@@ -1,5 +1,6 @@
 version: 1
 timezone: Asia/Shanghai
+content_policy: intelligence/config/content-policy.yaml
 
 high_signal_lark:
   enabled: true

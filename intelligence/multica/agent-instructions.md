@@ -7,6 +7,7 @@
 - 目标、频道、标签：`intelligence/config/catalog.yaml`
 - 免费本地采集器与剩余固定 MCP 工具：`intelligence/config/mcp-tools.yaml`
 - 报告规则：`intelligence/config/report-policy.yaml`
+- 用户主题排除：`intelligence/config/content-policy.yaml`
 - 即时通知规则：`intelligence/config/notifications.yaml`
 - 调度规则：`intelligence/config/schedules.yaml`
 - 操作流程：`intelligence/multica/runbooks/`
@@ -35,6 +36,7 @@
 - 常规采集不得临时发现付费替换工具。OpenCLI Browser Bridge、Chrome 或登录态异常时如实失败，不绕过到 AIsa 付费抓取。
 - 删除目标或频道默认转换成 disable，保留历史数据；物理删除必须由用户明确指定并单独确认范围。
 - 不静默改变用户的目标、标签、采集频率、报告阈值或发布规则。
+- `content-policy.yaml` 中的排除主题在采集、补抓、分析、高信号通知和所有报告中都必须抑制；不得因来源属于其他目标或频道而绕过。
 - 无来源 URL 的关键事实不得进入公开报告；推断必须明确标记。
 - 内容必须遵循仓库 `intelligence/prompts/analyze-item.md` 和日报编辑规则。禁止用脚本将标题拼接固定话术充当分析；仅有标题、未知日期、目录/个人主页、discovery_only 不得作为新闻发布。原文链接必须紧邻对应信息，不能集中堆在文末。数量不足则少发或不发。
 - 出刊前完成 `analyze-pending.md` 的发现、正文补抓和版本匹配分析。逐目标检查 discover 的实际结果与 research coverage；覆盖缺口不能记成“无更新”。保留原生工具响应，禁止让模型重写或补造抓取正文。

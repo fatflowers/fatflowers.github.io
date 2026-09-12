@@ -1,0 +1,13 @@
+version: 1
+
+excluded_topics:
+  - slug: datasette
+    terms:
+      - datasette
+    suppress:
+      - collection
+      - enrichment
+      - analysis
+      - high_signal_lark
+      - reports
+    reason: user_not_interested

@@ -12,6 +12,8 @@ from datetime import datetime
 from typing import Any, Mapping
 from urllib.parse import parse_qs, urlsplit
 
+from intelligence.content_policy import excluded_mapping
+
 
 def verified_observed_change(metadata: Any) -> Mapping[str, Any] | None:
     if not isinstance(metadata, Mapping):
@@ -35,6 +37,9 @@ def verified_observed_change(metadata: Any) -> Mapping[str, Any] | None:
 
 
 def exclusion_reason(row: Mapping[str, Any], start: datetime, end: datetime) -> str | None:
+    topic = excluded_mapping(row, stage="reports")
+    if topic:
+        return "user_excluded_topic:%s" % topic
     if row.get("is_baseline") in (True, 1, "1"):
         return "baseline"
     raw = row.get("raw_metadata_json", row.get("raw_metadata", {}))

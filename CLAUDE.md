@@ -97,6 +97,8 @@ Enabled scheduled channels must not call AIsa `get_twitter_user_tweet_timeline` 
 
 The maximum OpenCLI load under the current catalog is 304 web fallbacks plus 32 X polls per day (336 calls/day); all routes have zero per-request vendor cost. OpenCLI availability depends on the Mac mini's Chrome, Browser Bridge, and X login. A missing bridge, expired login, timeout, or exhausted X window is a collection failure that preserves the previous cursor; it must not trigger a paid fallback.
 
+User topic preferences live in `intelligence/config/content-policy.yaml`. An excluded topic must be suppressed consistently during collection, enrichment, pending analysis, high-signal Lark notifications, and every report edition. Matching is global across targets and channels. Do not reintroduce an excluded topic through a differently named source or manual report selection.
+
 ### Free replacements for former Firecrawl Map channels
 
 | Channel | Collector | Public endpoint | Incremental state |

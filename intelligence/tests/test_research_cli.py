@@ -20,6 +20,22 @@ def test_registry_hydrate_never_fetches_or_calls_paid_fallback(monkeypatch):
     assert 'fallback' not in result
 
 
+def test_user_excluded_topic_is_rejected_before_fetch(monkeypatch):
+    client = Client()
+    client.items[0].update(
+        title="Datasette security release",
+        url="https://simonwillison.net/2026/Sep/11/datasette-security/",
+        canonical_url="https://simonwillison.net/2026/Sep/11/datasette-security/",
+    )
+    monkeypatch.setattr(research, "fetch_article", lambda *_: pytest.fail("excluded topic must not fetch"))
+
+    result = research.research_hydrate(client, item_id="one")
+
+    assert result["status"] == "rejected"
+    assert result["reason"] == "user_excluded_topic:datasette"
+    assert client.writes[0]["status"] == "rejected"
+
+
 class Client:
     _path = staticmethod(lambda path, query: path)
 
