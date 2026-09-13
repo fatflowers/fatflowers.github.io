@@ -1,5 +1,5 @@
 version: 1
-updated_at: "2026-09-13T15:19:25+08:00"
+updated_at: "2026-09-13T15:31:15+08:00"
 
 cloudflare:
   database:
@@ -31,6 +31,7 @@ multica:
   autopilots:
     collect-due: 7c54a8c8-0a58-48fe-958c-f1673f500bc0
     analyze-pending: abacc877-3a8e-4203-a3ee-b03095677a2b
+    intelligence-feed-sync: 9b4dd63a-c89c-455a-a3d8-53f3ddf66709
     morning-intelligence: 35e9fb31-90ce-46f6-a466-b6648e91ad68
     midday-high-signals: b39270a5-32b1-4ced-b878-445a8688d82b
     evening-intelligence: 3e6ca845-0d1a-4312-9c47-95f487bfc377
@@ -39,6 +40,7 @@ multica:
   triggers:
     collect-due: cfa0dda3-0472-4ef7-ad06-b3823270b8d2
     analyze-pending: 07b9ec0f-b38d-4a93-92c9-28b1566e491e
+    intelligence-feed-sync: 41e349ed-e487-49a2-9a6a-1f72df9cd608
     morning-intelligence: 30a33adc-09df-42e9-9130-a6f6ff705a20
     midday-high-signals: 4ac326ec-92ca-4496-856b-84a33c8f3c1d
     evening-intelligence: cb9d9499-1df5-4d23-a130-263777fa36b4
@@ -51,6 +53,9 @@ verification:
   scheduled_collection_run: 01a0729f-0bfc-7080-9c88-64821d2f4290
   scheduled_collection_result: skipped_no_due_channels
   analyze_autopilot_run: 01a07299-f4ef-7ec8-b56c-c7a4e1121cee
+  feed_sync_autopilot_run: 01a099ae-b780-7a4e-bdc1-5ca3c24291f4
+  feed_sync_result: skipped_no_feed_changes
+  feed_url: https://fatflowers.github.io/zh/feed/
   natural_language_issue: TOM-1
   first_report:
     id: a32ff510-b9f8-5c5f-9379-569edce53138
