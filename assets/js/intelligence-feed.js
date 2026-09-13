@@ -53,7 +53,8 @@
     const meta = document.createElement('div');
     meta.className = 'feed-card-meta';
     meta.append(text('span', dateLabel(item.published_at)));
-    meta.append(text('span', `${item.target_name} / ${item.channel_name}`));
+    const sourceCount = item.sources?.length || 1;
+    meta.append(text('span', `${item.target_name} / ${item.channel_name}${sourceCount > 1 ? ` · ${sourceCount} 个来源` : ''}`));
     const score = text('span', `重要性 ${item.importance}/5`, 'feed-score');
     score.title = '综合影响、可信度与可行动性评分；1 低，5 高';
     meta.append(score);
@@ -91,6 +92,21 @@
         const a = document.createElement('a');
         a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer';
         a.textContent = entry.claim || '查看来源';
+        li.append(a); links.append(li);
+      });
+      section.append(links); details.append(section);
+    }
+    if (item.sources?.length) {
+      const section = document.createElement('section');
+      section.append(text('h3', '数据来源'));
+      const links = document.createElement('ul');
+      item.sources.forEach(entry => {
+        const href = safeUrl(entry.url);
+        if (!href) return;
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer';
+        a.textContent = `${entry.target_name} / ${entry.channel_name}`;
         li.append(a); links.append(li);
       });
       section.append(links); details.append(section);

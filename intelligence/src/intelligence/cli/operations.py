@@ -35,7 +35,7 @@ from intelligence.collectors.opencli import OpenCLICollector
 from intelligence.collectors.rss import RSSCollector
 from intelligence.mcp import MCPToolRegistry
 from intelligence.models.catalog import stable_id
-from intelligence.normalize import NormalizedItem, content_hash, dedupe_key
+from intelligence.normalize import NormalizedItem, canonicalize_url, content_hash, dedupe_key
 from intelligence.publisher import GitPublisher, PublicationService, PublishValidator
 from intelligence.reporter import (
     Report,
@@ -1432,11 +1432,21 @@ def _report_signal(row: Mapping[str, Any]) -> ReportSignal:
         }
     )
     original_url = str(row.get("canonical_url") or row.get("url") or "")
-    sources = (ReportSource(original_url, "原文"),) + tuple(
-        ReportSource(evidence.url, str(row.get("title") or evidence.claim))
-        for evidence in analysis.evidence
-        if evidence.url != original_url
-    )
+    metadata = _json_object(row.get("raw_metadata_json", row.get("raw_metadata")))
+    raw = metadata.get("raw") if isinstance(metadata.get("raw"), Mapping) else {}
+    card = raw.get("card") if isinstance(raw.get("card"), Mapping) else {}
+    linked_url = str(card.get("url") or "")
+    candidates = [(original_url, "原文"), (linked_url, "链接原文")] + [
+        (evidence.url, str(row.get("title") or evidence.claim)) for evidence in analysis.evidence
+    ]
+    sources_list, seen_sources = [], set()
+    for url, title in candidates:
+        normalized = canonicalize_url(url)
+        if not normalized or normalized in seen_sources:
+            continue
+        seen_sources.add(normalized)
+        sources_list.append(ReportSource(normalized, title))
+    sources = tuple(sources_list)
     return ReportSignal(
         item_id=str(row["id"]),
         target=str(row.get("target_name") or row.get("target_slug") or "Unknown"),
@@ -1444,7 +1454,7 @@ def _report_signal(row: Mapping[str, Any]) -> ReportSignal:
         published_at=_datetime(str(row["published_at"])),
         analysis=analysis,
         sources=sources,
-        date_kind="observed_change" if verified_observed_change(_json_object(row.get("raw_metadata_json", row.get("raw_metadata")))) else "published",
+        date_kind="observed_change" if verified_observed_change(metadata) else "published",
         source_label="%s / %s" % (
             str(row.get("target_name") or row.get("target_slug") or "Unknown"),
             str(row.get("channel_name") or row.get("channel_slug") or "Unknown"),

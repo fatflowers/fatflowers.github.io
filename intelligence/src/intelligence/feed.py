@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from intelligence.content_policy import excluded_mapping
+from intelligence.normalize.text import canonicalize_url
 
 
 def export_feed_snapshot(repository, client, *, force: bool = False) -> dict[str, Any]:
@@ -99,11 +100,14 @@ def export_feed_snapshot(repository, client, *, force: bool = False) -> dict[str
 
 
 def _public_item(row: Mapping[str, Any]) -> dict[str, Any]:
+    url = str(row.get("canonical_url") or row.get("url") or "")
+    linked_url = canonicalize_url(str(row.get("linked_url") or ""))
     return {
         "id": str(row["id"]),
         "headline": str(row.get("headline") or row.get("title") or "未命名信息"),
         "title": str(row.get("title") or row.get("headline") or "未命名信息"),
-        "url": str(row.get("canonical_url") or row.get("url") or ""),
+        "url": url,
+        "linked_url": linked_url,
         "published_at": str(row["published_at"]),
         "analyzed_at": str(row.get("analyzed_at") or ""),
         "target_slug": str(row.get("target_slug") or ""),
@@ -118,6 +122,11 @@ def _public_item(row: Mapping[str, Any]) -> dict[str, Any]:
         "topics": _array(row.get("topics_json")),
         "watch_next": _array(row.get("watch_next_json")),
         "evidence": _array(row.get("evidence_json")),
+        "sources": [{
+            "target_name": str(row.get("target_name") or row.get("target_slug") or "未知目标"),
+            "channel_name": str(row.get("channel_name") or row.get("channel_slug") or "未知频道"),
+            "url": url,
+        }],
     }
 
 
@@ -134,15 +143,83 @@ def _array(value: Any) -> list[Any]:
 
 
 def _dedupe(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    selected = {}
-    for item in items:
-        key = item["url"].rstrip("/").casefold() or item["id"]
-        prior = selected.get(key)
-        if prior is None or (item["importance"], item["analyzed_at"], item["id"]) > (
-            prior["importance"], prior["analyzed_at"], prior["id"]
-        ):
-            selected[key] = item
-    return sorted(selected.values(), key=lambda value: (value["published_at"], value["id"]), reverse=True)
+    """Merge exact URLs and social posts that explicitly link a collected article.
+
+    Text similarity is deliberately not used here: two posts from the same target
+    can discuss adjacent stories with similar vocabulary. A card/link edge is
+    deterministic evidence that the social post is a retelling of the article.
+    """
+    parents = list(range(len(items)))
+
+    def root(index: int) -> int:
+        while parents[index] != index:
+            parents[index] = parents[parents[index]]
+            index = parents[index]
+        return index
+
+    def union(left: int, right: int) -> None:
+        a, b = root(left), root(right)
+        if a != b:
+            parents[max(a, b)] = min(a, b)
+
+    by_url: dict[str, int] = {}
+    for index, item in enumerate(items):
+        url = canonicalize_url(item["url"]).casefold()
+        if url:
+            if url in by_url:
+                union(index, by_url[url])
+            else:
+                by_url[url] = index
+    for index, item in enumerate(items):
+        linked = canonicalize_url(item.get("linked_url", "")).casefold()
+        if linked and linked in by_url:
+            union(index, by_url[linked])
+
+    groups: dict[int, list[dict[str, Any]]] = {}
+    for index, item in enumerate(items):
+        groups.setdefault(root(index), []).append(item)
+
+    selected = []
+    for group in groups.values():
+        linked_targets = {canonicalize_url(item.get("linked_url", "")).casefold() for item in group}
+        primary = max(group, key=lambda item: (
+            canonicalize_url(item["url"]).casefold() in linked_targets,
+            item["importance"], item["analyzed_at"], item["id"],
+        )).copy()
+        sources = _unique_objects(
+            source for item in group for source in item.get("sources", [])
+        )
+        if len(sources) > 1:
+            primary["sources"] = sources
+            primary["evidence"] = _unique_objects(
+                evidence for item in group for evidence in item.get("evidence", [])
+            )
+            primary["topics"] = list(dict.fromkeys(
+                topic for item in group for topic in item.get("topics", [])
+            ))
+            primary["watch_next"] = list(dict.fromkeys(
+                value for item in group for value in item.get("watch_next", [])
+            ))
+            primary["merged_item_ids"] = sorted(item["id"] for item in group)
+        else:
+            primary.pop("sources", None)
+        primary.pop("linked_url", None)
+        selected.append(primary)
+    return sorted(selected, key=lambda value: (value["published_at"], value["id"]), reverse=True)
+
+
+def _unique_objects(values) -> list[dict[str, Any]]:
+    selected = []
+    seen = set()
+    for value in values:
+        if not isinstance(value, Mapping):
+            continue
+        key = canonicalize_url(str(value.get("url") or "")) or json.dumps(value, ensure_ascii=False, sort_keys=True)
+        if key in seen:
+            continue
+        seen.add(key)
+        selected.append(dict(value))
+    return selected
 
 
 def _repository_root(path: Path) -> Path:

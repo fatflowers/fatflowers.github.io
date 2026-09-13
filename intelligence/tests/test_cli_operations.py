@@ -5,6 +5,7 @@ import yaml
 
 from intelligence.catalog import CatalogRepository
 from intelligence.cli.operations import (
+    _report_signal,
     build_report,
     collection_plan,
     collect_local,
@@ -490,6 +491,59 @@ def test_feed_export_writes_current_snapshot_and_skips_when_unchanged(tmp_path):
     assert snapshot["items"][0]["topics"] == ["Agent"]
     assert second["status"] == "unchanged"
     assert client.calls[-1][1]["changed_after"] == "2026-09-13T01:00:00Z"
+
+
+def test_feed_export_merges_social_post_that_explicitly_links_article(tmp_path):
+    root, repository = project(tmp_path)
+    client = FakeClient()
+    article_url = "https://example.com/posts/agent-security"
+    client.feed_pages = [{
+        "latest_analyzed_at": "2026-09-13T02:00:00Z",
+        "next_cursor": None,
+        "items": [
+            {
+                "id": "social", "title": "Read this report", "headline": "转述报告",
+                "canonical_url": "https://x.com/example/status/1", "linked_url": article_url,
+                "published_at": "2026-09-12T10:05:00Z", "analyzed_at": "2026-09-13T02:00:00Z",
+                "target_slug": "example", "target_name": "Example", "channel_slug": "example-x",
+                "channel_name": "Official X", "importance": 2, "summary": "社交转述。",
+                "topics_json": '["安全"]', "watch_next_json": '[]', "evidence_json": '[]',
+            },
+            {
+                "id": "article", "title": "Agent security report", "headline": "完整安全报告",
+                "canonical_url": article_url, "linked_url": None,
+                "published_at": "2026-09-12T10:00:00Z", "analyzed_at": "2026-09-13T01:00:00Z",
+                "target_slug": "example", "target_name": "Example", "channel_slug": "example-blog",
+                "channel_name": "Blog", "importance": 3, "summary": "完整正文分析。",
+                "topics_json": '["代理"]', "watch_next_json": '[]', "evidence_json": '[]',
+            },
+        ],
+    }]
+
+    result = export_feed_snapshot(repository, client)
+    snapshot = json.loads((root / "static/data/intelligence-feed/index.json").read_text())
+
+    assert result["total_items"] == 1
+    assert snapshot["items"][0]["id"] == "article"
+    assert snapshot["items"][0]["url"] == article_url
+    assert {source["channel_name"] for source in snapshot["items"][0]["sources"]} == {"Blog", "Official X"}
+    assert snapshot["items"][0]["merged_item_ids"] == ["article", "social"]
+
+
+def test_report_signal_includes_social_card_article_as_a_source():
+    signal = _report_signal({
+        "id": "social", "title": "Read this", "canonical_url": "https://x.com/example/status/1",
+        "published_at": "2026-09-12T10:05:00Z", "target_name": "Example", "channel_name": "Official X",
+        "summary": "一条完整摘要。", "key_change": "发布一份安全报告。", "why_it_matters": "需要审计。",
+        "company_impact": "复核权限。", "importance": 3, "confidence": 0.9,
+        "topics_json": '["安全"]', "watch_next_json": '[]',
+        "evidence_json": '[{"url":"https://x.com/example/status/1","claim":"原帖"}]',
+        "raw_metadata_json": json.dumps({"raw": {"card": {"url": "https://example.com/report"}}}),
+    })
+
+    assert {source.url for source in signal.sources} == {
+        "https://x.com/example/status/1", "https://example.com/report",
+    }
 
 
 def test_weekly_report_identity_is_stable_within_iso_week(tmp_path):

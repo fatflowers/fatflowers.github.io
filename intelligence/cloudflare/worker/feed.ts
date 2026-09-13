@@ -2,6 +2,7 @@ import { parseLimit, requireIsoDate, requireNumber } from "./http.ts";
 import type { ApiResponse, AuthContext } from "./types.ts";
 
 const FEED_FIELDS = `i.id, i.title, i.canonical_url, i.url, i.published_at,
+  json_extract(i.raw_metadata_json,'$.raw.card.url') AS linked_url,
   a.analyzed_at, a.headline, a.summary, a.key_change, a.why_it_matters,
   a.company_impact, a.importance, a.confidence, a.topics_json,
   a.watch_next_json, a.evidence_json,

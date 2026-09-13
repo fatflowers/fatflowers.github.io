@@ -4,7 +4,7 @@
 
 1. 从仓库根目录执行 `intelligence/scripts/intelctl-secure feed export`，读取最终 JSON。
 2. `status=unchanged` 时立即返回 `skipped/no_feed_changes`；不得 commit、push、触发部署或发送飞书。
-3. `status=updated` 时只允许自动修改 `static/data/intelligence-feed/`。历史数据保留在 D1；最近 90 天写入 `index.json`，更早内容按月归档。不得删除历史 D1 数据。
+3. `status=updated` 时只允许自动修改 `static/data/intelligence-feed/`。历史数据保留在 D1；最近 90 天写入 `index.json`，更早内容按月归档。不得删除历史 D1 数据。若社交帖的原生卡片明确链接到同批已收录文章，则合并为一个事件，优先用文章作主卡片并保留全部渠道链接；不得仅凭模糊文本相似度合并。
 4. 运行 `hugo --minify`、`node --check assets/js/intelligence-feed.js` 和 `git diff --check`。检查生成 JSON 不含 `content_text`、confidence、凭据、Cookie 或内部 URL。
 5. 提交信息固定为 `content(intelligence): update feed snapshot`，推送 `main`。若没有实际 diff 则按 unchanged 结束；遇到冲突停止，不覆盖其他任务改动。
 6. 按 `publication-check.md` 的 GitHub Pages 方法等待本提交部署成功，再读取 `https://fatflowers.github.io/zh/feed/` 与 `/data/intelligence-feed/index.json`，核对 `latest_analyzed_at` 和新增 item ID。未完成线上验证不得通知。

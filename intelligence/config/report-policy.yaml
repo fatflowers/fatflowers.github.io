@@ -28,6 +28,8 @@ feed_publication:
   minimum_importance: 2
   debounce_minutes: 5
   deploy_only_when_changed: true
+  cross_channel_link_dedupe: true
+  prefer_linked_article_over_social_repost: true
   preserve_history_in_d1: true
   archive_by_month: true
   allowed_changed_paths:

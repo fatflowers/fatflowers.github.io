@@ -251,7 +251,8 @@ test('feed export is analyzed-only, ordered, bounded and supports cheap change c
   const db=new SqliteD1();
   const analyzedAt='2026-09-13T01:00:00Z';
   db.db.exec(`UPDATE items SET is_baseline=0,enrichment_status='ready',raw_metadata_json='{}';
-    UPDATE items SET published_at='2026-09-12T02:00:00Z',title='Newest' WHERE id='a1';
+    UPDATE items SET published_at='2026-09-12T02:00:00Z',title='Newest',
+      raw_metadata_json='{"platform":"twitter","raw":{"card":{"url":"https://example.com/article"}}}' WHERE id='a1';
     UPDATE items SET published_at='2026-09-11T02:00:00Z',title='Older' WHERE id='a2';`);
   for(const [id,importance] of [['a1',4],['a2',2],['b1',1]] as const) {
     db.db.prepare(`INSERT INTO analyses(item_id,headline,summary,key_change,why_it_matters,company_impact,
@@ -264,6 +265,7 @@ test('feed export is analyzed-only, ordered, bounded and supports cheap change c
   const first=await response.json() as any;
   assert.deepEqual(first.items.map((item:any)=>item.id),['a1']);
   assert.equal(first.items[0].content_text,undefined);
+  assert.equal(first.items[0].linked_url,'https://example.com/article');
   assert.deepEqual(first.next_cursor,{published_at:'2026-09-12T02:00:00Z',item_id:'a1'});
   const second=await call(db,`/v1/feed/export?from=2026-09-01T00:00:00Z&to=2026-09-14T00:00:00Z&min_importance=2&limit=10&cursor_published=${encodeURIComponent(first.next_cursor.published_at)}&cursor_id=a1`);
   assert.deepEqual((await second.json() as any).items.map((item:any)=>item.id),['a2']);
