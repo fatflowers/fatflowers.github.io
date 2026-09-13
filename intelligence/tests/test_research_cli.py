@@ -80,6 +80,35 @@ def test_balanced_selection():
     assert [i["target_id"] for i in result["items"]] == ["a", "b", "a"]
 
 
+def test_recent_explicit_cutoff_expands_to_seven_day_catch_up(monkeypatch):
+    from datetime import datetime, timezone
+
+    class FixedDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 9, 13, 12, 0, tzinfo=timezone.utc)
+
+    monkeypatch.setattr(research, "datetime", FixedDateTime)
+    result = research.research_plan(Client([]), since="2026-09-12T00:00:00Z", limit=3)
+    assert result["since"] == "2026-09-06T12:00:00+00:00"
+
+
+def test_research_run_hydrates_with_effective_plan_cutoff(monkeypatch):
+    seen = []
+    monkeypatch.setattr(research, "research_plan", lambda *a, **kw: {
+        "since": "2026-09-06T12:00:00+00:00", "items": [{"id": "one"}],
+    })
+    monkeypatch.setattr(research, "research_hydrate", lambda client, *, item_id, since: (
+        seen.append(since) or {"item_id": item_id, "status": "ready", "queued_children": []}
+    ))
+    monkeypatch.setattr(research, "research_coverage", lambda *a, **kw: {"targets": []})
+
+    result = research.research_run(Client(), since="2026-09-12T00:00:00Z", limit=1)
+
+    assert seen == ["2026-09-06T12:00:00+00:00"]
+    assert result["since"] == "2026-09-06T12:00:00+00:00"
+
+
 def test_native_refetch_gap_never_reports_batch_complete(monkeypatch):
     monkeypatch.setattr(research,'research_hydrate',lambda client,**kwargs: {
         'item_id':kwargs['item_id'],'status':'needs_platform_refetch','reason':'truncated'})
@@ -191,6 +220,28 @@ def test_http_403_uses_opencli_before_paid_fallback(monkeypatch):
     assert result["status"] == "ready"
     assert "fallback" not in result
     assert client.writes[0]["tool_name"] == "opencli-web-read"
+    assert client.writes[0]["date_evidence"]["kind"] == "feed"
+
+
+def test_exact_rss_date_overrides_noisy_related_card_date(monkeypatch):
+    client = Client()
+    client.items[0].update(
+        url="https://openai.com/index/scaling-storage-one-billion-users-part-one",
+        canonical_url="https://openai.com/index/scaling-storage-one-billion-users-part-one",
+        title="Rapidly scaling online storage",
+        published_at="2026-09-11T10:00:00Z",
+        raw_metadata_json={"platform": "rss"},
+    )
+    monkeypatch.setattr(research, "fetch_article", lambda url: article(
+        canonical_url=url,
+        published_at="2026-08-25T00:00:00-07:00",
+        publication_evidence={"source": "metadata.publishedTime", "value": "2026-08-25"},
+    ))
+
+    result = research.research_hydrate(client, item_id="one", since="2026-09-06T00:00:00Z")
+
+    assert result["status"] == "ready"
+    assert client.writes[0]["published_at"].startswith("2026-09-11T10:00:00")
     assert client.writes[0]["date_evidence"]["kind"] == "feed"
 
 

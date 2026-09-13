@@ -40,6 +40,27 @@ def test_opencli_web_read_returns_standard_article_and_safe_flags():
     assert command[command.index("--download-images") + 1] == "false"
 
 
+def test_opencli_openai_visible_article_date_beats_related_card_header_date():
+    markdown = """# Storage article
+> 发布时间: 2026-08-25T00:00:00.000-07:00
+> 原文链接: https://openai.com/index/storage/
+
+---
+
+September 11, 2026
+
+# Storage article
+""" + "Concrete engineering detail. " * 30
+    article = fetch_article_with_opencli(
+        "https://openai.com/index/storage/",
+        runner=lambda arguments, timeout: completed(markdown),
+        binary="opencli",
+    )
+
+    assert article["published_at"].startswith("2026-09-11")
+    assert article["publication_precision"] == "day"
+
+
 def test_opencli_twitter_normalizes_ids_and_advances_watermark():
     rows = [
         {"id": "12", "author": "OpenAI", "text": "Newest public post", "created_at": "2026-09-11T12:00:00Z"},

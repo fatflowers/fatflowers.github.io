@@ -99,6 +99,8 @@ The maximum OpenCLI load under the current catalog is 304 web fallbacks plus 32 
 
 User topic preferences live in `intelligence/config/content-policy.yaml`. An excluded topic must be suppressed consistently during collection, enrichment, pending analysis, high-signal Lark notifications, and every report edition. Matching is global across targets and channels. Do not reintroduce an excluded topic through a differently named source or manual report selection.
 
+Research planning and hydration must use the same effective cutoff. A caller's narrower cutoff is expanded to the seven-day catch-up window once, and that returned value must flow through every hydration. For an RSS item whose canonical URL matches the article, the feed item's publication timestamp is authoritative over a browser-extracted date because rendered pages may include older related-card dates.
+
 ## D1 Read Budget
 
 Treat `rows_read` as a production budget, not as a proxy for returned rows. Before changing a hot Worker query, inspect `wrangler d1 insights`, add the reverse/composite indexes needed by joins and correlated lookups, and verify the final plan with `EXPLAIN QUERY PLAN`. After deployment, capture the query's real `meta.rows_read`; report selection should stay below 50,000 rows per call with the current dataset. Do not put `datetime()`/`julianday()` around an indexed column unless the migration defines the exact matching expression index.

@@ -28,12 +28,19 @@ def cutoff(value=None):
     return parsed.replace(tzinfo=parsed.tzinfo or timezone.utc).isoformat()
 
 
+def research_window_start(value=None):
+    """Keep explicit report cutoffs from defeating the seven-day catch-up policy."""
+    requested = datetime.fromisoformat(cutoff(value))
+    catch_up = datetime.now(timezone.utc) - timedelta(days=7)
+    return min(requested, catch_up).isoformat()
+
+
 def research_plan(client, *, since=None, limit=30, target=None):
     if not 1 <= limit <= 100:
         raise CatalogError("research limit must be between 1 and 100")
-    since = cutoff(since)
+    since = research_window_start(since)
     response = client._request("GET", client._path("/v1/items/pending-enrichment", {
-        "since": min(datetime.fromisoformat(since), datetime.now(timezone.utc) - timedelta(days=7)).isoformat(), "limit": 500,
+        "since": since, "limit": 500,
         "target_id": stable_id("target", target) if target else None,
     }))
     groups = defaultdict(deque)
@@ -132,9 +139,11 @@ def _persist(client, item, article, *, since, tool_name):
     raw = item.get("raw_metadata_json") or item.get("raw_metadata") or {}
     if isinstance(raw, str):
         raw = json.loads(raw)
-    if (not article.get("published_at") and item.get("published_at")
-            and raw.get("platform") == "rss"
+    if (item.get("published_at") and raw.get("platform") == "rss"
             and canonicalize_url(article.get("canonical_url") or item["url"]) == canonicalize_url(item["url"])):
+        # The exact feed item is the publication authority. Browser readers
+        # can accidentally lift a date from a related-article card, so a noisy
+        # page-level date must not override the feed's item-scoped timestamp.
         article.update(published_at=item["published_at"], publication_precision=raw.get("publication_precision", "second"),
                        publication_evidence={"source": "feed.publication", "value": item["published_at"]})
     status, reason = "ready", "article_body_and_publication_date_verified"
@@ -323,8 +332,8 @@ def _firecrawl_document(payload, item):
 
 
 def research_run(client, *, since=None, limit=30, target=None):
-    since = cutoff(since)
     plan = research_plan(client, since=since, limit=limit, target=target)
+    since = plan["since"]
     pending = deque(item["id"] for item in plan["items"])
     attempted, results, fallbacks = set(), [], []
     while pending and len(attempted) < limit:

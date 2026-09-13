@@ -125,12 +125,22 @@ def fetch_article_with_opencli(
     markdown = _run(arguments, runner=runner or _default_runner, timeout=timeout)
     published_match = re.search(r"^>\s*(?:发布时间|Publish(?:ed)?(?: time| at)?):\s*(.+?)\s*$", markdown, re.M | re.I)
     source_match = re.search(r"^>\s*(?:原文链接|Original URL|Source URL):\s*(https://\S+)\s*$", markdown, re.M | re.I)
+    visible_openai_date = None
+    if urlsplit(url).hostname in {"openai.com", "www.openai.com"}:
+        # OpenCLI can infer its header date from an older "Keep reading" card.
+        # OpenAI renders the article's own date immediately after the divider.
+        visible_openai_date = re.search(
+            r"^---\s*$\s*^((?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4})\s*$",
+            markdown[:2_000], re.M,
+        )
     metadata = {
         "title": title or "",
         "canonicalUrl": canonical_url or (source_match.group(1) if source_match else url),
     }
-    if published_match:
-        metadata["publishedTime"] = published_match.group(1)
+    if visible_openai_date or published_match:
+        metadata["publishedTime"] = (
+            visible_openai_date.group(1) if visible_openai_date else published_match.group(1)
+        )
     article = enrich_article(url, markdown=markdown, metadata=metadata)
     article["body_provenance"] = {
         "source": "opencli_browser_markdown",
