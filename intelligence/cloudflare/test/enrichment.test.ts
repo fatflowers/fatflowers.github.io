@@ -10,7 +10,7 @@ class SqliteD1 implements D1Database {
   db=new DatabaseSync(':memory:');
   beforeBatch?:()=>void;
   constructor() {
-    for (const file of ['0001_initial.sql','0002_baseline_items.sql','0003_article_enrichment.sql','0004_analysis_headline.sql','0005_read_efficiency.sql','0006_query_cost_controls.sql']) this.db.exec(readFileSync(new URL(`../migrations/${file}`,import.meta.url),'utf8'));
+    for (const file of ['0001_initial.sql','0002_baseline_items.sql','0003_article_enrichment.sql','0004_analysis_headline.sql','0005_read_efficiency.sql','0006_query_cost_controls.sql','0007_feed_export.sql']) this.db.exec(readFileSync(new URL(`../migrations/${file}`,import.meta.url),'utf8'));
     for (const id of ['a','b']) {
       this.db.prepare("INSERT INTO targets(id,slug,name,target_type,created_at,updated_at) VALUES(?,?,?,'company','2026-09-06','2026-09-06')").run(id,id,id);
       this.db.prepare("INSERT INTO channels(id,target_id,slug,name,channel_type,collector_type,created_at,updated_at) VALUES(?,?,?,?,'blog','mcp','2026-09-06','2026-09-06')").run(id,id,id,id);
@@ -245,4 +245,28 @@ test('current-revision analysis clears only recent complete native baseline item
   assert.equal(db.db.prepare("SELECT is_baseline FROM items WHERE id='a1'").get()!.is_baseline,0);
   assert.equal(db.db.prepare("SELECT is_baseline FROM items WHERE id='a2'").get()!.is_baseline,1);
   assert.equal(db.db.prepare("SELECT is_baseline FROM items WHERE id='b1'").get()!.is_baseline,1);
+});
+
+test('feed export is analyzed-only, ordered, bounded and supports cheap change checks',async()=>{
+  const db=new SqliteD1();
+  const analyzedAt='2026-09-13T01:00:00Z';
+  db.db.exec(`UPDATE items SET is_baseline=0,enrichment_status='ready',raw_metadata_json='{}';
+    UPDATE items SET published_at='2026-09-12T02:00:00Z',title='Newest' WHERE id='a1';
+    UPDATE items SET published_at='2026-09-11T02:00:00Z',title='Older' WHERE id='a2';`);
+  for(const [id,importance] of [['a1',4],['a2',2],['b1',1]] as const) {
+    db.db.prepare(`INSERT INTO analyses(item_id,headline,summary,key_change,why_it_matters,company_impact,
+      importance,confidence,topics_json,watch_next_json,evidence_json,model,prompt_version,analyzed_at)
+      VALUES(?,?,?,'Change','Why','Impact',?,0.9,'["infra"]','[]','[]','test','v1',?)`)
+      .run(id,'Headline '+id,'Summary '+id,importance,analyzedAt);
+  }
+  const response=await call(db,'/v1/feed/export?from=2026-09-01T00:00:00Z&to=2026-09-14T00:00:00Z&min_importance=2&limit=1');
+  assert.equal(response.status,200);
+  const first=await response.json() as any;
+  assert.deepEqual(first.items.map((item:any)=>item.id),['a1']);
+  assert.equal(first.items[0].content_text,undefined);
+  assert.deepEqual(first.next_cursor,{published_at:'2026-09-12T02:00:00Z',item_id:'a1'});
+  const second=await call(db,`/v1/feed/export?from=2026-09-01T00:00:00Z&to=2026-09-14T00:00:00Z&min_importance=2&limit=10&cursor_published=${encodeURIComponent(first.next_cursor.published_at)}&cursor_id=a1`);
+  assert.deepEqual((await second.json() as any).items.map((item:any)=>item.id),['a2']);
+  const changed=await call(db,'/v1/feed/export?changed_after=2026-09-12T00:00:00Z&min_importance=2');
+  assert.equal((await changed.json() as any).changed,true);
 });

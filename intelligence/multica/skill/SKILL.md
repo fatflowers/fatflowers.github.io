@@ -27,6 +27,7 @@ description: 通过 intelctl 管理个人公开情报系统的目标、频道、
 | 分析 | `intelctl analyze pending/ingest` |
 | 高信号即时通知 | 分析入库后按 `config/notifications.yaml` 检查审计去重，再用 `lark-cli im +messages-send` 以 bot 身份发送 |
 | 报告群通知 | 所有版次在线上验收后按 report_id 审计去重，再向 `config/notifications.yaml` 的唯一群聊发送标题、摘要和公开 URL |
+| 信息流同步 | `intelctl feed export`；有变化才提交 `static/data/intelligence-feed/`、部署并发送合并 Lark 通知 |
 | 报告 | `intelctl report generate/publish` |
 | 状态诊断 | `intelctl status`、`intelctl run list/show`；没有 `run retry`，重试须遵循对应 runbook |
 | 调度变更 | 更新 `schedules.yaml` 与对应 Multica Autopilot trigger |

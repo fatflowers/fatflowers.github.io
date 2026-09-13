@@ -139,6 +139,33 @@ class WorkerAPIClient:
             ),
         )
 
+    def get_feed_export(
+        self,
+        *,
+        minimum_importance: int = 2,
+        changed_after: Optional[str] = None,
+        from_value: Optional[str] = None,
+        to_value: Optional[str] = None,
+        cursor_published: Optional[str] = None,
+        cursor_id: Optional[str] = None,
+        limit: int = 500,
+    ) -> Dict[str, Any]:
+        return self._request(
+            "GET",
+            self._path(
+                "/v1/feed/export",
+                {
+                    "min_importance": minimum_importance,
+                    "changed_after": changed_after,
+                    "from": from_value,
+                    "to": to_value,
+                    "cursor_published": cursor_published,
+                    "cursor_id": cursor_id,
+                    "limit": limit,
+                },
+            ),
+        )
+
     def get_report(self, report_id: str) -> Dict[str, Any]:
         return self._request("GET", "/v1/reports/%s" % urllib.parse.quote(report_id, safe=""))
 

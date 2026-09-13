@@ -6,6 +6,8 @@
 > 最后更新：2026-09-12
 > 部署记录：Cloudflare D1/Worker、Multica Cloud Agent/Skill/Autopilot、Hugo 报告发布链路均已上线。
 
+> 信息流：中文 `/zh/feed/`，每 5 分钟检查一次已分析变化；有变化才生成静态 JSON、部署并发送合并 Lark 通知。默认窗口 90 天、每页 30 条，历史分析永久保留在 D1，更早的公开数据按月归档。
+
 ## 1. 文档目的
 
 本文档定义一个运行在 Mac mini 上、由 Multica 提供自然语言控制、以 RSS、官方 API、普通 HTTP 与 OpenCLI 为主要采集能力、以 Cloudflare D1 为结构化存储、以当前 Hugo 博客为发布端的个人情报系统。

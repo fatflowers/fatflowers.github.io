@@ -101,6 +101,8 @@ User topic preferences live in `intelligence/config/content-policy.yaml`. An exc
 
 Research planning and hydration must use the same effective cutoff. A caller's narrower cutoff is expanded to the seven-day catch-up window once, and that returned value must flow through every hydration. For an RSS item whose canonical URL matches the article, the feed item's publication timestamp is authoritative over a browser-extracted date because rendered pages may include older related-card dates.
 
+The Chinese-only intelligence stream lives at `/zh/feed/`. `intelctl feed export` publishes importance ≥ 2 analyzed items to `static/data/intelligence-feed/index.json`, keeping a 90-day current window and monthly static archives while D1 retains full history. The five-minute Multica sync must call the cheap `changed_after` check first and must not commit, deploy, or notify when the snapshot is unchanged. After a changed snapshot is publicly verified, send one deduplicated Lark batch notification.
+
 ## D1 Read Budget
 
 Treat `rows_read` as a production budget, not as a proxy for returned rows. Before changing a hot Worker query, inspect `wrangler d1 insights`, add the reverse/composite indexes needed by joins and correlated lookups, and verify the final plan with `EXPLAIN QUERY PLAN`. After deployment, capture the query's real `meta.rows_read`; report selection should stay below 50,000 rows per call with the current dataset. Do not put `datetime()`/`julianday()` around an indexed column unless the migration defines the exact matching expression index.

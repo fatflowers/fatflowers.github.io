@@ -20,6 +20,19 @@ publication:
   ad_hoc_default_status: draft
   publish_user_requested_ad_hoc_only: true
 
+feed_publication:
+  path: /zh/feed/
+  data_directory: static/data/intelligence-feed
+  current_window_days: 90
+  page_size: 30
+  minimum_importance: 2
+  debounce_minutes: 5
+  deploy_only_when_changed: true
+  preserve_history_in_d1: true
+  archive_by_month: true
+  allowed_changed_paths:
+    - static/data/intelligence-feed/
+
 report_status:
   allowed: [draft, validating, ready, published, failed]
   automatic_path: [draft, validating, ready, published]

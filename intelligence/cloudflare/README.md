@@ -213,3 +213,10 @@ Authenticated writes prune expired `idempotency_keys` through the expiry index. 
 retains the 24-hour replay contract while preventing response rows from accumulating
 indefinitely. With the current dataset, report-input queries must remain below 50,000
 rows read per call in production verification.
+
+`GET /v1/feed/export` is the authenticated, sanitized source for the static Hugo
+intelligence stream. `changed_after=<ISO>&min_importance=2` performs the cheap
+five-minute change check. Full exports use `from`, `to`, `limit` and the returned
+`cursor_published`/`cursor_id`; responses omit source bodies and internal metadata.
+Migration `0007_feed_export.sql` supplies the analysis-change and publication-order
+indexes. The browser never calls this endpoint: it reads committed static JSON only.

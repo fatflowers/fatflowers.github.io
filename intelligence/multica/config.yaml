@@ -34,6 +34,11 @@ autopilots:
     mode: run_only
     schedule_ref: analyze-pending
     runbook: intelligence/multica/runbooks/analyze-pending.md
+  - id: intelligence-feed-sync
+    name: Sync Intelligence Feed
+    mode: run_only
+    schedule_ref: intelligence-feed-sync
+    runbook: intelligence/multica/runbooks/feed-sync.md
   - id: morning-intelligence
     name: Morning Intelligence
     mode: create_issue

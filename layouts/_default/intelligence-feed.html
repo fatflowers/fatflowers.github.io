@@ -1,0 +1,30 @@
+{{ define "main" }}
+<article class="post-single feed-page" data-feed-index="/data/intelligence-feed/index.json" data-feed-archive="/data/intelligence-feed/archive/">
+  <header class="post-header feed-header">
+    <div>
+      <p class="feed-eyebrow">INTELLIGENCE STREAM</p>
+      <h1 class="post-title">{{ .Title }}</h1>
+      <p class="post-description">{{ .Description }}</p>
+    </div>
+    <div class="feed-live"><span aria-hidden="true"></span>分析完成后更新</div>
+  </header>
+
+  <form class="feed-filters" aria-label="筛选信息流">
+    <label>开始日期<input id="feed-from" type="date"></label>
+    <label>结束日期<input id="feed-to" type="date"></label>
+    <label>目标<select id="feed-target"><option value="">全部目标</option></select></label>
+    <label>重要性<select id="feed-importance"><option value="2">2 分及以上</option><option value="3">3 分及以上</option><option value="4">4 分及以上</option><option value="5">仅 5 分</option></select></label>
+  </form>
+
+  <div class="feed-status-row">
+    <p id="feed-status" class="feed-status" aria-live="polite">正在读取信息流…</p>
+    <button id="feed-reset" class="feed-reset" type="button">清除筛选</button>
+  </div>
+  <div id="feed-list" class="feed-list" aria-busy="true"></div>
+  <button id="feed-more" class="feed-more" type="button" hidden>加载更多</button>
+  <p id="feed-empty" class="feed-empty" hidden>这个范围内没有符合条件的信息。</p>
+  <noscript><p class="feed-empty">需要启用 JavaScript 才能查看和筛选信息流。</p></noscript>
+</article>
+{{- $script := resources.Get "js/intelligence-feed.js" | minify | fingerprint -}}
+<script src="{{ $script.RelPermalink }}" integrity="{{ $script.Data.Integrity }}" defer></script>
+{{ end }}

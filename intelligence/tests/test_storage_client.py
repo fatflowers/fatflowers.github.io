@@ -36,6 +36,13 @@ def test_all_worker_read_routes_use_expected_query_contracts():
         tag="mcp",
     )
     client.list_audit_events(entity_type="channel", entity_id="one", limit=9)
+    client.get_feed_export(
+        minimum_importance=2,
+        from_value="2026-09-01T00:00:00Z",
+        to_value="2026-09-14T00:00:00Z",
+        cursor_published="2026-09-12T00:00:00Z",
+        cursor_id="item",
+    )
 
     assert calls[0]["path"].startswith("/v1/channels/due?")
     assert "target_id=target" in calls[0]["path"]
@@ -45,6 +52,8 @@ def test_all_worker_read_routes_use_expected_query_contracts():
     assert calls[2]["path"].startswith("/v1/reports/input?")
     assert "min_importance=4" in calls[2]["path"]
     assert calls[3]["path"].startswith("/v1/audit-events?")
+    assert calls[4]["path"].startswith("/v1/feed/export?")
+    assert "cursor_id=item" in calls[4]["path"]
 
 
 def test_all_worker_write_routes_set_idempotency_keys():

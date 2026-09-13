@@ -127,26 +127,31 @@ defaultContentLanguageInSubdir = false
     weight = 3
 
   [[languages.zh.menus.main]]
+    name = "信息流"
+    url = "/zh/feed/"
+    weight = 4
+
+  [[languages.zh.menus.main]]
     name = "信息源"
     url = "/zh/sources/"
-    weight = 4
+    weight = 5
 
   [[languages.zh.menus.main]]
     name = "工作流程"
     url = "/zh/how-it-works/"
-    weight = 5
+    weight = 6
 
   [[languages.zh.menus.main]]
     name = "归档"
     url = "/zh/archives"
-    weight = 6
+    weight = 7
 
   [[languages.zh.menus.main]]
     name = "搜索"
     url = "/zh/search"
-    weight = 7
+    weight = 8
 
   [[languages.zh.menus.main]]
     name = "标签"
     url = "/zh/tags"
-    weight = 8
+    weight = 9

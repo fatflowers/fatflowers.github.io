@@ -36,3 +36,14 @@ report_lark:
     - description
     - item_count
     - published_url
+
+feed_lark:
+  enabled: true
+  delivery_stage: post_publication_verification
+  identity: bot
+  chat_id: oc_6a65bd218e5dd85031c2d04814de54e1
+  debounce_minutes: 5
+  minimum_importance: 2
+  audit_action: lark.feed_batch_sent
+  page_url: https://fatflowers.github.io/zh/feed/
+  max_headlines_per_message: 10

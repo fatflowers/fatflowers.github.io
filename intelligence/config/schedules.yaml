@@ -27,6 +27,17 @@ jobs:
     overlap_policy: skip
     timeout_minutes: 45
 
+  - id: intelligence-feed-sync
+    owner: multica_cloud
+    enabled: true
+    cadence:
+      type: interval
+      minutes: 5
+    runbook: intelligence/multica/runbooks/feed-sync.md
+    overlap_policy: skip
+    timeout_minutes: 15
+    status_tracking: audit_events
+
   - id: morning-intelligence
     owner: multica_cloud
     enabled: true

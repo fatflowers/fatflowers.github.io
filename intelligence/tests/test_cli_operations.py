@@ -14,6 +14,7 @@ from intelligence.cli.operations import (
     report_window,
     scheduler_apply,
 )
+from intelligence.feed import export_feed_snapshot
 from intelligence.collectors import CollectionPage
 from intelligence.normalize import NormalizedItem
 from intelligence.reporter import ReportEdition
@@ -27,6 +28,7 @@ class FakeClient:
         self.report_items = []
         self.due_channels = []
         self.remote_channels = []
+        self.feed_pages = []
 
     def create_run(self, payload, *, idempotency_key):
         self.calls.append(("create_run", payload, idempotency_key))
@@ -60,6 +62,12 @@ class FakeClient:
 
     def get_report(self, report_id):
         return {"report": None}
+
+    def get_feed_export(self, **kwargs):
+        self.calls.append(("feed_export", kwargs))
+        if kwargs.get("changed_after"):
+            return {"changed": False, "latest": None}
+        return self.feed_pages.pop(0)
 
 
 def project(tmp_path: Path):
@@ -450,6 +458,38 @@ def test_report_build_is_deterministic_for_generate_then_publish(tmp_path):
     assert rejected_report.signals == ()
     assert rejected_render is None
     assert rejected_decision.should_generate is False
+
+
+def test_feed_export_writes_current_snapshot_and_skips_when_unchanged(tmp_path):
+    root, repository = project(tmp_path)
+    client = FakeClient()
+    client.feed_pages = [{
+        "latest_analyzed_at": "2026-09-13T01:00:00Z",
+        "next_cursor": None,
+        "items": [
+            {
+                "id": "feed-1", "title": "Source title", "headline": "具体更新",
+                "canonical_url": "https://example.com/update", "published_at": "2026-09-12T10:00:00Z",
+                "analyzed_at": "2026-09-13T01:00:00Z", "target_slug": "openai", "target_name": "OpenAI",
+                "channel_slug": "openai-news", "channel_name": "Official News", "importance": 4,
+                "summary": "发生了一项具体更新。", "key_change": "新增能力", "why_it_matters": "减少集成工作",
+                "company_impact": "可进行验证", "topics_json": '["Agent"]', "watch_next_json": '["测试"]',
+                "evidence_json": '[{"url":"https://example.com/update","claim":"来源"}]',
+            }
+        ],
+    }]
+
+    first = export_feed_snapshot(repository, client)
+    snapshot = json.loads((root / "static/data/intelligence-feed/index.json").read_text())
+    second = export_feed_snapshot(repository, client)
+
+    assert first["status"] == "updated" and first["initial_snapshot"] is True
+    assert first["new_items"] == []
+    assert snapshot["page_size"] == 30 and snapshot["window_days"] == 90
+    assert snapshot["history_preserved"] is True
+    assert snapshot["items"][0]["topics"] == ["Agent"]
+    assert second["status"] == "unchanged"
+    assert client.calls[-1][1]["changed_after"] == "2026-09-13T01:00:00Z"
 
 
 def test_weekly_report_identity_is_stable_within_iso_week(tmp_path):

@@ -181,6 +181,7 @@ def test_operational_parser_supports_reviewed_and_legacy_runbook_forms():
     pending = parser.parse_args(["analyze", "pending", "--limit", "12"])
     legacy_analyze = parser.parse_args(["analyze", "--pending"])
     scheduler = parser.parse_args(["scheduler", "apply", "--dry-run"])
+    feed = parser.parse_args(["feed", "export", "--force"])
 
     assert planned.collect_command == "plan" and planned.due is True
     assert local.collect_command == "local" and local.channel == "openai-news"
@@ -188,6 +189,7 @@ def test_operational_parser_supports_reviewed_and_legacy_runbook_forms():
     assert pending.analyze_command == "pending" and pending.limit == 12
     assert legacy_analyze.analyze_command is None and legacy_analyze.legacy_pending is True
     assert scheduler.dry_run is True
+    assert feed.feed_command == "export" and feed.force is True
 
 
 def test_report_push_requires_two_explicit_switches():

@@ -3,6 +3,7 @@ import { ApiError, constantTimeEqual, errorResponse, jsonResponse, requireObject
 import { getPendingAnalysis, writeAnalyses, writeItems } from "./items.ts";
 import { revisePublishedReport } from "./revisions.ts";
 import { pendingEnrichment, enrichItem, coverage, getItem } from "./enrichment.ts";
+import { exportFeed } from "./feed.ts";
 import {
   createAuditEvent,
   createReport,
@@ -40,6 +41,7 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/v1\/coverage$/, handler: coverage, write: false },
   { method: "GET", pattern: /^\/v1\/items\/pending-analysis$/, handler: getPendingAnalysis, write: false },
   { method: "GET", pattern: /^\/v1\/items\/(?<id>[^/]+)$/, handler: getItem, write: false },
+  { method: "GET", pattern: /^\/v1\/feed\/export$/, handler: exportFeed, write: false },
   { method: "POST", pattern: /^\/v1\/analyses\/batch$/, handler: writeAnalyses, write: true },
   { method: "GET", pattern: /^\/v1\/reports\/input$/, handler: getReportInput, write: false },
   { method: "GET", pattern: /^\/v1\/reports\/(?<id>[^/]+)$/, handler: getReport, write: false },

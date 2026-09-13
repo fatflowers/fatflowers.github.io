@@ -17,6 +17,7 @@ from intelligence.catalog import (
     CatalogValidationError,
 )
 from intelligence.observability import emit_event, new_run_id
+from intelligence.feed import export_feed_snapshot
 from intelligence.storage import StorageClientError, WorkerAPIClient
 from .research import research_plan, research_hydrate, research_ingest, research_coverage, research_run, research_discover, resolve_mcp_fallbacks
 
@@ -216,6 +217,11 @@ def build_parser() -> argparse.ArgumentParser:
     report_revise.add_argument("--git-commit", required=True)
     report_revise.add_argument("--expected-git-commit", required=True)
     report_revise.add_argument("--item-id", action="append", dest="item_ids")
+
+    feed = commands.add_parser("feed")
+    feed_commands = feed.add_subparsers(dest="feed_command", required=True)
+    feed_export = feed_commands.add_parser("export")
+    feed_export.add_argument("--force", action="store_true")
 
     scheduler = commands.add_parser("scheduler")
     scheduler_commands = scheduler.add_subparsers(dest="scheduler_command", required=True)
@@ -557,6 +563,9 @@ def execute(args: argparse.Namespace) -> Any:
             branch=args.branch,
             report_options=options,
         )
+
+    if args.command == "feed":
+        return export_feed_snapshot(repository, client, force=args.force)
 
     if args.command == "scheduler":
         if args.scheduler_command == "plan":

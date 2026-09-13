@@ -1,5 +1,5 @@
 version: 1
-updated_at: "2026-09-13T11:20:02+08:00"
+updated_at: "2026-09-13T15:19:25+08:00"
 
 cloudflare:
   database:
@@ -12,11 +12,12 @@ cloudflare:
       - 0004_analysis_headline.sql
       - 0005_read_efficiency.sql
       - 0006_query_cost_controls.sql
+      - 0007_feed_export.sql
     status: deployed
   worker:
     name: personal-intelligence-api
     url: https://personal-intelligence-api.sunliumin.workers.dev
-    version_id: 42267dda-c700-48ed-9986-03638e5b7356
+    version_id: 89c94394-1769-46bd-a00a-2ecc25159df7
     status: deployed
 
 multica:
