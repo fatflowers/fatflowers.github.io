@@ -128,7 +128,11 @@ def test_project_catalog_validates_when_present():
     if project_catalog.exists():
         catalog = CatalogRepository(project_catalog, SCHEMA).load()
         assert len(catalog.targets) == 9
-        assert sum(len(target.channels) for target in catalog.targets) == 38
+        assert sum(len(target.channels) for target in catalog.targets) == 35
+        simon = next(target for target in catalog.targets if target.slug == "simon-willison")
+        assert [(channel.slug, channel.collector_type) for channel in simon.channels] == [
+            ("simon-willison-atom", "rss")
+        ]
         for slug in ('grok', 'manus', 'deepseek', 'openrouter'):
             target = next(t for t in catalog.targets if t.slug == slug)
             assert target.enabled and all(c.enabled for c in target.channels)

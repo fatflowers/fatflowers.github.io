@@ -49,8 +49,8 @@ intelligence/
 ## 首批目录
 
 - 目标：Composio、OpenAI、Anthropic、Simon Willison、MCP Ecosystem。
-- 核心频道：22 个，配置为 enabled。
-- 补充频道：6 个，配置为 disabled。
+- 核心频道：30 个，配置为 enabled。
+- 未启用频道：5 个。
 - 配置中的 enabled 表示业务期望；MCP 频道还必须满足 binding `status: verified` 才能进入定时采集。
 
 快速检查：
