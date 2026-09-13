@@ -5,6 +5,57 @@ const REPORT_EDITIONS = ["morning", "midday", "evening", "weekly", "ad-hoc"] as 
 const REPORT_STATUSES = ["draft", "validating", "ready", "published", "failed"] as const;
 const RUN_STATUSES = ["pending", "running", "succeeded", "failed", "skipped"] as const;
 
+export const REPORT_INPUT_SQL = `SELECT i.*, a.headline, a.summary, a.key_change, a.why_it_matters,
+      a.company_impact, a.importance, a.confidence, a.topics_json, a.watch_next_json,
+      a.evidence_json, a.model, a.prompt_version, a.analyzed_at,
+      t.slug AS target_slug, t.name AS target_name, c.slug AS channel_slug, c.name AS channel_name
+    FROM items i
+    JOIN analyses a ON a.item_id = i.id
+    JOIN targets t ON t.id = i.target_id
+    JOIN channels c ON c.id = i.channel_id
+    WHERE i.is_baseline = 0
+      AND (i.enrichment_status IS NULL OR i.enrichment_status='ready')
+      AND COALESCE(json_extract(i.raw_metadata_json, '$.discovery_only'), 0) = 0
+      AND julianday(i.published_at) >= julianday(?)
+      AND julianday(i.published_at) < julianday(?)
+      AND a.importance >= ?
+      AND (? = 1 OR (
+        NOT EXISTS (
+          SELECT 1 FROM report_items ri INDEXED BY idx_report_items_item_report
+          CROSS JOIN reports r
+          WHERE ri.item_id=i.id
+            AND r.id=ri.report_id
+            AND r.report_status='published' AND r.edition IN ('morning','midday','evening')
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM items prior INDEXED BY idx_items_canonical
+          CROSS JOIN report_items ri INDEXED BY idx_report_items_item_report
+          CROSS JOIN reports r
+          WHERE NULLIF(i.canonical_url, '') IS NOT NULL
+            AND prior.canonical_url IS NOT NULL AND prior.canonical_url != ''
+            AND prior.canonical_url=i.canonical_url
+            AND ri.item_id=prior.id
+            AND r.id=ri.report_id
+            AND r.report_status='published' AND r.edition IN ('morning','midday','evening')
+            AND NOT (
+              COALESCE(json_extract(i.raw_metadata_json, '$.date_kind'), '') = 'observed_change'
+              AND length(COALESCE(json_extract(i.raw_metadata_json, '$.web_diff.after_hash'), '')) = 64
+              AND json_extract(i.raw_metadata_json, '$.web_diff.after_hash') !=
+                  COALESCE(json_extract(prior.raw_metadata_json, '$.web_diff.after_hash'), '')
+            )
+        )
+      ))
+      AND (? IS NULL OR i.target_id = ?)
+      AND (? IS NULL OR EXISTS (
+        SELECT 1 FROM target_tags tt JOIN tags tg ON tg.id = tt.tag_id
+        WHERE tt.target_id = i.target_id AND tg.slug = ?
+      ) OR EXISTS (
+        SELECT 1 FROM channel_tags ct JOIN tags cg ON cg.id = ct.tag_id
+        WHERE ct.channel_id = i.channel_id AND cg.slug = ?
+      ))
+    ORDER BY a.importance DESC, i.published_at DESC, i.id
+    LIMIT ?`;
+
 export async function getReport({ env, params }: AuthContext): Promise<ApiResponse> {
   const id = requireString(params.id, "id", { max: 128 })!;
   const report = await env.DB.prepare("SELECT * FROM reports WHERE id = ?").bind(id).first();
@@ -21,44 +72,10 @@ export async function getReportInput({ env, url }: AuthContext): Promise<ApiResp
   const targetId = url.searchParams.get("target_id");
   const tag = url.searchParams.get("tag");
   const includeReported = url.searchParams.get("include_reported") === "true";
-  const rows = await env.DB.prepare(`SELECT i.*, a.headline, a.summary, a.key_change, a.why_it_matters,
-      a.company_impact, a.importance, a.confidence, a.topics_json, a.watch_next_json,
-      a.evidence_json, a.model, a.prompt_version, a.analyzed_at,
-      t.slug AS target_slug, t.name AS target_name, c.slug AS channel_slug, c.name AS channel_name
-    FROM items i
-    JOIN analyses a ON a.item_id = i.id
-    JOIN targets t ON t.id = i.target_id
-    JOIN channels c ON c.id = i.channel_id
-    WHERE i.is_baseline = 0
-      AND (i.enrichment_status IS NULL OR i.enrichment_status='ready')
-      AND COALESCE(json_extract(i.raw_metadata_json, '$.discovery_only'), 0) = 0
-      AND datetime(i.published_at) >= datetime(?)
-      AND datetime(i.published_at) < datetime(?)
-      AND a.importance >= ?
-      AND (? = 1 OR NOT EXISTS (
-        SELECT 1 FROM report_items ri JOIN reports r ON r.id=ri.report_id
-        JOIN items prior ON prior.id=ri.item_id
-        WHERE r.report_status='published' AND r.edition IN ('morning','midday','evening')
-          AND (ri.item_id=i.id OR (
-            NULLIF(i.canonical_url, '') = prior.canonical_url
-            AND NOT (
-              COALESCE(json_extract(i.raw_metadata_json, '$.date_kind'), '') = 'observed_change'
-              AND length(COALESCE(json_extract(i.raw_metadata_json, '$.web_diff.after_hash'), '')) = 64
-              AND json_extract(i.raw_metadata_json, '$.web_diff.after_hash') !=
-                  COALESCE(json_extract(prior.raw_metadata_json, '$.web_diff.after_hash'), '')
-            )
-          ))
-      ))
-      AND (? IS NULL OR i.target_id = ?)
-      AND (? IS NULL OR EXISTS (
-        SELECT 1 FROM target_tags tt JOIN tags tg ON tg.id = tt.tag_id
-        WHERE tt.target_id = i.target_id AND tg.slug = ?
-      ) OR EXISTS (
-        SELECT 1 FROM channel_tags ct JOIN tags cg ON cg.id = ct.tag_id
-        WHERE ct.channel_id = i.channel_id AND cg.slug = ?
-      ))
-    ORDER BY a.importance DESC, i.published_at DESC, i.id
-    LIMIT ?`).bind(from, to, minImportance, includeReported ? 1 : 0, targetId, targetId, tag, tag, tag, limit).all();
+  const rows = await env.DB.prepare(REPORT_INPUT_SQL)
+    .bind(from, to, minImportance, includeReported ? 1 : 0, targetId, targetId, tag, tag, tag, limit).all();
+  console.log(JSON.stringify({event:'d1_query_cost',query:'report_input',rows_read:rows.meta?.rows_read,
+    returned:rows.results?.length ?? 0,include_reported:includeReported}));
   return { status: 200, body: { window: { from, to }, items: rows.results ?? [] } };
 }
 

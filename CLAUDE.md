@@ -99,6 +99,12 @@ The maximum OpenCLI load under the current catalog is 304 web fallbacks plus 32 
 
 User topic preferences live in `intelligence/config/content-policy.yaml`. An excluded topic must be suppressed consistently during collection, enrichment, pending analysis, high-signal Lark notifications, and every report edition. Matching is global across targets and channels. Do not reintroduce an excluded topic through a differently named source or manual report selection.
 
+## D1 Read Budget
+
+Treat `rows_read` as a production budget, not as a proxy for returned rows. Before changing a hot Worker query, inspect `wrangler d1 insights`, add the reverse/composite indexes needed by joins and correlated lookups, and verify the final plan with `EXPLAIN QUERY PLAN`. After deployment, capture the query's real `meta.rows_read`; report selection should stay below 50,000 rows per call with the current dataset. Do not put `datetime()`/`julianday()` around an indexed column unless the migration defines the exact matching expression index.
+
+`report_items` lookups from an item must use `idx_report_items_item_report`, canonical duplicate checks must use `idx_items_canonical`, and report windows must use `idx_items_report_window`. Reuse the coverage returned by `research run` instead of issuing an identical coverage query in the same job. Expired `idempotency_keys` are pruned through `idx_idempotency_expiry` on authenticated writes so stored response rows do not grow without bound while retaining the 24-hour replay contract. Any new recurring query needs a stated maximum calls/day and a production `rows_read` measurement before handoff.
+
 ### Free replacements for former Firecrawl Map channels
 
 | Channel | Collector | Public endpoint | Incremental state |

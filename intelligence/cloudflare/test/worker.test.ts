@@ -36,6 +36,12 @@ class FakeStatement implements D1PreparedStatement {
   }
 
   async run<T>(): Promise<D1Result<T>> {
+    if (this.sql.includes("DELETE FROM idempotency_keys WHERE expires_at")) {
+      const cutoff = String(this.values[0]);
+      for (const [key, value] of this.database.idempotency) {
+        if (value.expires_at <= cutoff) this.database.idempotency.delete(key);
+      }
+    }
     if (this.sql.includes("INSERT INTO idempotency_keys")) {
       const [key, method, path, requestHash, responseStatus, responseBody, , expiresAt] = this.values;
       this.database.idempotency.set([key, method, path].join("\u0000"), {
@@ -143,6 +149,29 @@ test("reusing an idempotency key with another body is rejected", async () => {
   }), env(database));
   assert.equal(response.status, 409);
   assert.equal((await response.json() as { error: { code: string } }).error.code, "idempotency_conflict");
+});
+
+test("a write prunes expired idempotency responses through the expiry index", async () => {
+  const database = new FakeDatabase();
+  database.idempotency.set(["expired", "POST", "/v1/audit-events"].join("\u0000"), {
+    request_hash: "old",
+    response_status: 200,
+    response_body: "{}",
+    expires_at: "2020-01-01T00:00:00.000Z",
+  });
+  const response = await worker.fetch(request("/v1/audit-events", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${TOKEN}`,
+      "content-type": "application/json",
+      "idempotency-key": "fresh",
+    },
+    body: JSON.stringify({
+      id: "audit-1", actor: "test", action: "test", entity_type: "test", entity_id: "test",
+    }),
+  }), env(database));
+  assert.equal(response.status, 201);
+  assert.equal([...database.idempotency.keys()].some((key) => key.startsWith("expired\u0000")), false);
 });
 
 test("token comparison handles equal and different lengths", () => {

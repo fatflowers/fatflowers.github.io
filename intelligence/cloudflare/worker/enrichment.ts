@@ -28,6 +28,8 @@ export async function pendingEnrichment({env, url}: AuthContext): Promise<ApiRes
       AND (? IS NULL OR i.target_id=?)
   ) SELECT * FROM candidates ORDER BY target_rank, target_id LIMIT ?`)
     .bind(since(url), target, target, parseLimit(url,100,500)).all();
+  console.log(JSON.stringify({event:'d1_query_cost',query:'pending_enrichment',rows_read:result.meta?.rows_read,
+    returned:result.results?.length ?? 0}));
   return {status:200,body:{items:result.results ?? []}};
 }
 
@@ -127,5 +129,7 @@ export async function coverage({env,url}: AuthContext): Promise<ApiResponse> {
     COUNT(a.item_id) AS analyzed
     FROM targets t LEFT JOIN items i ON i.target_id=t.id AND julianday(i.fetched_at)>=julianday(?)
     LEFT JOIN analyses a ON a.item_id=i.id WHERE t.enabled=1 GROUP BY t.id ORDER BY t.id`).bind(since(url)).all();
+  console.log(JSON.stringify({event:'d1_query_cost',query:'coverage',rows_read:result.meta?.rows_read,
+    returned:result.results?.length ?? 0}));
   return {status:200,body:{targets:result.results ?? []}};
 }

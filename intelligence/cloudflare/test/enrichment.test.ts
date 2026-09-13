@@ -3,13 +3,14 @@ import {readFileSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import test from 'node:test';
 import worker from '../worker/index.ts';
+import {REPORT_INPUT_SQL} from '../worker/tracking.ts';
 import type {D1Database,D1PreparedStatement,D1Result} from '../worker/types.ts';
 
 class SqliteD1 implements D1Database {
   db=new DatabaseSync(':memory:');
   beforeBatch?:()=>void;
   constructor() {
-    for (const file of ['0001_initial.sql','0002_baseline_items.sql','0003_article_enrichment.sql','0004_analysis_headline.sql']) this.db.exec(readFileSync(new URL(`../migrations/${file}`,import.meta.url),'utf8'));
+    for (const file of ['0001_initial.sql','0002_baseline_items.sql','0003_article_enrichment.sql','0004_analysis_headline.sql','0005_read_efficiency.sql','0006_query_cost_controls.sql']) this.db.exec(readFileSync(new URL(`../migrations/${file}`,import.meta.url),'utf8'));
     for (const id of ['a','b']) {
       this.db.prepare("INSERT INTO targets(id,slug,name,target_type,created_at,updated_at) VALUES(?,?,?,'company','2026-09-06','2026-09-06')").run(id,id,id);
       this.db.prepare("INSERT INTO channels(id,target_id,slug,name,channel_type,collector_type,created_at,updated_at) VALUES(?,?,?,?,'blog','mcp','2026-09-06','2026-09-06')").run(id,id,id,id);
@@ -196,6 +197,17 @@ test('daily inputs omit already-published items while weekly override includes t
   assert.equal((await (await call(db,path+'&include_reported=true')).json() as any).items.length,1);
   db.db.exec("UPDATE reports SET report_status='draft'");
   assert.equal((await (await call(db,path)).json() as any).items.length,1);
+});
+
+test('report input duplicate checks use reverse lookup indexes',()=>{
+  const db=new SqliteD1();
+  const plan=db.db.prepare('EXPLAIN QUERY PLAN '+REPORT_INPUT_SQL).all(
+    '2026-09-05T00:00:00Z','2026-09-07T00:00:00Z',1,0,null,null,null,null,null,500,
+  ) as {detail:string}[];
+  const details=plan.map(row=>row.detail).join('\n');
+  assert.match(details,/idx_report_items_item_report/);
+  assert.match(details,/idx_items_canonical/);
+  assert.match(details,/idx_items_report_window|idx_items_published_jd/);
 });
 
 test('dated summaries and placeholder analyses re-enter research but old known articles do not',async()=>{

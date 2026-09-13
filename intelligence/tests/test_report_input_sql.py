@@ -20,6 +20,9 @@ def test_report_query_excludes_baseline_discovery_undated_and_old():
         CREATE TABLE tags(id, slug);
         CREATE TABLE reports(id, report_status, edition);
         CREATE TABLE report_items(report_id, item_id);
+        CREATE INDEX idx_report_items_item_report ON report_items(item_id, report_id);
+        CREATE INDEX idx_items_canonical ON items(canonical_url, id)
+          WHERE canonical_url IS NOT NULL AND canonical_url != '';
         INSERT INTO targets VALUES ('t','target','Target');
         INSERT INTO channels VALUES ('c','channel','Channel');
     """)
@@ -34,7 +37,7 @@ def test_report_query_excludes_baseline_discovery_undated_and_old():
                    (item_id, published, baseline, metadata))
         db.execute("INSERT INTO analyses(item_id, importance) VALUES (?, 4)", (item_id,))
     source = (root / "cloudflare/worker/tracking.ts").read_text()
-    query = re.search(r"env.DB.prepare\(`(SELECT i\.\*,.*?)`\)", source, re.S).group(1)
+    query = re.search(r"REPORT_INPUT_SQL = `(SELECT i\.\*,.*?)`;", source, re.S).group(1)
     results = db.execute(query, ("2026-09-05T00:00:00Z", "2026-09-06T00:00:00Z", 1,
                                  0, None, None, None, None, None, 500)).fetchall()
     assert [row[0] for row in results] == ["current"]

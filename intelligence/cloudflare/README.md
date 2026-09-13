@@ -135,7 +135,7 @@ Terminal run states are immutable.
 by default. Weekly reports and explicit editorial corrections must pass
 `include_reported=true` when they intentionally need previously reported material.
 
-Apply migration `0003_article_enrichment.sql` before deploying this Worker version.
+Apply all migrations through `0006_query_cost_controls.sql` before deploying this Worker version.
 
 `GET /v1/items/pending-enrichment?since=<ISO>&limit=100&target_id=<optional>`
 returns discovery-only records, including initial baseline discoveries, from enabled
@@ -200,3 +200,16 @@ Clients must carry the revision read alongside the body; stale analysis returns 
 `GET /v1/coverage?since=<ISO>` returns per-enabled-target discovered, enriched,
 rejected, failed, pending_enrichment and analyzed counts. Default window is seven days.
 Pending includes exhausted failures so incomplete research remains visible to operators.
+
+## D1 query-cost controls
+
+Use `wrangler d1 insights personal-intelligence --sort-type=sum --sort-by=reads`
+before optimizing from row counts alone. Hot-path queries log a `d1_query_cost` event
+with their actual `meta.rows_read` and returned row count. Report input uses an indexed
+publication window plus reverse membership/canonical indexes from migration `0006`;
+do not replace those point lookups with a correlated scan of `report_items`.
+
+Authenticated writes prune expired `idempotency_keys` through the expiry index. This
+retains the 24-hour replay contract while preventing response rows from accumulating
+indefinitely. With the current dataset, report-input queries must remain below 50,000
+rows read per call in production verification.

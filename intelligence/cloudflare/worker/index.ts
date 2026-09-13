@@ -129,6 +129,10 @@ async function executeIdempotentWrite(
   const { text, body } = await readJsonBody(request);
   const requestHash = await sha256Hex(text);
   const now = new Date().toISOString();
+  // Expired keys were previously removed only when the exact key was reused,
+  // so the table grew forever. The expiry index makes this bounded cleanup
+  // cheap when there is nothing to delete.
+  await env.DB.prepare("DELETE FROM idempotency_keys WHERE expires_at <= ?").bind(now).run();
   const existing = await env.DB.prepare(`SELECT request_hash, response_status, response_body, expires_at
     FROM idempotency_keys WHERE idempotency_key = ? AND method = ? AND path = ?`)
     .bind(key, request.method, path).first<{
