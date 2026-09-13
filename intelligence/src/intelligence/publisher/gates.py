@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Callable, Optional, Protocol, Sequence
 from urllib.parse import urlparse
 
+from intelligence.normalize.text import canonicalize_url
 from intelligence.reporter import Report, RenderedReport
 
 
@@ -68,11 +69,11 @@ class PublicSourcesGate:
                 if not address.is_global:
                     return GateResult(self.name, False, f"source URL is not public: {source.url}")
         evidence_urls = {
-            evidence.url
+            canonicalize_url(evidence.url)
             for signal in context.report.signals
             for evidence in signal.analysis.evidence
         }
-        source_urls = {source.url for source in sources}
+        source_urls = {canonicalize_url(source.url) for source in sources}
         missing = sorted(evidence_urls - source_urls)
         if missing:
             return GateResult(self.name, False, f"analysis evidence is absent from report sources: {missing[0]}")

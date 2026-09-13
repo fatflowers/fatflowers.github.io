@@ -54,6 +54,16 @@ def test_public_source_gate_rejects_private_source(tmp_path: Path) -> None:
     assert PublicSourcesGate().check(ctx).passed is False
 
 
+def test_public_source_gate_matches_canonical_trailing_slash_variants(tmp_path: Path) -> None:
+    ctx = context(tmp_path)
+    signal = ctx.report.signals[0]
+    evidence = replace(signal.analysis.evidence[0], url=signal.sources[0].url + "/")
+    signal = replace(signal, analysis=replace(signal.analysis, evidence=(evidence,)))
+    ctx = replace(ctx, report=replace(ctx.report, signals=(signal,)))
+
+    assert PublicSourcesGate().check(ctx).passed
+
+
 @pytest.mark.parametrize(
     "secret",
     [
