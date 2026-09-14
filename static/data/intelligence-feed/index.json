@@ -1,8 +1,40 @@
 {
   "archives": [],
-  "count": 404,
+  "count": 405,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-14T00:35:01.019933Z",
+      "channel_name": "Everything Atom",
+      "channel_slug": "simon-willison-atom",
+      "company_impact": "使用 shot-scraper 进行回归截图、网页存档或演示素材生成的团队，可在升级后验证 WebP 输出是否符合现有图像处理链路。",
+      "evidence": [
+        {
+          "claim": "文章公布 shot-scraper 1.12，说明新增 WebP 截图支持，并给出 --quality 参数及无损默认行为。",
+          "url": "https://simonwillison.net/2026/Sep/13/shot-scraper/"
+        }
+      ],
+      "headline": "shot-scraper 1.12 新增 WebP 截图输出",
+      "id": "005d4753-9544-5eb0-96ba-d6b54a00a72e",
+      "importance": 2,
+      "key_change": "相比此前版本，截图命令现在可直接生成 WebP，并能通过 `--quality` 调整有损压缩质量。",
+      "published_at": "2026-09-13T23:58:14+00:00",
+      "summary": "Simon Willison 发布 shot-scraper 1.12，为网页截图自动化工具加入 WebP 输出与 `--quality` 质量参数；未指定质量时输出无损 WebP。作者根据自身使用经验称，WebP 截图通常比 JPEG 或 PNG 文件更小。",
+      "target_name": "Simon Willison",
+      "target_slug": "simon-willison",
+      "title": "shot-scraper 1.12",
+      "topics": [
+        "网页自动化",
+        "截图",
+        "WebP",
+        "开源工具"
+      ],
+      "url": "https://simonwillison.net/2026/Sep/13/shot-scraper/",
+      "watch_next": [
+        "使用 shot-scraper 的项目可在 CI 或存档任务中试跑 WebP 输出，并核对下游预览和压缩质量要求。"
+      ],
+      "why_it_matters": "需要保存或传输大量网页截图的自动化流程，可利用 WebP 在图像体积与质量之间选择取舍。"
+    },
     {
       "analyzed_at": "2026-09-13T00:33:54.163936Z",
       "channel_name": "GitHub Organization",
@@ -12702,7 +12734,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-13T05:04:34.878037Z",
+  "latest_analyzed_at": "2026-09-14T00:35:01.019933Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -12714,7 +12746,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 404,
+  "total_count": 405,
   "version": 1,
   "window_days": 90
 }
