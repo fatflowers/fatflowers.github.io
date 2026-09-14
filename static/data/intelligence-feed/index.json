@@ -1,6 +1,6 @@
 {
   "archives": [],
-  "count": 408,
+  "count": 413,
   "history_preserved": true,
   "items": [
     {
@@ -67,6 +67,68 @@
       "why_it_matters": "为使用编码代理的开发者提供了任务分工的思考框架，但属于个人观点，不是能力或成本变化的实证。"
     },
     {
+      "analyzed_at": "2026-09-14T18:08:26.933719Z",
+      "channel_name": "GitHub Organization",
+      "channel_slug": "composio-github",
+      "company_impact": "采用 Composio CLI 的项目可针对含特殊 token 的输入补做回归测试；影响范围仍需以实际命令验证。",
+      "evidence": [
+        {
+          "claim": "发布说明列出修复：避免 tiktoken 特殊 token 字面量导致 execute 失败。",
+          "url": "https://github.com/ComposioHQ/composio/releases/tag/%40composio/cli%400.4.2-beta.389"
+        }
+      ],
+      "headline": "Composio CLI 修复特殊 token 执行失败",
+      "id": "c05ea5f4-acc4-5d3f-8086-a18373cf2029",
+      "importance": 2,
+      "key_change": "相较 beta.388，CLI 增加了对 tiktoken 特殊 token 字面量的执行兼容性修复。",
+      "published_at": "2026-09-14T14:17:56+00:00",
+      "summary": "Composio 发布 CLI beta.389，修复了在执行流程中将 tiktoken 特殊 token 字面量视为失败的缺陷。发布说明未披露受影响命令范围或迁移要求。",
+      "target_name": "Composio",
+      "target_slug": "composio",
+      "title": "CLI Beta @composio/cli@0.4.2-beta.389",
+      "topics": [
+        "Composio",
+        "CLI",
+        "bug fix"
+      ],
+      "url": "https://github.com/ComposioHQ/composio/releases/tag/%40composio/cli%400.4.2-beta.389",
+      "watch_next": [
+        "在使用 tiktoken 特殊 token 的 CLI 流程中运行一次回归测试。"
+      ],
+      "why_it_matters": "使用该 CLI 且输入可能包含特殊 token 的团队可减少一次执行失败来源。"
+    },
+    {
+      "analyzed_at": "2026-09-14T18:08:26.933719Z",
+      "channel_name": "GitHub Organization",
+      "channel_slug": "composio-github",
+      "company_impact": "依赖该 CLI 的项目可在升级前后测量冷启动时间和内存占用，确认是否符合其运行环境。",
+      "evidence": [
+        {
+          "claim": "发布说明称每次 CLI 调用减少 221ms 与 44MB RSS。",
+          "url": "https://github.com/ComposioHQ/composio/releases/tag/%40composio/cli%400.4.2-beta.388"
+        }
+      ],
+      "headline": "Composio CLI beta.388 降低启动资源开销",
+      "id": "3230262f-5229-5910-817b-e8256def52df",
+      "importance": 2,
+      "key_change": "相较 beta.387，CLI 发布说明新增一项每次调用的启动性能与内存优化主张。",
+      "published_at": "2026-09-14T14:10:56+00:00",
+      "summary": "Composio CLI beta.388 的发布说明称，每次 CLI 调用减少 221ms 耗时和 44MB RSS 内存占用。说明未提供测试环境、受影响命令或基准方法。",
+      "target_name": "Composio",
+      "target_slug": "composio",
+      "title": "CLI Beta @composio/cli@0.4.2-beta.388",
+      "topics": [
+        "Composio",
+        "CLI",
+        "performance"
+      ],
+      "url": "https://github.com/ComposioHQ/composio/releases/tag/%40composio/cli%400.4.2-beta.388",
+      "watch_next": [
+        "在现有自动化环境中对升级前后的 CLI 启动时间和峰值内存进行基准测试。"
+      ],
+      "why_it_matters": "频繁执行 CLI 的自动化任务可能受益，但实际收益需在自身环境复测。"
+    },
+    {
       "analyzed_at": "2026-09-14T17:09:01.297556Z",
       "channel_name": "Official News RSS",
       "channel_slug": "openai-news",
@@ -97,6 +159,105 @@
         "构建邮件代理的项目可针对回复决策、记忆召回和语气一致性分别建立验证集。"
       ],
       "why_it_matters": "为构建邮件或协作代理的团队提供了可复用的任务拆分、评估与用户编辑反馈设计参考，但成效数据尚未独立验证。"
+    },
+    {
+      "analyzed_at": "2026-09-14T18:08:26.933719Z",
+      "channel_name": "Official Blog",
+      "channel_slug": "composio-blog",
+      "company_impact": "采用 Composio 构建代理的团队可为共享邮箱或公司账户试点组织连接，同时审查成员访问、使用历史和删除流程。",
+      "evidence": [
+        {
+          "claim": "文章说明团队连接需账户所有者重新登录授权，组织成员可使用共享连接，个人连接仍优先，功能仍属实验性。",
+          "url": "https://composio.dev/blog/introducing-composio-shared-connections"
+        }
+      ],
+      "headline": "Composio 推出团队共享应用连接",
+      "id": "59bc5789-fdc1-5198-a302-7e2c0785074a",
+      "importance": 3,
+      "key_change": "Composio 新增组织级共享连接，支持让多个成员在不分发账户凭据的情况下使用同一已授权应用账户。",
+      "published_at": "2026-09-14T07:00:00+00:00",
+      "summary": "Composio 推出实验性 Shared Connections：账户所有者可为组织创建独立的团队连接，成员在没有个人连接时自动使用它，已有个人连接则优先保留。原有私有连接不会自动共享，所有者仍需重新登录授权。",
+      "target_name": "Composio",
+      "target_slug": "composio",
+      "title": "Introducing Composio Shared Connections | Composio",
+      "topics": [
+        "Composio",
+        "shared connections",
+        "agent access",
+        "identity",
+        "authorization"
+      ],
+      "url": "https://composio.dev/blog/introducing-composio-shared-connections",
+      "watch_next": [
+        "选择一个低风险公司账户试点，确认成员访问规则、使用历史和撤销流程符合团队治理要求。"
+      ],
+      "why_it_matters": "团队可减少重复授权和凭据传播，但需建立共享账户的使用审计与权限治理。"
+    },
+    {
+      "analyzed_at": "2026-09-14T18:08:26.933719Z",
+      "channel_name": "Claude Product and Engineering Blog",
+      "channel_slug": "claude-blog",
+      "company_impact": "考虑在敏感行业引入 Slack 代理的团队，应先将数据源分级，并把含敏感信息的频道和系统排除在连接范围外。",
+      "evidence": [
+        {
+          "claim": "文章称 Claude Tag beta 不受 Anthropic BAA 覆盖，并描述通过批准频道、禁用私信和按频道限定连接器来避免接触 PHI。",
+          "url": "https://claude.com/blog/how-healthcare-organizations-use-claude-tag"
+        }
+      ],
+      "headline": "Claude Tag 在医疗团队以 PHI 隔离方式试用",
+      "id": "93e27dec-e159-5322-bbcb-fb8a69d789d3",
+      "importance": 3,
+      "key_change": "新增医疗组织使用 Claude Tag 的公开案例与部署边界说明，明确提出仅在不接触 PHI 的频道和连接器中使用。",
+      "published_at": "2026-09-14T00:00:00+00:00",
+      "summary": "Anthropic 展示 Insight Health、Tennr 和 Medallion 在医疗相关组织中使用 Claude Tag beta 的案例：其用于告警分诊、内部工具维护和规则问答，并通过频道、连接器与访问范围隔离受保护健康信息。Claude Tag 目前不在其 BAA 覆盖范围内。",
+      "target_name": "Anthropic",
+      "target_slug": "anthropic",
+      "title": "How healthcare organizations use Claude Tag",
+      "topics": [
+        "Anthropic",
+        "Claude Tag",
+        "healthcare",
+        "Slack",
+        "data governance"
+      ],
+      "url": "https://claude.com/blog/how-healthcare-organizations-use-claude-tag",
+      "watch_next": [
+        "先盘点频道与连接器的数据类别，确认敏感数据不进入未被 BAA 覆盖的代理工作流。"
+      ],
+      "why_it_matters": "医疗团队获得了一个可参考的代理上线边界：数据分区、按频道授权及人工审核仍是前提。"
+    },
+    {
+      "analyzed_at": "2026-09-14T18:08:26.933719Z",
+      "channel_name": "Claude Product and Engineering Blog",
+      "channel_slug": "claude-blog",
+      "company_impact": "正在构建受监管行业代理工作流的团队可先核对数据连接、人工审批和记录留存是否满足内部要求。",
+      "evidence": [
+        {
+          "claim": "文章宣布该插件提供连接器与会议准备、组合分析、合规检查等技能，并说明关键活动须由顾问审核批准。",
+          "url": "https://claude.com/blog/claude-for-financial-advisors"
+        }
+      ],
+      "headline": "Claude 推出面向财务顾问的连接器与技能包",
+      "id": "90298172-6f08-5b23-bc40-50276837d342",
+      "importance": 3,
+      "key_change": "新增一个面向财务顾问的 Claude 插件，组合多家金融与业务系统连接器及按工作流设计的技能。",
+      "published_at": "2026-09-14T00:00:00+00:00",
+      "summary": "Anthropic 发布 Claude for Financial Advisors：财务顾问可连接托管、CRM、投组与规划工具，并使用会议准备、组合复核、合规提示等技能。关键任务仍要求顾问审核批准，文中建议注册投资顾问使用 Enterprise 计划。",
+      "target_name": "Anthropic",
+      "target_slug": "anthropic",
+      "title": "Claude for Financial Advisors",
+      "topics": [
+        "Anthropic",
+        "Claude",
+        "financial services",
+        "connectors",
+        "agent workflows"
+      ],
+      "url": "https://claude.com/blog/claude-for-financial-advisors",
+      "watch_next": [
+        "评估现有 Enterprise 许可、审计日志和所需数据源是否满足插件部署前提。"
+      ],
+      "why_it_matters": "受监管专业团队可评估把分散的客户上下文汇总到现有审查流程中。"
     },
     {
       "analyzed_at": "2026-09-14T00:35:01.019933Z",
@@ -12829,7 +12990,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-14T17:09:01.297556Z",
+  "latest_analyzed_at": "2026-09-14T18:08:26.933719Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -12841,7 +13002,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 408,
+  "total_count": 413,
   "version": 1,
   "window_days": 90
 }
