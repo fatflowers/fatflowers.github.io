@@ -105,6 +105,10 @@ class GitPublisher:
         for name in result.stdout.split("\0"):
             name = name.strip()
             if name and not name.startswith((
-                "content/posts/intelligence/", "static/images/intelligence/"
+                "content/posts/intelligence/", "static/images/intelligence/",
+                # The five-minute feed job may have committed a deterministic
+                # snapshot while a report is preparing to push. Both prefixes
+                # are approved publication outputs; arbitrary files stay blocked.
+                "static/data/intelligence-feed/",
             )):
                 raise RuntimeError(f"outgoing commit outside publish allowlist: {name}")

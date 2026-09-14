@@ -13,3 +13,7 @@
    - 消息包含报告标题、版次、周期、简介、条目数量和完整 `published_url`。不得在公开 URL 尚未通过 GET 与 artifact 指纹核验前发送。
    - 飞书返回 `ok=true` 后，用 `intelctl audit create --actor intelligence-operator --action lark.report_sent --entity-type report --entity-id <report_id> --after <任务目录内JSON>` 记录 chat_id、message_id、published_url、sent_at。
    - 发送最多重试 2 次。通知失败不撤销已发布报告，但必须记录为发布后通知失败并保留下一轮补发；响应不确定且没有 message_id 时不得盲目重复。
+9. morning 或 evening 的 generate 若正常返回 `skipped`，读取 `report_skip_lark` 发送一条运行状态，避免“无合格新内容”被误认为任务停摆：
+   - 以 `<edition>:<period>` 为 entity_id 查询 action=`lark.report_skipped`，存在则不重复发送。
+   - 消息只写版次、周期、跳过原因和最近采集状态，不声称生成了报告，也不触发 Hugo 部署。
+   - 使用 bot 身份和配置中的唯一群聊；发送成功后写入 `lark.report_skipped` 审计，失败最多重试 2 次。

@@ -37,6 +37,19 @@ report_lark:
     - item_count
     - published_url
 
+report_skip_lark:
+  enabled: true
+  identity: bot
+  chat_id: oc_6a65bd218e5dd85031c2d04814de54e1
+  editions: [morning, evening]
+  audit_action: lark.report_skipped
+  retry_limit: 2
+  message_fields:
+    - edition
+    - period
+    - reason
+    - latest_collection_status
+
 feed_lark:
   enabled: true
   delivery_stage: post_publication_verification

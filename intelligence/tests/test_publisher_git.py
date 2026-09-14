@@ -87,6 +87,28 @@ def test_publisher_blocks_unrelated_snapshot_commits_before_staging(tmp_path: Pa
     assert not any(command[1] in {"add", "commit", "push"} for command in commands)
 
 
+def test_publisher_allows_committed_intelligence_feed_snapshot(tmp_path: Path) -> None:
+    commands = []
+
+    def runner(command, **kwargs):
+        commands.append(tuple(command))
+        if command[1] == "log":
+            output = "static/data/intelligence-feed/index.json\0"
+        elif command[1] == "rev-parse":
+            output = "abc123\n"
+        else:
+            output = ""
+        return subprocess.CompletedProcess(command, 0, output, "")
+
+    result = GitPublisher(tmp_path, runner=runner).publish(
+        (Path("content/posts/intelligence/report.zh.md"),),
+        message="publish", dry_run=False, push=True,
+    )
+
+    assert result.pushed
+    assert ("git", "push", "origin", "HEAD:main") in commands
+
+
 def test_publication_service_moves_draft_to_ready_then_dry_runs(tmp_path: Path) -> None:
     report = make_report()
     rendered = render_hugo_report(report)
