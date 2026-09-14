@@ -1,8 +1,70 @@
 {
   "archives": [],
-  "count": 413,
+  "count": 415,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-14T19:07:39.418738Z",
+      "channel_name": "Official X",
+      "channel_slug": "composio-twitter",
+      "company_impact": "采用 Composio 的团队可评估共享连接是否适合集中管理常用工具授权，并验证最小权限与成员撤销行为。",
+      "evidence": [
+        {
+          "claim": "Composio 官方帖文称 Shared Connections 可将一次建立的应用连接共享给团队，使每个人的代理都能使用。",
+          "url": "https://x.com/composio/status/2099543711109538120"
+        }
+      ],
+      "headline": "Composio 推出团队共享连接",
+      "id": "33033658-ec64-5a40-9521-759bded021c2",
+      "importance": 3,
+      "key_change": "新增团队范围复用应用连接的产品能力；此前每个成员或代理需各自建立连接的具体行为未在材料中说明。",
+      "published_at": "2026-09-14T17:00:03+00:00",
+      "summary": "Composio 宣布 Shared Connections：团队成员可复用一次建立的应用连接，让各自的代理使用同一连接。现有材料未说明权限边界、管理员控制或支持的连接类型。",
+      "target_name": "Composio",
+      "target_slug": "composio",
+      "title": "Introducing Shared Connections in Composio. You connect an app once, share it with your team, and everyone's agent can use it. https://t.co/I2tqZ4KPAF",
+      "topics": [
+        "agent 工具集成",
+        "团队协作",
+        "OAuth 连接"
+      ],
+      "url": "https://x.com/composio/status/2099543711109538120",
+      "watch_next": [
+        "在测试项目验证共享连接的成员权限、撤销与审计记录后再用于生产工具。"
+      ],
+      "why_it_matters": "可减少团队重复授权集成的配置工作，但需先确认共享后的访问控制。"
+    },
+    {
+      "analyzed_at": "2026-09-14T19:07:39.418738Z",
+      "channel_name": "Official X",
+      "channel_slug": "composio-twitter",
+      "company_impact": "使用 Composio 自动化代理的团队可先在隔离环境试运行 agent 登录、就绪检查和单一工具调用，并限制 API key 权限。",
+      "evidence": [
+        {
+          "claim": "Composio 官方帖文及其引用内容称新指南覆盖无需浏览器的认证、composio login --agent、API key 设置、就绪检查和 Hacker News 工具调用。",
+          "url": "https://x.com/composio/status/2099522923019088158"
+        }
+      ],
+      "headline": "Composio 发布无人值守代理认证指南",
+      "id": "09545cd3-1546-547b-a032-c958d1c1dc50",
+      "importance": 2,
+      "key_change": "新增针对无人值守编码代理的认证配置指南与具体命令入口；未提供原教程正文，因此无法确认适用版本、权限限制或完整步骤。",
+      "published_at": "2026-09-14T15:37:26+00:00",
+      "summary": "Composio 转发的新指南说明，无人值守的编码代理可不经浏览器完成认证；帖文列出 composio login --agent、API key 设置、就绪检查和一次 Hacker News 工具调用示例。当前采集的是官方转发及其引用内容，未取得教程原文。",
+      "target_name": "Composio",
+      "target_slug": "composio",
+      "title": "Did you know that your agent can connect to Composio completely unattended? Check out the new guide from @ComposioDevs",
+      "topics": [
+        "编码代理",
+        "无人值守认证",
+        "工具调用"
+      ],
+      "url": "https://x.com/composio/status/2099522923019088158",
+      "watch_next": [
+        "取得并审阅该认证指南原文，确认命令适用的 CLI 版本与 API key 最小权限要求。"
+      ],
+      "why_it_matters": "为自动化代理接入工具提供了可核验的配置方向，但生产采用前仍需阅读完整文档并核实密钥权限。"
+    },
     {
       "analyzed_at": "2026-09-14T17:09:01.297556Z",
       "channel_name": "GitHub Organization",
@@ -12990,7 +13052,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-14T18:08:26.933719Z",
+  "latest_analyzed_at": "2026-09-14T19:07:39.418738Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -13002,7 +13064,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 413,
+  "total_count": 415,
   "version": 1,
   "window_days": 90
 }
