@@ -1,8 +1,40 @@
 {
   "archives": [],
-  "count": 406,
+  "count": 408,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-14T17:09:01.297556Z",
+      "channel_name": "GitHub Organization",
+      "channel_slug": "composio-github",
+      "company_impact": "依赖 Composio beta CLI 的团队可在升级前后比较常用命令和代码生成流程的耗时与输出，尤其检查延后执行是否改变脚本时序。",
+      "evidence": [
+        {
+          "claim": "@composio/cli 0.4.2-beta.390 的发行说明列出延后 TypeScript 编译器和生成管线的性能调整。",
+          "url": "https://github.com/ComposioHQ/composio/releases/tag/%40composio/cli%400.4.2-beta.390"
+        }
+      ],
+      "headline": "Composio CLI beta 延后编译与生成管线启动",
+      "id": "19956523-a37a-57b8-81d4-bc8cfee7beea",
+      "importance": 2,
+      "key_change": "相较 beta.389，CLI 增加了延后启动 TypeScript 编译与生成管线的实现调整；现有发布说明不足以判断实际启动耗时或兼容性影响。",
+      "published_at": "2026-09-14T14:48:50+00:00",
+      "summary": "Composio 发布 @composio/cli 0.4.2-beta.390，发行说明仅列出一项性能调整：推迟 TypeScript 编译器和生成管线的启动。未提供性能数据、受影响命令或迁移说明。",
+      "target_name": "Composio",
+      "target_slug": "composio",
+      "title": "CLI Beta @composio/cli@0.4.2-beta.390",
+      "topics": [
+        "Composio",
+        "CLI",
+        "开发者工具",
+        "性能优化"
+      ],
+      "url": "https://github.com/ComposioHQ/composio/releases/tag/%40composio/cli%400.4.2-beta.390",
+      "watch_next": [
+        "使用该 beta 版本的项目可在 CI 中对常用 CLI 命令和生成产物执行升级前后回归测试。"
+      ],
+      "why_it_matters": "使用该 beta CLI 的开发者可能获得启动路径优化，但应以本地命令与生成流程测试确认，不能据此假定所有工作流加速。"
+    },
     {
       "analyzed_at": "2026-09-14T15:08:44.451607Z",
       "channel_name": "Everything Atom",
@@ -33,6 +65,38 @@
         "使用编码代理的项目可在下一轮需求评审中明确记录用户问题、验收标准与体验指标，再比较代理生成代码的交付效果。"
       ],
       "why_it_matters": "为使用编码代理的开发者提供了任务分工的思考框架，但属于个人观点，不是能力或成本变化的实证。"
+    },
+    {
+      "analyzed_at": "2026-09-14T17:09:01.297556Z",
+      "channel_name": "Official News RSS",
+      "channel_slug": "openai-news",
+      "company_impact": "采用邮件自动化的团队可先将回复决策、意图识别和上下文检索拆分评测，再以用户编辑差异作为偏好数据；不应将案例自述指标直接外推到自身场景。",
+      "evidence": [
+        {
+          "claim": "Fyxer 说明其使用 30–50 个专用模型、超过 50 万小时工作流数据，以及由用户编辑驱动的 DPO 训练闭环。",
+          "url": "https://openai.com/index/fyxer"
+        }
+      ],
+      "headline": "Fyxer公开其上下文邮件助手的训练闭环",
+      "id": "b99b9ff5-f629-55ea-b2f8-d57cde7b77a3",
+      "importance": 2,
+      "key_change": "新增一份第一方客户案例，给出上下文邮件代理按任务拆分、检索记忆、SFT/LoRA 和 DPO 反馈闭环的具体实现描述；不是 OpenAI API、模型或产品可用性的更新。",
+      "published_at": "2026-09-14T12:00:00+00:00",
+      "summary": "OpenAI 客户案例披露，Fyxer 将 30–50 个专用模型用于邮件分类、检索与回复生成，并以超过 50 万小时助理工作流和用户修改记录训练系统。文中称其 53% 的 AI 草稿被原样接受、90 天留存率超过 90%，均为 Fyxer 自述数据。",
+      "target_name": "OpenAI",
+      "target_slug": "openai",
+      "title": "How Fyxer built an AI executive assistant people trust",
+      "topics": [
+        "邮件代理",
+        "模型微调",
+        "偏好优化",
+        "上下文检索"
+      ],
+      "url": "https://openai.com/index/fyxer",
+      "watch_next": [
+        "构建邮件代理的项目可针对回复决策、记忆召回和语气一致性分别建立验证集。"
+      ],
+      "why_it_matters": "为构建邮件或协作代理的团队提供了可复用的任务拆分、评估与用户编辑反馈设计参考，但成效数据尚未独立验证。"
     },
     {
       "analyzed_at": "2026-09-14T00:35:01.019933Z",
@@ -12765,7 +12829,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-14T15:08:44.451607Z",
+  "latest_analyzed_at": "2026-09-14T17:09:01.297556Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -12777,7 +12841,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 406,
+  "total_count": 408,
   "version": 1,
   "window_days": 90
 }
