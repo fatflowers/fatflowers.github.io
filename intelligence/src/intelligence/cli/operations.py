@@ -677,11 +677,16 @@ def _write_item_batches(
         chunks = [[]]
     responses = []
     for index, chunk in enumerate(chunks):
+        state = channel_state if index == len(chunks) - 1 else None
+        request_digest = hashlib.sha256(json.dumps(
+            {"items": chunk, "channel_state": state},
+            ensure_ascii=False, sort_keys=True, separators=(",", ":"),
+        ).encode("utf-8")).hexdigest()[:16]
         responses.append(
             client.write_items(
                 chunk,
-                channel_state=channel_state if index == len(chunks) - 1 else None,
-                idempotency_key="%s:%d" % (idempotency_prefix, index),
+                channel_state=state,
+                idempotency_key="%s:%d:%s" % (idempotency_prefix, index, request_digest),
             )
         )
     return {

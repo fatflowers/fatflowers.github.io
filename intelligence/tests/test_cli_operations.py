@@ -5,6 +5,7 @@ import yaml
 
 from intelligence.catalog import CatalogRepository
 from intelligence.cli.operations import (
+    _write_item_batches,
     _report_signal,
     build_report,
     collection_plan,
@@ -70,6 +71,18 @@ class FakeClient:
             return {"changed": False, "latest": None}
         return self.feed_pages.pop(0)
 
+
+def test_item_batch_idempotency_key_tracks_actual_request_body():
+    client = FakeClient()
+    state = {"channel_id": "channel-1", "last_checked_at": "2026-09-14T00:00:00Z"}
+
+    _write_item_batches(client, [{"id": "one"}], channel_state=state, idempotency_prefix="items:run:channel")
+    first_key = client.calls[-1][3]
+    _write_item_batches(client, [{"id": "two"}], channel_state=state, idempotency_prefix="items:run:channel")
+    second_key = client.calls[-1][3]
+
+    assert first_key != second_key
+    assert first_key.startswith("items:run:channel:0:")
 
 def project(tmp_path: Path):
     root = tmp_path / "site"
