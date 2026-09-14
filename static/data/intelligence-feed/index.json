@@ -1,8 +1,71 @@
 {
   "archives": [],
-  "count": 419,
+  "count": 421,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-14T23:07:51.640200Z",
+      "channel_name": "GitHub Organization",
+      "channel_slug": "composio-github",
+      "company_impact": "使用 Composio CLI 自动化工具调用的团队可在升级后对 execute 的账户查询和执行结果做回归测试。",
+      "evidence": [
+        {
+          "claim": "发行说明称 execute 期间已连接账户列表改为只查询一次。",
+          "url": "https://github.com/ComposioHQ/composio/releases/tag/%40composio/cli%400.4.2-beta.393"
+        }
+      ],
+      "headline": "Composio CLI 减少执行时的账户查询",
+      "id": "85d68df6-4a4f-56e9-ac02-43f67332a0a4",
+      "importance": 2,
+      "key_change": "相较 beta.392，此 beta 仅新增 execute 流程中一次已连接账户查询的性能优化。",
+      "published_at": "2026-09-14T22:36:32+00:00",
+      "summary": "Composio 发布 @composio/cli 0.4.2-beta.393：CLI 在一次 execute 调用中改为只列出一次已连接账户。发行说明未披露受影响命令、性能数据或兼容性变化。",
+      "target_name": "Composio",
+      "target_slug": "composio",
+      "title": "CLI Beta @composio/cli@0.4.2-beta.393",
+      "topics": [
+        "Composio",
+        "CLI",
+        "性能优化"
+      ],
+      "url": "https://github.com/ComposioHQ/composio/releases/tag/%40composio/cli%400.4.2-beta.393",
+      "watch_next": [
+        "使用 Composio CLI execute 的项目可升级 beta.393 后比较重复执行时的账户查询行为。"
+      ],
+      "why_it_matters": "频繁执行 CLI 的项目可能减少重复账户查询；实际收益需在自身工作流中验证。"
+    },
+    {
+      "analyzed_at": "2026-09-14T23:07:51.640200Z",
+      "channel_name": "GitHub Organization",
+      "channel_slug": "composio-github",
+      "company_impact": "采用 Composio CLI 的团队可在测试环境升级后验证安装流程、自动插件设置和既有令牌配置。",
+      "evidence": [
+        {
+          "claim": "发行说明列出令牌保管与部署选项文档，并称恢复了安装时的自动插件设置。",
+          "url": "https://github.com/ComposioHQ/composio/releases/tag/%40composio/cli%400.4.2-beta.392"
+        }
+      ],
+      "headline": "Composio CLI 修复安装时插件自动设置",
+      "id": "c67d987f-9608-5fc3-9a90-a6ab65ee773f",
+      "importance": 2,
+      "key_change": "相较 beta.391，该 beta 恢复安装时的自动插件设置，并新增有关令牌保管与部署选项的说明文档。",
+      "published_at": "2026-09-14T21:48:45+00:00",
+      "summary": "Composio 发布 @composio/cli 0.4.2-beta.392，恢复安装过程中的自动插件设置，并补充令牌保管架构与部署选项文档。发行说明没有列出受影响平台或额外迁移步骤。",
+      "target_name": "Composio",
+      "target_slug": "composio",
+      "title": "CLI Beta @composio/cli@0.4.2-beta.392",
+      "topics": [
+        "Composio",
+        "CLI",
+        "插件安装",
+        "令牌管理"
+      ],
+      "url": "https://github.com/ComposioHQ/composio/releases/tag/%40composio/cli%400.4.2-beta.392",
+      "watch_next": [
+        "使用自动插件设置的项目可在测试环境安装 beta.392 并确认插件已正确配置。"
+      ],
+      "why_it_matters": "依赖 CLI 安装即完成插件配置的用户可减少手动设置；升级前仍应验证本地插件状态。"
+    },
     {
       "analyzed_at": "2026-09-14T22:07:15.962086Z",
       "channel_name": "GitHub Organization",
@@ -13179,7 +13242,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-14T22:07:15.962086Z",
+  "latest_analyzed_at": "2026-09-14T23:07:51.640200Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -13191,7 +13254,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 419,
+  "total_count": 421,
   "version": 1,
   "window_days": 90
 }
