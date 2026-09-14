@@ -1,8 +1,39 @@
 {
   "archives": [],
-  "count": 418,
+  "count": 419,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-14T22:07:15.962086Z",
+      "channel_name": "GitHub Organization",
+      "channel_slug": "openai-github",
+      "company_impact": "采用 Fence 的团队可先在测试工作流中验证该固定提交，再按自身升级策略替换现有引用。",
+      "evidence": [
+        {
+          "claim": "发行记录标注 v0.10.2，并列出审核源提交、完整 Action 提交和固定引用示例。",
+          "url": "https://github.com/openai/fence/releases/tag/v0.10.2"
+        }
+      ],
+      "headline": "OpenAI Fence 发布 v0.10.2",
+      "id": "94964b01-7ba8-5ec2-b1eb-dd38ab8cdbb4",
+      "importance": 2,
+      "key_change": "版本更新至 v0.10.2，并公开对应的审核源提交与完整 Action 提交；相较近期已刊事件未见同一发行记录。",
+      "published_at": "2026-09-14T21:12:28+00:00",
+      "summary": "OpenAI 的 Fence GitHub Action 发布 v0.10.2；发行记录给出经审核的源提交和完整 Action 提交，并提供将工作流固定到该版本提交的 YAML 示例。原始说明未列出新增功能或行为差异。",
+      "target_name": "OpenAI",
+      "target_slug": "openai",
+      "title": "v0.10.2",
+      "topics": [
+        "GitHub Actions",
+        "软件供应链",
+        "OpenAI 开源"
+      ],
+      "url": "https://github.com/openai/fence/releases/tag/v0.10.2",
+      "watch_next": [
+        "使用 Fence 的项目可比对现有工作流引用与发行记录中的完整提交。"
+      ],
+      "why_it_matters": "使用该 Action 的项目可据此将引用固定到已列出的完整提交，减少标签变动带来的供应链不确定性。"
+    },
     {
       "analyzed_at": "2026-09-14T20:07:42.390995Z",
       "channel_name": "GitHub Organization",
@@ -13148,7 +13179,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-14T21:07:41.160054Z",
+  "latest_analyzed_at": "2026-09-14T22:07:15.962086Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -13160,7 +13191,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 418,
+  "total_count": 419,
   "version": 1,
   "window_days": 90
 }
