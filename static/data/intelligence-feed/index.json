@@ -1,8 +1,39 @@
 {
   "archives": [],
-  "count": 415,
+  "count": 418,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-14T20:07:42.390995Z",
+      "channel_name": "GitHub Organization",
+      "channel_slug": "composio-github",
+      "company_impact": "采用该预发布 CLI 的团队可在升级前核验构建与启动流程，避免假设依赖仍随二进制分发。",
+      "evidence": [
+        {
+          "claim": "该版本的发行说明列出将编译器和分词器移出 CLI 可执行文件这一项变更。",
+          "url": "https://github.com/ComposioHQ/composio/releases/tag/%40composio/cli%400.4.2-beta.391"
+        }
+      ],
+      "headline": "Composio CLI beta 将编译器与分词器移出可执行文件",
+      "id": "d0f403ca-853f-5cfa-8196-096b621cafb0",
+      "importance": 2,
+      "key_change": "相较 beta.390，CLI 可执行文件不再内置编译器和分词器；现有发布说明未给出兼容性影响或迁移步骤。",
+      "published_at": "2026-09-14T18:57:48+00:00",
+      "summary": "Composio 发布 @composio/cli@0.4.2-beta.391，发行说明仅列出一项变更：将 CLI 的编译器和分词器移出可执行文件。公告未说明新的安装、下载或运行时行为。",
+      "target_name": "Composio",
+      "target_slug": "composio",
+      "title": "CLI Beta @composio/cli@0.4.2-beta.391",
+      "topics": [
+        "Composio",
+        "CLI",
+        "开源发布"
+      ],
+      "url": "https://github.com/ComposioHQ/composio/releases/tag/%40composio/cli%400.4.2-beta.391",
+      "watch_next": [
+        "升级到 beta.391 的项目可运行一次现有构建和启动检查，确认编译器与分词器依赖的获取方式。"
+      ],
+      "why_it_matters": "使用该 beta CLI 的项目可能需要留意安装包组成或运行时依赖变化。"
+    },
     {
       "analyzed_at": "2026-09-14T19:07:39.418738Z",
       "channel_name": "Official X",
@@ -256,6 +287,39 @@
       "why_it_matters": "团队可减少重复授权和凭据传播，但需建立共享账户的使用审计与权限治理。"
     },
     {
+      "analyzed_at": "2026-09-14T20:07:42.390995Z",
+      "channel_name": "Claude Product and Engineering Blog",
+      "channel_slug": "claude-blog",
+      "company_impact": "运行代理辅助开发的团队可审查关键 CI 服务是否依赖单实例状态，并为结果写入与历史汇总设置独立的容量和延迟指标。",
+      "evidence": [
+        {
+          "claim": "文章称六个月内 CI 作业量增长 25 倍，并描述了以可并行工作器、内存日志和独立汇总消费者替代单进程状态的改造。",
+          "url": "https://claude.com/blog/agentic-coding-is-straining-ci-heres-how-we-scaled-test-impact-analysis-at-anthropic"
+        }
+      ],
+      "headline": "Anthropic 分享代理编码时代的 CI 扩展改造",
+      "id": "9fa4d195-af49-56ff-a756-5a2e60a92111",
+      "importance": 4,
+      "key_change": "新增一份带具体负载数据与架构取舍的工程复盘：测试结果监听器可并行写入日志，独立消费者按周期汇总测试历史，替代了原先无法分片的单进程设计。",
+      "published_at": "2026-09-14T00:00:00+00:00",
+      "summary": "Anthropic 复盘其测试影响分析服务如何应对六个月内 25 倍的 CI 作业增长：将单进程内存状态改为可横向扩展的工作器、内存存储日志和独立汇总消费者。文章称改造后队列积压趋于平稳，并建议为代理驱动的代码与测试增长预留更高容量。",
+      "target_name": "Anthropic",
+      "target_slug": "anthropic",
+      "title": "Agentic coding is straining CI. Here’s how we scaled test impact analysis at Anthropic",
+      "topics": [
+        "Anthropic",
+        "Claude Code",
+        "CI",
+        "软件工程",
+        "代理编码"
+      ],
+      "url": "https://claude.com/blog/agentic-coding-is-straining-ci-heres-how-we-scaled-test-impact-analysis-at-anthropic",
+      "watch_next": [
+        "维护测试选择服务的团队可测量结果监听积压，并评估按代码包分片或将状态移出单进程的可行性。"
+      ],
+      "why_it_matters": "代理加速代码提交后，CI 选测系统的积压会直接影响测试覆盖与合并效率；该复盘提供了可复用的状态拆分方向。"
+    },
+    {
       "analyzed_at": "2026-09-14T18:08:26.933719Z",
       "channel_name": "Claude Product and Engineering Blog",
       "channel_slug": "claude-blog",
@@ -320,6 +384,38 @@
         "评估现有 Enterprise 许可、审计日志和所需数据源是否满足插件部署前提。"
       ],
       "why_it_matters": "受监管专业团队可评估把分散的客户上下文汇总到现有审查流程中。"
+    },
+    {
+      "analyzed_at": "2026-09-14T20:07:42.390995Z",
+      "channel_name": "Claude Product and Engineering Blog",
+      "channel_slug": "claude-blog",
+      "company_impact": "准备扩大企业 AI 使用范围的团队可用文中的任务定义和监督层级检查上线前决策是否完整；其效果主张尚无独立验证。",
+      "evidence": [
+        {
+          "claim": "文章发布了七项阶段性考虑、四部分任务定义、轻量总拥有成本模型和四层监督模型。",
+          "url": "https://claude.com/blog/deploying-ai-from-pilot-to-production"
+        }
+      ],
+      "headline": "Anthropic 发布企业 AI 从试点走向生产的决策指南",
+      "id": "8a475cf6-c016-5ecd-98c3-ba1d96ac1aa2",
+      "importance": 3,
+      "key_change": "新增一份把 AI 项目从试点推进到生产的公开方法指南，具体包含用户、任务、输出与质量阈值的任务定义，以及自动化、抽样、复核和咨询四层监督模型。",
+      "published_at": "2026-09-14T00:00:00+00:00",
+      "summary": "Anthropic 与 Accenture 发布企业 AI 落地指南，提出在试点前、试点中和生产阶段依次处理七类决策，并给出任务定义、总拥有成本和分层人工监督的框架。文章称这是面向 Claude Enterprise 部署的实践蓝图。",
+      "target_name": "Anthropic",
+      "target_slug": "anthropic",
+      "title": "Deploying AI from pilot to production",
+      "topics": [
+        "Anthropic",
+        "企业 AI",
+        "Claude Enterprise",
+        "治理"
+      ],
+      "url": "https://claude.com/blog/deploying-ai-from-pilot-to-production",
+      "watch_next": [
+        "计划将 AI 试点推广到更多团队时，可先为每个用例记录用户、任务、输出和可衡量的质量阈值。"
+      ],
+      "why_it_matters": "团队可将试点成功之外的责任归属、成本和审核机制提前写入生产计划。"
     },
     {
       "analyzed_at": "2026-09-14T00:35:01.019933Z",
@@ -13052,7 +13148,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-14T19:07:39.418738Z",
+  "latest_analyzed_at": "2026-09-14T20:07:42.390995Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -13064,7 +13160,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 415,
+  "total_count": 418,
   "version": 1,
   "window_days": 90
 }
