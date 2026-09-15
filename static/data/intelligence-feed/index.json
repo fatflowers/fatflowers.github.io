@@ -1,8 +1,40 @@
 {
   "archives": [],
-  "count": 425,
+  "count": 426,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-15T18:07:18.548352Z",
+      "channel_name": "GitHub Organization",
+      "channel_slug": "mcp-github",
+      "company_impact": "采用 rmcp Rust SDK 的团队可把配置相关代码迁移到新类型；具体兼容期限尚未在发行说明中说明。",
+      "evidence": [
+        {
+          "claim": "v3.4.0 添加了 ServerConfig 和 ClientConfig，并弃用了 ServerInfo 与 ClientInfo 别名。",
+          "url": "https://github.com/modelcontextprotocol/rust-sdk/releases/tag/rmcp-macros-v3.4.0"
+        }
+      ],
+      "headline": "RMCP Rust SDK 新增配置类型并弃用旧别名",
+      "id": "8b7e0e4c-3ec4-5177-9417-5b252ba123fe",
+      "importance": 2,
+      "key_change": "该版本引入了显式的 ServerConfig/ClientConfig 类型，同时将原有 ServerInfo/ClientInfo 标记为弃用；相较近期已刊事件，这是该 Rust SDK 的独立 API 命名调整。",
+      "published_at": "2026-09-15T15:43:54+00:00",
+      "summary": "Model Context Protocol Rust SDK 的 rmcp-macros v3.4.0 新增 ServerConfig 与 ClientConfig，并弃用 ServerInfo 和 ClientInfo 两个别名。发行说明未列出迁移期限或其他行为差异。",
+      "target_name": "MCP Ecosystem",
+      "target_slug": "mcp-ecosystem",
+      "title": "rmcp-macros-v3.4.0",
+      "topics": [
+        "MCP",
+        "Rust SDK",
+        "API 兼容性"
+      ],
+      "url": "https://github.com/modelcontextprotocol/rust-sdk/releases/tag/rmcp-macros-v3.4.0",
+      "watch_next": [
+        "使用 rmcp 的 Rust 项目可在依赖更新分支中运行编译检查，定位 ServerInfo 与 ClientInfo 的调用。",
+        "关注后续发行说明是否给出旧别名的移除版本或迁移示例。"
+      ],
+      "why_it_matters": "依赖这些旧别名的 Rust 项目应在升级前检查编译器弃用警告，避免后续版本移除时被动修改。"
+    },
     {
       "analyzed_at": "2026-09-15T03:07:54.215838Z",
       "channel_name": "GitHub Organization",
@@ -13376,7 +13408,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-15T16:07:50.732800Z",
+  "latest_analyzed_at": "2026-09-15T18:07:18.548352Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -13388,7 +13420,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 425,
+  "total_count": 426,
   "version": 1,
   "window_days": 90
 }
