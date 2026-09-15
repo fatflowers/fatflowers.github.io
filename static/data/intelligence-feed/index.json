@@ -1,6 +1,6 @@
 {
   "archives": [],
-  "count": 422,
+  "count": 424,
   "history_preserved": true,
   "items": [
     {
@@ -34,6 +34,75 @@
         "等待 Anthropic 补充 0.3.272 的具体变更或兼容性说明。"
       ],
       "why_it_matters": "依赖该 SDK 的项目可据此安排版本对齐测试，但不应仅凭此声明假定新增功能或兼容性修复。"
+    },
+    {
+      "analyzed_at": "2026-09-15T15:07:58.426889Z",
+      "channel_name": "Claude Product and Engineering Blog",
+      "channel_slug": "claude-blog",
+      "company_impact": "团队可在采购或扩展前明确业务负责人、允许接入的系统和试点成功指标；文中的客户回报数字属于其案例陈述，不应直接外推。",
+      "evidence": [
+        {
+          "claim": "文章说明该指南包含成熟度模型、准备—试点—规模化三阶段计划、前置设置决策及效率、扩张和新能力三类 ROI 衡量方式。",
+          "url": "https://claude.com/blog/building-an-ai-native-revenue-organization"
+        }
+      ],
+      "headline": "Anthropic 发布 AI 原生销售团队落地指南",
+      "id": "b2e973b0-b9ab-5e6f-bd68-ceb68d6a8cda",
+      "importance": 3,
+      "key_change": "相较同日发布的 Salesforce in Claude 功能公告，此文新增的是销售组织推广 Claude 的成熟度模型、三阶段实施框架和 ROI 衡量方法，而非新增产品接口或套餐。",
+      "published_at": "2026-09-15T00:00:00+00:00",
+      "summary": "Anthropic 发布面向收入团队的 Claude 推广指南，提出从准备、试点到规模化的三阶段路径，并列出所有者、连接器、IT 与安全、成功指标和支出可见性等前置决策。指南还建议用效率、扩张和新能力三类指标衡量 ROI。",
+      "target_name": "Anthropic",
+      "target_slug": "anthropic",
+      "title": "Building an AI-native revenue organization",
+      "topics": [
+        "Claude",
+        "企业 AI",
+        "销售运营",
+        "AI 采用",
+        "ROI"
+      ],
+      "url": "https://claude.com/blog/building-an-ai-native-revenue-organization",
+      "watch_next": [
+        "准备销售 AI 试点的团队可将指南中的所有者、连接器、IT 与安全检查项纳入启动清单。",
+        "为试点预先定义效率、扩张和新能力三类指标，并与现有销售流程基线对照。"
+      ],
+      "why_it_matters": "准备在销售流程引入 AI 的团队可据此把连接、权限、指标和试点评估拆成明确的实施步骤。"
+    },
+    {
+      "analyzed_at": "2026-09-15T15:07:58.426889Z",
+      "channel_name": "Claude Product and Engineering Blog",
+      "channel_slug": "claude-blog",
+      "company_impact": "采用该插件的团队可先在受控小组验证连接器权限、写回审批和 CRM 数据质量，再决定是否扩大部署。",
+      "evidence": [
+        {
+          "claim": "文章宣布 Salesforce in Claude beta，并说明其含 37 项销售技能、Salesforce 和 Slack 连接器以及在用户批准后写回 Salesforce 的工作流。",
+          "url": "https://claude.com/blog/salesforce-in-claude"
+        }
+      ],
+      "headline": "Claude 推出 Salesforce 销售工作插件测试版",
+      "id": "073e3d9c-6e9e-50f7-a84c-0b7dcd4f147f",
+      "importance": 4,
+      "key_change": "Claude 新增与 Salesforce 联合推出的 Salesforce in Claude beta，覆盖读取 Salesforce 数据、草拟并在用户确认后写回商机、通话和跟进任务等销售工作流；官方同时称 Salesforce MCP 可从 marketplace 安装。",
+      "published_at": "2026-09-15T00:00:00+00:00",
+      "summary": "Anthropic 发布 Salesforce in Claude beta：管理员为组织接入后，付费 Claude 用户可通过 Salesforce 与 Slack 连接器完成客户研究、通话准备、管道审阅及经确认的 CRM 更新。该插件提供 37 项面向客户经理日常工作的技能。",
+      "target_name": "Anthropic",
+      "target_slug": "anthropic",
+      "title": "Bringing Salesforce into Claude",
+      "topics": [
+        "Claude",
+        "Salesforce",
+        "企业 AI",
+        "CRM",
+        "MCP",
+        "销售自动化"
+      ],
+      "url": "https://claude.com/blog/salesforce-in-claude",
+      "watch_next": [
+        "计划试用的团队可核对 Salesforce 管理员授权范围及插件可用套餐。",
+        "在试点中抽查商机、联系人和跟进任务的写回审批与审计记录。"
+      ],
+      "why_it_matters": "使用 Claude 与 Salesforce 的销售团队获得了一条带权限继承和人工确认的 CRM 自动化路径。"
     },
     {
       "analyzed_at": "2026-09-14T23:07:51.640200Z",
@@ -13274,7 +13343,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-15T14:07:23.933129Z",
+  "latest_analyzed_at": "2026-09-15T15:07:58.426889Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -13286,7 +13355,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 422,
+  "total_count": 424,
   "version": 1,
   "window_days": 90
 }
