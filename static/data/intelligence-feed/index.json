@@ -1,8 +1,39 @@
 {
   "archives": [],
-  "count": 426,
+  "count": 427,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-15T21:07:22.154775Z",
+      "channel_name": "Official X",
+      "channel_slug": "composio-twitter",
+      "company_impact": "计划将 ChatGPT 接入外部工具的团队可先在受控测试账户验证插件安装、授权范围和实际可调用的连接器。",
+      "evidence": [
+        {
+          "claim": "Composio 官方帖文称，自当天起可从 ChatGPT 插件市场直接安装，并给出市场搜索和访问链接两种入口。",
+          "url": "https://x.com/composio/status/2099961821629174079"
+        }
+      ],
+      "headline": "Composio 可从 ChatGPT 插件市场直接安装",
+      "id": "5781e814-0f82-55b3-a5b9-c131235f81fb",
+      "importance": 3,
+      "key_change": "新增了通过 ChatGPT 插件市场安装 Composio 的分发入口；近期已刊内容涉及无人值守认证、共享连接和 CLI beta，未包含这一安装渠道。",
+      "published_at": "2026-09-15T20:41:28+00:00",
+      "summary": "Composio 宣布其应用现可通过 ChatGPT 插件市场直接添加到 ChatGPT 账户。用户可在市场搜索 Composio 或打开官方链接完成安装，以便让 AI 使用其工具连接能力。",
+      "target_name": "Composio",
+      "target_slug": "composio",
+      "title": "Great news! Starting today, you can install Composio directly into your @ChatGPT account from the plugin marketplace! Just go to Plugins and search for Composio",
+      "topics": [
+        "ChatGPT 插件",
+        "Composio",
+        "工具集成"
+      ],
+      "url": "https://x.com/composio/status/2099961821629174079",
+      "watch_next": [
+        "在测试账户中核对插件可用地区、授权范围及可调用的具体连接器。"
+      ],
+      "why_it_matters": "已使用 ChatGPT 的团队可从插件市场发现和添加该集成，减少另行寻找安装入口的步骤。"
+    },
     {
       "analyzed_at": "2026-09-15T18:07:18.548352Z",
       "channel_name": "GitHub Organization",
@@ -13408,7 +13439,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-15T20:07:38.304751Z",
+  "latest_analyzed_at": "2026-09-15T21:07:22.154775Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -13420,7 +13451,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 426,
+  "total_count": 427,
   "version": 1,
   "window_days": 90
 }
