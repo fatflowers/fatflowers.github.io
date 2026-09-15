@@ -1,6 +1,6 @@
 {
   "archives": [],
-  "count": 424,
+  "count": 425,
   "history_preserved": true,
   "items": [
     {
@@ -68,6 +68,39 @@
         "为试点预先定义效率、扩张和新能力三类指标，并与现有销售流程基线对照。"
       ],
       "why_it_matters": "准备在销售流程引入 AI 的团队可据此把连接、权限、指标和试点评估拆成明确的实施步骤。"
+    },
+    {
+      "analyzed_at": "2026-09-15T16:07:50.732800Z",
+      "channel_name": "Claude Product and Engineering Blog",
+      "channel_slug": "claude-blog",
+      "company_impact": "采用 Claude Cowork 的团队可先核对现有工具是否在新集成范围内，再用非生产数据验证工作流的连接权限、定时运行与人工审批环节。",
+      "evidence": [
+        {
+          "claim": "Anthropic 公布 Claude for Small Business 现含 43 个工作流和 27 项新集成，并列出 Shopify、Salesforce、TikTok、Atlassian、Zoom、Xero、Gusto、Square、Stripe 和 Zapier 等工具。",
+          "url": "https://claude.com/blog/claude-for-small-business-launches-new-workflows-integrations-and-training-programs"
+        }
+      ],
+      "headline": "Claude 小企业版新增 43 个工作流和 27 项集成",
+      "id": "34f3f40b-c83a-5a5f-a519-93b88f38b4ff",
+      "importance": 3,
+      "key_change": "相较 5 月以连接器和预设工作流推出的 Claude for Small Business，本次新增 43 个工作流、27 项集成，并把场景扩展到周报、线索响应、提案、营销与月末结账等任务。",
+      "published_at": "2026-09-15T00:00:00+00:00",
+      "summary": "Anthropic 于 2026 年 9 月 15 日更新 Claude for Small Business：产品现提供 43 个工作流和 27 项新集成，覆盖 Shopify、Salesforce、TikTok、Atlassian、Zoom、Xero、Gusto、Square、Stripe 与 Zapier 等常用工具。官方同时公布面向小企业主的免费线下工作坊和合作方网络研讨会。",
+      "target_name": "Anthropic",
+      "target_slug": "anthropic",
+      "title": "Claude for Small Business launches new workflows, integrations, and training programs",
+      "topics": [
+        "Claude",
+        "小企业自动化",
+        "工作流",
+        "应用集成"
+      ],
+      "url": "https://claude.com/blog/claude-for-small-business-launches-new-workflows-integrations-and-training-programs",
+      "watch_next": [
+        "已使用 Claude Cowork 的团队可先在测试账户验证 Shopify、CRM 或财务工具连接器的权限范围和审批行为。",
+        "关注 Anthropic 是否公布 27 项新增集成的完整名单、地区可用性及套餐限制。"
+      ],
+      "why_it_matters": "使用 Claude Cowork 的小企业团队可将已连接业务工具中的重复性流程预设为工作流，并在发送、发布或支付前保留人工批准。"
     },
     {
       "analyzed_at": "2026-09-15T15:07:58.426889Z",
@@ -13343,7 +13376,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-15T15:07:58.426889Z",
+  "latest_analyzed_at": "2026-09-15T16:07:50.732800Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -13355,7 +13388,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 424,
+  "total_count": 425,
   "version": 1,
   "window_days": 90
 }
