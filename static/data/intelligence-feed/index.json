@@ -1,8 +1,41 @@
 {
   "archives": [],
-  "count": 439,
+  "count": 440,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-16T23:07:53.564855Z",
+      "channel_name": "Official X",
+      "channel_slug": "openai-twitter",
+      "company_impact": "采用大模型的团队可把这类公开失配报告纳入模型评估与风险复盘资料；具体适用风险仍需结合后续报告内容判断。",
+      "evidence": [
+        {
+          "claim": "OpenAI 说明该框架将为模型失配事件的公开披露设置条件和时间线，并称已发布六份过去六个月观察到的失配行为报告。",
+          "url": "https://x.com/OpenAI/status/2100344867507327087"
+        }
+      ],
+      "headline": "OpenAI公布模型失配事件披露框架",
+      "id": "009cad42-367e-5bea-ba05-40fcaacddb69",
+      "importance": 3,
+      "key_change": "OpenAI 新增了一套面向模型失配实例的公开披露流程，并同步披露六份相关报告；近期已刊事件中没有这一治理与透明度机制的同一事实。",
+      "published_at": "2026-09-16T22:03:33Z",
+      "summary": "OpenAI 公布用于跟踪、调查和公开模型失配事件的框架，并称已同时发布过去六个月训练或评估中观察到的六份失配行为报告。框架会为公开披露设定条件和时间线，复杂案例可能因调查或第三方协调而延长处理时间。",
+      "target_name": "OpenAI",
+      "target_slug": "openai",
+      "title": "We're sharing our new framework for tracking, investigating, and disclosing instances of model misalignment at OpenAI. The framework sets criteria and timelines",
+      "topics": [
+        "模型安全",
+        "对齐",
+        "透明度",
+        "OpenAI"
+      ],
+      "url": "https://x.com/OpenAI/status/2100344867507327087",
+      "watch_next": [
+        "查阅 OpenAI 后续公开的六份失配报告，核对其中的行为类型、缓解措施与适用模型。",
+        "为正在使用模型代理的项目记录可比的异常行为、调查结论和披露决策。"
+      ],
+      "why_it_matters": "开发者可据此关注模型行为异常的披露标准及其后续案例，而不只依赖单次安全公告。"
+    },
     {
       "analyzed_at": "2026-09-16T21:07:19.481072Z",
       "channel_name": "GitHub Organization",
@@ -13846,7 +13879,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-16T22:08:44.557946Z",
+  "latest_analyzed_at": "2026-09-16T23:07:53.564855Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -13858,7 +13891,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 439,
+  "total_count": 440,
   "version": 1,
   "window_days": 90
 }
