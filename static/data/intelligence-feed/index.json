@@ -1,8 +1,40 @@
 {
   "archives": [],
-  "count": 430,
+  "count": 431,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-16T16:07:30.319722Z",
+      "channel_name": "Official News RSS",
+      "channel_slug": "openai-news",
+      "company_impact": "为面向老年用户设计 AI 辅助或数字技能培训的团队提供了可参考的线下教学和安全教育场景。",
+      "evidence": [
+        {
+          "claim": "OpenAI 宣布与 OATS 在 10 个美国城市为 1,000 名老年人举办免费的线下 ChatGPT 实操活动，并包含识别诈骗的教学内容。",
+          "url": "https://openai.com/index/helping-older-adults-use-ai-in-everyday-life"
+        }
+      ],
+      "headline": "OpenAI 在十城举办老年人 ChatGPT 实操课",
+      "id": "68bdf31c-e6d5-5fa2-bd96-b695f79c9dc1",
+      "importance": 2,
+      "key_change": "新增了覆盖 10 个城市、面向 1,000 名老年人的线下 ChatGPT 实操活动，并将防诈骗识别纳入课程内容。",
+      "published_at": "2026-09-16T16:00:00+00:00",
+      "summary": "OpenAI Academy 与 AARP 旗下 OATS 在美国 10 个城市举办面向 1,000 名老年人的免费线下 AI Skills Jam，教授使用 ChatGPT 的日常任务和识别诈骗等基础技能。该活动属于双方持续开展的老年人数字技能项目。",
+      "target_name": "OpenAI",
+      "target_slug": "openai",
+      "title": "Helping older adults use AI in everyday life",
+      "topics": [
+        "AI 素养",
+        "ChatGPT",
+        "数字安全",
+        "老年用户"
+      ],
+      "url": "https://openai.com/index/helping-older-adults-use-ai-in-everyday-life",
+      "watch_next": [
+        "需要面向老年用户开展 AI 培训的组织可评估将诈骗识别与真实日常任务纳入课程。"
+      ],
+      "why_it_matters": "它提供了面向老年用户的实际培训与安全教育案例，而非新的模型或产品能力发布。"
+    },
     {
       "analyzed_at": "2026-09-16T14:06:57.389260Z",
       "channel_name": "Official News RSS",
@@ -13547,7 +13579,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-16T14:06:57.389260Z",
+  "latest_analyzed_at": "2026-09-16T16:07:30.319722Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -13559,7 +13591,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 430,
+  "total_count": 431,
   "version": 1,
   "window_days": 90
 }
