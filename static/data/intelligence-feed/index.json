@@ -1,8 +1,74 @@
 {
   "archives": [],
-  "count": 436,
+  "count": 438,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-16T21:07:19.481072Z",
+      "channel_name": "GitHub Organization",
+      "channel_slug": "composio-github",
+      "company_impact": "采用 Composio CLI 的团队应在升级前检查 setup 输出和遥测配置；具体采集内容尚无公开说明。",
+      "evidence": [
+        {
+          "claim": "发行说明列出 setup 中的插件采用遥测和插件提示，以及社交预览卡片调整。",
+          "url": "https://github.com/ComposioHQ/composio/releases/tag/%40composio/cli%400.4.2-beta.396"
+        }
+      ],
+      "headline": "Composio CLI beta 新增插件采用遥测",
+      "id": "76cfc27f-4305-5150-bedc-69f21aa2d35f",
+      "importance": 2,
+      "key_change": "相较近期已刊的 CLI beta 性能与执行流程调整，本版本新增了 setup 阶段的插件采用遥测和插件提示；发布说明未披露可配置性或数据处理细节。",
+      "published_at": "2026-09-16T20:46:40+00:00",
+      "summary": "Composio 发布 @composio/cli 0.4.2-beta.396：发行说明列出安装流程中的插件采用遥测与插件提示，并同步调整文档社交预览卡片。未提供遥测字段、开关、传输方式或兼容性说明。",
+      "target_name": "Composio",
+      "target_slug": "composio",
+      "title": "CLI Beta @composio/cli@0.4.2-beta.396",
+      "topics": [
+        "Composio",
+        "CLI",
+        "开发者工具",
+        "遥测"
+      ],
+      "url": "https://github.com/ComposioHQ/composio/releases/tag/%40composio/cli%400.4.2-beta.396",
+      "watch_next": [
+        "升级前在测试环境运行 setup，确认插件提示与遥测行为",
+        "等待官方补充遥测字段、开关及隐私说明"
+      ],
+      "why_it_matters": "使用该 beta 的团队需要先确认安装流程是否符合自身遥测与隐私要求。"
+    },
+    {
+      "analyzed_at": "2026-09-16T21:07:19.481072Z",
+      "channel_name": "Official X",
+      "channel_slug": "composio-twitter",
+      "company_impact": "运行编码代理的团队可将失败 token 消耗纳入自有基准测试；帖文不足以支持选择某一框架的结论。",
+      "evidence": [
+        {
+          "claim": "Composio 帖文称以 GPT-6 Astra 在六种代理框架和 29 个任务上测试，且失败时 token 使用可相差 3 至 5 倍。",
+          "url": "https://x.com/composio/status/2100308380980068538"
+        }
+      ],
+      "headline": "Composio 分享六种代理框架的失败代价比较",
+      "id": "21e46f3d-24a9-5866-94ae-dde56a795b0a",
+      "importance": 2,
+      "key_change": "这是一次新的框架比较主张；近期已刊的 Composio 安装入口、共享连接与 CLI beta 更新不包含该实验结论。由于仅有社交帖正文，无法核验任务组成、成功率或 token 统计。",
+      "published_at": "2026-09-16T19:38:34+00:00",
+      "summary": "Composio 表示，它在 29 个高难度代理任务上用 GPT-6 Astra 测试了 Codex、Claude Code 等六种代理框架。其帖文称多数框架成功率接近，但失败时的 token 消耗相差约 3 至 5 倍；未提供任务、方法或完整结果。",
+      "target_name": "Composio",
+      "target_slug": "composio",
+      "title": "We ran GPT-6 Astra across 6 agent harnesses (Codex, Claude Code, OpenCode, Hermes Agent, Pi Agent, Command Code) on 29 challenging agentic tasks. Most harnesses",
+      "topics": [
+        "代理评估",
+        "编码代理",
+        "token 成本",
+        "Composio"
+      ],
+      "url": "https://x.com/composio/status/2100308380980068538",
+      "watch_next": [
+        "用本团队任务集同时记录成功率、失败率和每次失败的 token 消耗",
+        "等待 Composio 公布任务清单、评测设置及各框架的完整结果"
+      ],
+      "why_it_matters": "代理评估不应只比较成功率，失败路径的成本也可能显著影响实际预算。"
+    },
     {
       "analyzed_at": "2026-09-16T19:07:36.475131Z",
       "channel_name": "Everything Atom",
@@ -13747,7 +13813,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-16T20:07:02.217332Z",
+  "latest_analyzed_at": "2026-09-16T21:07:19.481072Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -13759,7 +13825,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 436,
+  "total_count": 438,
   "version": 1,
   "window_days": 90
 }
