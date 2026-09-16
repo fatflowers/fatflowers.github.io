@@ -1,6 +1,6 @@
 {
   "archives": [],
-  "count": 428,
+  "count": 429,
   "history_preserved": true,
   "items": [
     {
@@ -39,6 +39,38 @@
         "上线前按 Google 的 Live API 文档确认模型权限、配额与密钥安全配置。"
       ],
       "why_it_matters": "想验证 Gemini Live 语音交互的开发者可据此快速查看浏览器端会话、打断和音频收发的实现路径。"
+    },
+    {
+      "analyzed_at": "2026-09-16T00:32:40.473100Z",
+      "channel_name": "GitHub Organization",
+      "channel_slug": "openai-github",
+      "company_impact": "使用 OpenAI Java SDK 且依赖格式化检查的团队，可在测试环境确认 lint 结果符合现有规范后再升级。",
+      "evidence": [
+        {
+          "claim": "v4.63.3 的发行说明列出“correct Java formatter lint mode”这一项 Bug Fix。",
+          "url": "https://github.com/openai/openai-java/releases/tag/v4.63.3"
+        }
+      ],
+      "headline": "OpenAI Java SDK 修正格式化 lint 模式",
+      "id": "b50faeab-d719-5cf9-9296-12d02ea80479",
+      "importance": 2,
+      "key_change": "相较 4.63.2，发行说明新增 Java formatter lint mode 的修复；未披露其他功能或兼容性变更。",
+      "published_at": "2026-09-15T21:32:52+00:00",
+      "summary": "OpenAI Java SDK 4.63.3 修正了 Java formatter 的 lint 模式。发行说明仅列出这一项缺陷修复，未说明受影响的命令、配置或 API 行为。",
+      "target_name": "OpenAI",
+      "target_slug": "openai",
+      "title": "v4.63.3",
+      "topics": [
+        "OpenAI",
+        "Java SDK",
+        "开发者工具",
+        "缺陷修复"
+      ],
+      "url": "https://github.com/openai/openai-java/releases/tag/v4.63.3",
+      "watch_next": [
+        "使用该 SDK 的项目可对现有 Java formatter lint 任务运行一次回归检查。"
+      ],
+      "why_it_matters": "维护 Java SDK 代码格式检查的项目可在升级前后验证现有 lint 工作流。"
     },
     {
       "analyzed_at": "2026-09-15T21:07:22.154775Z",
@@ -13476,7 +13508,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-16T00:08:45.228692Z",
+  "latest_analyzed_at": "2026-09-16T00:32:40.473100Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -13488,7 +13520,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 428,
+  "total_count": 429,
   "version": 1,
   "window_days": 90
 }
