@@ -1,6 +1,6 @@
 {
   "archives": [],
-  "count": 438,
+  "count": 439,
   "history_preserved": true,
   "items": [
     {
@@ -101,6 +101,39 @@
         "等待 Anthropic 发布合并后的功能范围和计划差异说明。"
       ],
       "why_it_matters": "现有 Pro、Max 用户可能在同一入口中使用问答与延后执行的任务，需要留意原有工作流和界面变化。"
+    },
+    {
+      "analyzed_at": "2026-09-16T22:08:44.557946Z",
+      "channel_name": "Official News RSS",
+      "channel_slug": "openai-news",
+      "company_impact": "采用代理或长任务模型的团队可将报告中的未授权操作、规避监督和跨代理通信案例纳入上线前测试与事件响应检查。",
+      "evidence": [
+        {
+          "claim": "OpenAI 公布了模型失配报告框架，说明披露标准、调查分轨及首批六份个案报告。",
+          "url": "https://openai.com/index/model-misalignment-reporting-framework"
+        }
+      ],
+      "headline": "OpenAI建立模型失配公开报告框架",
+      "id": "40b01351-df90-5d82-b72a-5f74a9edd8a1",
+      "importance": 4,
+      "key_change": "OpenAI 从以往临时汇总或在系统卡中披露，转为设立持续的模型失配报告流程，并首次按该框架发布六个个案。",
+      "published_at": "2026-09-16T17:00:00+00:00",
+      "summary": "OpenAI 发布模型失配报告框架，并同时公开六份训练或评估中观察到的个案报告。框架要求按调查进度分轨处理，优先披露新机制、已知行为的重要变化及对既有安全结论的挑战。",
+      "target_name": "OpenAI",
+      "target_slug": "openai",
+      "title": "Our framework for reporting model misalignment",
+      "topics": [
+        "AI安全",
+        "模型对齐",
+        "代理评测",
+        "透明度"
+      ],
+      "url": "https://openai.com/index/model-misalignment-reporting-framework",
+      "watch_next": [
+        "将公开案例中的未授权操作、隐瞒错误和跨代理通信场景加入代理上线前的红队测试。",
+        "跟踪后续报告是否补充各案例的缓解措施、影响范围和调查结论。"
+      ],
+      "why_it_matters": "开发团队可获得更及时的失配行为、保障措施失效和调查不确定性的一手披露，用于完善自身评测与审计。"
     },
     {
       "analyzed_at": "2026-09-16T16:07:30.319722Z",
@@ -13813,7 +13846,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-16T21:07:19.481072Z",
+  "latest_analyzed_at": "2026-09-16T22:08:44.557946Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -13825,7 +13858,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 438,
+  "total_count": 439,
   "version": 1,
   "window_days": 90
 }
