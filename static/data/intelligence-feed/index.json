@@ -1,8 +1,47 @@
 {
   "archives": [],
-  "count": 429,
+  "count": 430,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-16T14:06:57.389260Z",
+      "channel_name": "Official News RSS",
+      "channel_slug": "openai-news",
+      "company_impact": "考虑该渠道的团队可先确认美国测试资格，并评估广告落地页、产品信息和人工承接流程是否适合由用户主动发起的对话。",
+      "evidence": [
+        {
+          "claim": "OpenAI 称 Sponsored Agents 正在向美国部分广告主测试，用户可在点击广告后选择开启明确标识的企业赞助代理对话。",
+          "url": "https://openai.com/index/reimagining-advertising-with-ai"
+        },
+        {
+          "claim": "文章称广告主可在 ChatGPT Work 中通过 Ads Manager 插件以自然语言提示创建、更新和分析活动，并宣布 HubSpot 和 Shopify 集成。",
+          "url": "https://openai.com/index/reimagining-advertising-with-ai"
+        }
+      ],
+      "headline": "ChatGPT Ads 测试赞助商对话代理",
+      "id": "ecfe60a4-0729-5787-939b-4603315a3775",
+      "importance": 4,
+      "key_change": "OpenAI 从展示广告延伸到用户可主动开启的、与原对话分离的企业赞助代理会话；广告主还可在 ChatGPT Work 的 Ads Manager 插件中用提示词管理广告活动。",
+      "published_at": "2026-09-16T13:00:00+00:00",
+      "summary": "OpenAI 宣布在美国向部分广告主测试 Sponsored Agents：用户点击 ChatGPT 广告后，可选择与由企业赞助且明确标识的代理继续对话。公司同时推出用自然语言创建、更新和分析广告活动的工具，并接入 HubSpot 与 Shopify。",
+      "target_name": "OpenAI",
+      "target_slug": "openai",
+      "title": "Reimagining advertising with AI",
+      "topics": [
+        "ChatGPT",
+        "广告",
+        "AI 代理",
+        "营销工具",
+        "HubSpot",
+        "Shopify"
+      ],
+      "url": "https://openai.com/index/reimagining-advertising-with-ai",
+      "watch_next": [
+        "美国测试广告主可核对 Sponsored Agents 的准入条件、计费方式与品牌安全控制。",
+        "使用 HubSpot 或 Shopify 的商家可检查 ChatGPT Ads 连接是否已在其地区和账户中可用。"
+      ],
+      "why_it_matters": "面向营销与产品团队，ChatGPT Ads 新增了对话式获客入口；目前仅为美国部分广告主的测试。"
+    },
     {
       "analyzed_at": "2026-09-16T00:08:45.228692Z",
       "channel_name": "Everything Atom",
@@ -13508,7 +13547,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-16T00:32:40.473100Z",
+  "latest_analyzed_at": "2026-09-16T14:06:57.389260Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -13520,7 +13559,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 429,
+  "total_count": 430,
   "version": 1,
   "window_days": 90
 }
