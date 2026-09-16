@@ -1,8 +1,45 @@
 {
   "archives": [],
-  "count": 427,
+  "count": 428,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-16T00:08:45.228692Z",
+      "channel_name": "Everything Atom",
+      "channel_slug": "simon-willison-atom",
+      "company_impact": "采用 Gemini Live API 的团队可把该工具及源码作为原型参考；实际模型可用范围、费用和接口限制仍应以 Google 文档为准。",
+      "evidence": [
+        {
+          "claim": "文章发布了 Gemini Live audio 工具，并说明可选择模型和音色、设置系统提示、在浏览器中语音对话及打断模型回复。",
+          "url": "https://simonwillison.net/2026/Sep/15/gemini-live/"
+        },
+        {
+          "claim": "文章链接的实现使用 WebSocket 连接 Gemini API，并通过 Web Audio API 处理捕获和播放。",
+          "url": "https://github.com/simonw/tools/blob/main/gemini-live.html"
+        }
+      ],
+      "headline": "Simon 发布 Gemini Live 浏览器语音试用工具",
+      "id": "0b2eb340-e764-5c64-b984-e64ad2855508",
+      "importance": 3,
+      "key_change": "新增一个可公开访问的、无第三方库实现的 Gemini Live 浏览器试用界面，并公开其 WebSocket 与 Web Audio API 实现链接；与近期已刊事件没有同一工具发布的重复事实。",
+      "published_at": "2026-09-15T22:47:07+00:00",
+      "summary": "Simon Willison 发布了 Gemini Live audio：这是一个可在浏览器中选择模型和音色、设置可选系统提示并进行语音对话的小工具；用户可在模型说话时打断它，也可用文字消息中断当前回复。工具直接对接 Google 的 Gemini Live WebSocket API。",
+      "target_name": "Simon Willison",
+      "target_slug": "simon-willison",
+      "title": "Gemini Live audio",
+      "topics": [
+        "语音交互",
+        "Gemini Live",
+        "浏览器开发",
+        "WebSocket"
+      ],
+      "url": "https://simonwillison.net/2026/Sep/15/gemini-live",
+      "watch_next": [
+        "使用 Gemini Live API 的项目可对照源码验证浏览器麦克风权限、WebSocket 会话和中断处理。",
+        "上线前按 Google 的 Live API 文档确认模型权限、配额与密钥安全配置。"
+      ],
+      "why_it_matters": "想验证 Gemini Live 语音交互的开发者可据此快速查看浏览器端会话、打断和音频收发的实现路径。"
+    },
     {
       "analyzed_at": "2026-09-15T21:07:22.154775Z",
       "channel_name": "Official X",
@@ -13439,7 +13476,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-15T21:07:22.154775Z",
+  "latest_analyzed_at": "2026-09-16T00:08:45.228692Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -13451,7 +13488,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 427,
+  "total_count": 428,
   "version": 1,
   "window_days": 90
 }
