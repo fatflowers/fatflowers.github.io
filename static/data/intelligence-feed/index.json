@@ -1,6 +1,6 @@
 {
   "archives": [],
-  "count": 431,
+  "count": 433,
   "history_preserved": true,
   "items": [
     {
@@ -73,6 +73,71 @@
         "使用 HubSpot 或 Shopify 的商家可检查 ChatGPT Ads 连接是否已在其地区和账户中可用。"
       ],
       "why_it_matters": "面向营销与产品团队，ChatGPT Ads 新增了对话式获客入口；目前仅为美国部分广告主的测试。"
+    },
+    {
+      "analyzed_at": "2026-09-16T17:08:15.046990Z",
+      "channel_name": "Official News RSS",
+      "channel_slug": "openai-news",
+      "company_impact": "使用 ChatGPT 的团队可把跨职能任务纳入试点指标，重点验证高频任务是否形成稳定流程；这是一项聚合观察研究，不直接证明因果效果。",
+      "evidence": [
+        {
+          "claim": "OpenAI 说明研究分析逾 150 万条 2026 年 4 至 7 月的工作相关 ChatGPT 消息，并报告跨岗位任务复用比例从 13.1% 升至 25.9%。",
+          "url": "https://openai.com/index/unlocking-new-ways-of-working"
+        }
+      ],
+      "headline": "OpenAI 研究显示跨岗位 AI 任务会沉淀为常规工作",
+      "id": "b14fd8fb-4168-57c1-a560-60d9331b53f9",
+      "importance": 3,
+      "key_change": "相较此前关于“任务跨界”的首份报告，本次新增四个月的重复使用证据与分任务回访率，显示部分跨岗位 AI 使用不只是一次性尝试。",
+      "published_at": "2026-09-16T09:00:00+00:00",
+      "summary": "OpenAI 的最新 Work at the Frontier 研究分析了 2026 年 4 至 7 月逾 150 万条工作相关 ChatGPT 消息，发现部分员工会反复使用原本不属其职业范围的任务。持续观察的约 6,200 名员工中，此类已使用任务占职业特定 AI 活动的比例从 4 月 13.1% 升至 7 月 25.9%。",
+      "target_name": "OpenAI",
+      "target_slug": "openai",
+      "title": "How workers are unlocking new ways of working",
+      "topics": [
+        "AI 采用",
+        "工作流",
+        "经济研究",
+        "ChatGPT"
+      ],
+      "url": "https://openai.com/index/unlocking-new-ways-of-working",
+      "watch_next": [
+        "负责 AI 试点的团队可按任务类型记录复用率，并与人工复核和业务结果一并比较。"
+      ],
+      "why_it_matters": "团队评估 AI 采用时可同时观察工作流重组，而不只统计工具访问量或单次使用率。"
+    },
+    {
+      "analyzed_at": "2026-09-16T17:08:15.046990Z",
+      "channel_name": "Claude Product and Engineering Blog",
+      "channel_slug": "claude-blog",
+      "company_impact": "使用 Claude 的团队应先在 Pro 或 Max 试用中核验现有项目、连接器和技能的权限行为；企业管理员可据此规划 beta 的启用与治理测试。",
+      "evidence": [
+        {
+          "claim": "Anthropic 公告称 Cowork 与聊天合并，Docs、Slides 与会话内 Design 在付费方案 beta 推出，并先向 Pro 和 Max 用户逐步开放。",
+          "url": "https://claude.com/blog/cowork-is-now-claude"
+        }
+      ],
+      "headline": "Claude 将 Cowork 与聊天合并并推出文档和幻灯片测试版",
+      "id": "67f94c3a-0622-590a-9f4e-ece8f3eb1fa0",
+      "importance": 4,
+      "key_change": "相较近期已刊的 Salesforce in Claude beta，本次新增的是 Claude 应用内的工作入口合并，以及 Docs、Slides 和会话内 Design 的 beta 可用范围与分阶段计划。",
+      "published_at": "2026-09-16T00:00:00+00:00",
+      "summary": "Anthropic 宣布将 Claude Cowork 与聊天合并为一个 Claude，在任意对话中提供原 Cowork 和 Design 的能力；Claude Docs、Claude Slides 和会话内 Claude Design 同日进入付费方案 beta。该变更先向 Pro 和 Max 用户在未来数周逐步推出，企业管理员可选择是否启用。",
+      "target_name": "Anthropic",
+      "target_slug": "anthropic",
+      "title": "Claude Cowork and chat are now one Claude",
+      "topics": [
+        "Claude",
+        "代理工作流",
+        "文档",
+        "演示文稿",
+        "产品更新"
+      ],
+      "url": "https://claude.com/blog/cowork-is-now-claude",
+      "watch_next": [
+        "采用 Claude 的团队可用一份真实报告和演示稿任务测试对话、连接器、共享链接与 PowerPoint/PDF 导出的权限边界。"
+      ],
+      "why_it_matters": "付费用户可在同一对话内发起较长任务并制作、编辑或导出文档和演示稿，减少在不同工作区间切换。"
     },
     {
       "analyzed_at": "2026-09-16T00:08:45.228692Z",
@@ -13579,7 +13644,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-16T16:07:30.319722Z",
+  "latest_analyzed_at": "2026-09-16T17:08:15.046990Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -13591,7 +13656,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 431,
+  "total_count": 433,
   "version": 1,
   "window_days": 90
 }
