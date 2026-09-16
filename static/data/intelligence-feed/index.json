@@ -1,6 +1,6 @@
 {
   "archives": [],
-  "count": 435,
+  "count": 436,
   "history_preserved": true,
   "items": [
     {
@@ -205,6 +205,42 @@
         "采用 Claude 的团队可用一份真实报告和演示稿任务测试对话、连接器、共享链接与 PowerPoint/PDF 导出的权限边界。"
       ],
       "why_it_matters": "付费用户可在同一对话内发起较长任务并制作、编辑或导出文档和演示稿，减少在不同工作区间切换。"
+    },
+    {
+      "analyzed_at": "2026-09-16T20:07:02.217332Z",
+      "channel_name": "Official News",
+      "channel_slug": "grok-news",
+      "company_impact": "采用 Grok Build 的团队可先在非敏感项目验证跨会话记忆是否准确保留工程约定，并检查其不应记录的任务状态与秘密是否确实被排除。",
+      "evidence": [
+        {
+          "claim": "公告称 Grok Build 会保存项目约定、决策和事实，并在后续相关项目会话中读取。",
+          "url": "https://x.ai/news/grok-build-memory"
+        },
+        {
+          "claim": "公告说明捕捉在每轮结束后后台运行，/dream 会把笔记整理为主题文件，且当前对话指令优先于笔记。",
+          "url": "https://x.ai/news/grok-build-memory"
+        }
+      ],
+      "headline": "Grok Build 新增跨会话项目记忆",
+      "id": "51e2397e-7b70-5cdb-a204-6e9255e3a2d5",
+      "importance": 3,
+      "key_change": "Grok Build 从仅依赖当前会话上下文，新增了按项目保存并在后续相关会话读取的记忆机制；公告明确其捕捉在回合结束后异步进行。",
+      "published_at": "2026-09-16T00:00:00+00:00",
+      "summary": "xAI 于 9 月 16 日宣布 Grok Build 在新会话中可读取此前工作产生的项目约定、决策和事实笔记。系统会在每轮完成后后台捕捉耐久信息，并用 /dream 将笔记整理为按主题划分的文件。",
+      "target_name": "Grok / xAI",
+      "target_slug": "grok",
+      "title": "Memory in Grok Build",
+      "topics": [
+        "编码代理",
+        "开发者工具",
+        "上下文管理"
+      ],
+      "url": "https://x.ai/news/grok-build-memory",
+      "watch_next": [
+        "在测试项目中开启新会话，核对记忆是否正确恢复测试命令和已确认的架构决策",
+        "评估团队项目的记忆浏览与修正流程，再决定是否用于日常开发"
+      ],
+      "why_it_matters": "需要持续维护同一代码库的开发者可减少重复交代测试命令、项目约定和既有决策的成本。"
     },
     {
       "analyzed_at": "2026-09-16T00:08:45.228692Z",
@@ -13711,7 +13747,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-16T19:07:36.475131Z",
+  "latest_analyzed_at": "2026-09-16T20:07:02.217332Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -13723,7 +13759,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 435,
+  "total_count": 436,
   "version": 1,
   "window_days": 90
 }
