@@ -1,8 +1,41 @@
 {
   "archives": [],
-  "count": 433,
+  "count": 435,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-16T19:07:36.475131Z",
+      "channel_name": "Everything Atom",
+      "channel_slug": "simon-willison-atom",
+      "company_impact": "使用 Claude app 的个人和小团队可在合并上线后核对现有 Cowork 任务、权限与交付方式是否保持一致。",
+      "evidence": [
+        {
+          "claim": "该文引用公告称 Claude Cowork 与 chat 将合并为一个 Claude，并将先面向 Claude app 的 Pro 和 Max 计划逐步推出。",
+          "url": "https://simonwillison.net/2026/Sep/16/one-claude/"
+        }
+      ],
+      "headline": "Claude 将 Cowork 与聊天合并为同一产品",
+      "id": "f3af90c8-763e-5a57-8c4b-25721a4fc526",
+      "importance": 3,
+      "key_change": "相较 Cowork 和 Claude chat 分列的产品界面，转述材料表明两者将合并；当前正文未给出功能边界、具体地区或完整上线时间表。",
+      "published_at": "2026-09-16T18:09:49+00:00",
+      "summary": "Simon Willison 转述 Anthropic 当日公告：Claude Cowork 与常规聊天将合并为一个 Claude，用户既可提问，也可把需延后完成的报告交由 Claude 继续处理。该变化先向 Claude app 的 Pro 和 Max 用户逐步开放。",
+      "target_name": "Simon Willison",
+      "target_slug": "simon-willison",
+      "title": "Claude Cowork and chat are now one Claude",
+      "topics": [
+        "Claude",
+        "Claude Cowork",
+        "产品整合",
+        "Agent"
+      ],
+      "url": "https://simonwillison.net/2026/Sep/16/one-claude/",
+      "watch_next": [
+        "Claude Pro 和 Max 用户可在 web、桌面和移动端逐步上线后检查 Cowork 任务入口与交付状态。",
+        "等待 Anthropic 发布合并后的功能范围和计划差异说明。"
+      ],
+      "why_it_matters": "现有 Pro、Max 用户可能在同一入口中使用问答与延后执行的任务，需要留意原有工作流和界面变化。"
+    },
     {
       "analyzed_at": "2026-09-16T16:07:30.319722Z",
       "channel_name": "Official News RSS",
@@ -73,6 +106,40 @@
         "使用 HubSpot 或 Shopify 的商家可检查 ChatGPT Ads 连接是否已在其地区和账户中可用。"
       ],
       "why_it_matters": "面向营销与产品团队，ChatGPT Ads 新增了对话式获客入口；目前仅为美国部分广告主的测试。"
+    },
+    {
+      "analyzed_at": "2026-09-16T19:07:36.475131Z",
+      "channel_name": "Official News RSS",
+      "channel_slug": "openai-news",
+      "company_impact": "采用这些产品的团队可先选定一个工作流，建立耗时、质量或成本基线，再用管理端分组数据复核培训和扩容决策。",
+      "evidence": [
+        {
+          "claim": "文章说明 Admin Console Analytics 汇总 ChatGPT Work 与 Codex 的用量、任务洞察和成果指标，并描述 Usage、Insights、Outcomes、Admin plugin 与 Admin API 的用途。",
+          "url": "https://openai.com/index/how-to-connect-ai-usage-to-business-value"
+        }
+      ],
+      "headline": "OpenAI 管理端新增用量、任务与成果视图",
+      "id": "0e418d90-76ba-57b1-abd5-04264bbbafe6",
+      "importance": 3,
+      "key_change": "官方首次在该文中把用量、任务洞察与 Codex 工程成果置于同一套管理分析流程，并说明可通过 Admin plugin 和 API 导出趋势用于内部报告。",
+      "published_at": "2026-09-16T12:00:00+00:00",
+      "summary": "OpenAI 说明 ChatGPT Work 与 Codex 的 Admin Console Analytics 可汇总活跃用户、credits、token 用量、任务分类和成果指标。管理员可按团队、用户或仓库查看采用情况，并将 Codex 的合并提交、代码行和代码审查活动纳入成果跟踪。",
+      "target_name": "OpenAI",
+      "target_slug": "openai",
+      "title": "How to connect AI usage to business value",
+      "topics": [
+        "ChatGPT Work",
+        "Codex",
+        "企业管理",
+        "用量分析",
+        "AI 价值评估"
+      ],
+      "url": "https://openai.com/index/how-to-connect-ai-usage-to-business-value",
+      "watch_next": [
+        "已部署 ChatGPT Work 或 Codex 的管理员可核对本组织是否可见 Usage、Insights 和 Outcomes 视图。",
+        "为一个高频工作流记录上线前的耗时、质量和复核成本，再与管理端趋势进行比较。"
+      ],
+      "why_it_matters": "使用 ChatGPT Work 或 Codex 的团队可把成本与实际任务、工程产出并列审视，而不只看总用量。"
     },
     {
       "analyzed_at": "2026-09-16T17:08:15.046990Z",
@@ -13644,7 +13711,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-16T17:08:15.046990Z",
+  "latest_analyzed_at": "2026-09-16T19:07:36.475131Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -13656,7 +13723,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 433,
+  "total_count": 435,
   "version": 1,
   "window_days": 90
 }
