@@ -1,6 +1,6 @@
 {
   "archives": [],
-  "count": 461,
+  "count": 464,
   "history_preserved": true,
   "items": [
     {
@@ -964,6 +964,39 @@
       "why_it_matters": "团队评估 AI 采用时可同时观察工作流重组，而不只统计工具访问量或单次使用率。"
     },
     {
+      "analyzed_at": "2026-09-19T11:06:11.269268Z",
+      "channel_name": "Official Blog",
+      "channel_slug": "openrouter-blog",
+      "company_impact": "使用 DeepSeek V4 处理截图或文档的团队应在请求分流层检查输入模态，并将图像请求固定到 V4.1 Flash 或实验性 Vision Exp。",
+      "evidence": [
+        {
+          "claim": "文章列出 V4.1 Flash 和 V4 Flash Vision Exp 支持图像输入，其余所述 V4 slug 为文本输入，并说明向文本模型传 image_url 会失败。",
+          "url": "https://openrouter.ai/blog/insights/deepseek-v4-vision"
+        }
+      ],
+      "headline": "DeepSeek V4 图像输入需按具体模型固定",
+      "id": "cb1e7417-d83a-5c3b-8d3e-a94f871744e6",
+      "importance": 3,
+      "key_change": "OpenRouter 整理并明确了 DeepSeek V4 系列中两款可直接接收图像的模型，以及其他现有 V4 slug 的输入限制；这为以往仅按 V4 家族名选择模型的调用提供了可执行的区分。",
+      "published_at": "2026-09-16T00:00:00+00:00",
+      "summary": "OpenRouter 的型号核对显示，DeepSeek V4.1 Flash 与 V4 Flash Vision Exp 接受图像输入；V4 Pro 0813、Flash 0731、0423 检查点和 Flash latest 别名均为纯文本输入。文章建议图像任务固定使用具体 slug，避免把 image_url 发给文本模型。",
+      "target_name": "OpenRouter",
+      "target_slug": "openrouter",
+      "title": "Does DeepSeek V4 Have Vision?",
+      "topics": [
+        "模型路由",
+        "多模态",
+        "DeepSeek",
+        "OpenRouter"
+      ],
+      "url": "https://openrouter.ai/blog/insights/deepseek-v4-vision/",
+      "watch_next": [
+        "将现有 V4 图像调用的模型名与输入模态校验加入集成测试",
+        "在部署前复查目标 slug 的模型页和 API 模态字段"
+      ],
+      "why_it_matters": "多模态请求若路由到文本模型会直接失败，按 slug 固定可避免生产请求因别名或型号混淆中断。"
+    },
+    {
       "analyzed_at": "2026-09-16T17:08:15.046990Z",
       "channel_name": "Claude Product and Engineering Blog",
       "channel_slug": "claude-blog",
@@ -1229,6 +1262,39 @@
         "为试点预先定义效率、扩张和新能力三类指标，并与现有销售流程基线对照。"
       ],
       "why_it_matters": "准备在销售流程引入 AI 的团队可据此把连接、权限、指标和试点评估拆成明确的实施步骤。"
+    },
+    {
+      "analyzed_at": "2026-09-19T11:06:11.269268Z",
+      "channel_name": "Official Blog",
+      "channel_slug": "openrouter-blog",
+      "company_impact": "运营多模型产品的团队可把模型评测、配置 PR 和发布审批拆开，优先验证自身任务集上的质量、数据保留和故障切换，而不只比较公开基准。",
+      "evidence": [
+        {
+          "claim": "案例描述 Descript 的模型评测自动化、PR 与功能开关流程，以及按推理提供方设置回退的实践；其中效果数据为 Descript 和 OpenRouter 的案例陈述。",
+          "url": "https://openrouter.ai/blog/case-studies/descript-case-study"
+        }
+      ],
+      "headline": "Descript 将新模型评测接入自动化发布链路",
+      "id": "8fa07fc1-c87d-5b2a-9996-1fd485cb2057",
+      "importance": 3,
+      "key_change": "案例披露了 Descript 从三套直连集成迁移到单一推理层后的评测与上线流程：模型评测、PR 创建和特性开关已自动化，供应商故障则可在保持模型不变的前提下切换推理提供方。",
+      "published_at": "2026-09-15T00:00:00+00:00",
+      "summary": "OpenRouter 案例称，Descript 把多家模型供应商的生产推理统一到一个连接后，可每周多次评测新模型；其代理可运行评测并创建将模型加入 harness 和功能开关的 PR，仍由人工审核。该案例称最近一次 Anthropic 模型从公告到上线缩短至数小时。",
+      "target_name": "OpenRouter",
+      "target_slug": "openrouter",
+      "title": "Case Study: How Descript Took New Models Off the Engineering Queue",
+      "topics": [
+        "AI 代理",
+        "模型评测",
+        "推理路由",
+        "工程实践"
+      ],
+      "url": "https://openrouter.ai/blog/case-studies/descript-case-study/",
+      "watch_next": [
+        "为候选模型建立可重复的任务集评测与人工批准门槛",
+        "检查故障切换是否保持同一模型及数据保留策略"
+      ],
+      "why_it_matters": "它提供了把模型选择从工程排期中拆出的具体实践：评测自动化与人工发布审批可以并存。"
     },
     {
       "analyzed_at": "2026-09-15T16:07:50.732800Z",
@@ -1674,6 +1740,39 @@
         "选择一个低风险公司账户试点，确认成员访问规则、使用历史和撤销流程符合团队治理要求。"
       ],
       "why_it_matters": "团队可减少重复授权和凭据传播，但需建立共享账户的使用审计与权限治理。"
+    },
+    {
+      "analyzed_at": "2026-09-19T11:06:11.269268Z",
+      "channel_name": "Official Blog",
+      "channel_slug": "openrouter-blog",
+      "company_impact": "构建工具型代理的团队可先用断言覆盖权限、参数和副作用，再以独立评审模型和人工标注样本监测最终答复质量。",
+      "evidence": [
+        {
+          "claim": "文章说明 LLM-as-a-Judge 的评分方式、与确定性检查的边界、常见偏差及用人工标注样本校准评审的流程。",
+          "url": "https://openrouter.ai/blog/tutorials/llm-as-a-judge-evaluate-ai-agents"
+        }
+      ],
+      "headline": "用 LLM 评审补足代理输出的语义测试",
+      "id": "df18897b-a743-5a73-a901-daffd3cbc7de",
+      "importance": 3,
+      "key_change": "该指南将代理评测明确拆为确定性断言与语义评审两层，并给出点式、成对和参考答案三种评分模式及防止自我偏好、位置偏好和冗长偏好的建议。",
+      "published_at": "2026-09-14T00:00:00+00:00",
+      "summary": "OpenRouter 发布 LLM-as-a-Judge 实践指南：在确定性测试确认工具调用和结构约束后，由独立模型依据可观察的评分规则评估代理最终答复的准确性、完整性或指令遵循。文中强调对关键执行限制仍应使用确定性校验，并以人工标注样本校准评审模型。",
+      "target_name": "OpenRouter",
+      "target_slug": "openrouter",
+      "title": "LLM-as-a-Judge: Score AI Agent Outputs Automatically",
+      "topics": [
+        "AI 代理",
+        "评测",
+        "LLM-as-a-Judge",
+        "质量保障"
+      ],
+      "url": "https://openrouter.ai/blog/tutorials/llm-as-a-judge-evaluate-ai-agents/",
+      "watch_next": [
+        "选取一个已有真实失败案例，写成包含正反条件的可观察评分规则",
+        "用人工已标注样本比较评审结果后再把阈值接入发布或监控流程"
+      ],
+      "why_it_matters": "仅断言工具是否被调用无法保证最终答复遗漏关键信息；分层评测能把开放式输出纳入可重复的质量门槛。"
     },
     {
       "analyzed_at": "2026-09-14T20:07:42.390995Z",
@@ -14537,7 +14636,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-19T10:10:11.947715Z",
+  "latest_analyzed_at": "2026-09-19T11:06:11.269268Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -14549,7 +14648,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 461,
+  "total_count": 464,
   "version": 1,
   "window_days": 90
 }
