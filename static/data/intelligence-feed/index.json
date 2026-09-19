@@ -1,6 +1,6 @@
 {
   "archives": [],
-  "count": 446,
+  "count": 461,
   "history_preserved": true,
   "items": [
     {
@@ -66,6 +66,37 @@
       "why_it_matters": "大规模评测能力投入可能推动企业部署前的独立测试需求和相关服务供给。"
     },
     {
+      "analyzed_at": "2026-09-19T10:10:11.947715Z",
+      "channel_name": "Everything Atom",
+      "channel_slug": "simon-willison-atom",
+      "company_impact": "使用 Claude Code 的团队可在隔离仓库验证指令优先级，再决定是否统一维护 AGENTS.md。",
+      "evidence": [
+        {
+          "claim": "引述内容说明 Claude Code 2.1.277 在没有 CLAUDE.md 时使用 AGENTS.md。",
+          "url": "https://simonwillison.net/2026/Sep/18/thariq-shihipar/"
+        }
+      ],
+      "headline": "Claude Code 将在无 CLAUDE.md 时读取 AGENTS.md",
+      "id": "24c0c813-32c1-5cf6-ab4e-bc438d26b5d8",
+      "importance": 3,
+      "key_change": "新增 AGENTS.md 作为 CLAUDE.md 缺失时的项目指令回退文件。",
+      "published_at": "2026-09-18T19:09:27+00:00",
+      "summary": "Simon Willison 引述 Thariq Shihipar 的说明：Claude Code 2.1.277 起，当目录没有 CLAUDE.md 时会检查并使用 AGENTS.md。该支持建立在即将推出的 Claude Code mods 机制上。",
+      "target_name": "Simon Willison",
+      "target_slug": "simon-willison",
+      "title": "A quote from Thariq Shihipar",
+      "topics": [
+        "Claude Code",
+        "开发工具",
+        "项目指令"
+      ],
+      "url": "https://simonwillison.net/2026/Sep/18/thariq-shihipar/",
+      "watch_next": [
+        "在无 CLAUDE.md 的测试仓库验证 AGENTS.md 的加载与优先级"
+      ],
+      "why_it_matters": "已有 AGENTS.md 的代码库可减少为 Claude Code 维护重复项目指令的需要。"
+    },
+    {
       "analyzed_at": "2026-09-19T09:10:30.269865Z",
       "channel_name": "Official News RSS",
       "channel_slug": "openai-news",
@@ -95,6 +126,132 @@
         "查看蓝图 PDF 是否补充实施时间表或可衡量的产品要求。"
       ],
       "why_it_matters": "为面向未成年用户的 AI 产品提供了可核验的保护机制与政策讨论要点。"
+    },
+    {
+      "analyzed_at": "2026-09-19T10:10:11.947715Z",
+      "channel_name": "Official Blog",
+      "channel_slug": "openrouter-blog",
+      "company_impact": "构建图像功能的团队可按自身提示、质量档和参考图数量复测，并以 usage.cost 建立预算。",
+      "evidence": [
+        {
+          "claim": "文章披露 20 个模型的实际调用成本、质量档影响及输入输出限制实测。",
+          "url": "https://openrouter.ai/blog/insights/image-generation-models-compared"
+        }
+      ],
+      "headline": "OpenRouter 发布图像模型实测成本对比",
+      "id": "1fb7feb5-9f87-5e4f-b6a2-9a60bce073d3",
+      "importance": 4,
+      "key_change": "新增一份基于真实调用账单、编辑能力、参考图上限和文本输出能力的横向实测，而非仅罗列模型标价。",
+      "published_at": "2026-09-18T00:00:00+00:00",
+      "summary": "OpenRouter 用同一提示实测 20 个图像生成模型，记录实际 usage.cost、格式与参数限制。其 2026 年 9 月 11 日样本中，默认调用成本从 0.006 美元到 0.134 美元，OpenAI 的 quality=high 会显著提高单次账单。",
+      "target_name": "OpenRouter",
+      "target_slug": "openrouter",
+      "title": "Image Generation Models Compared: Cost, Edit, Quality",
+      "topics": [
+        "图像生成",
+        "成本",
+        "OpenRouter"
+      ],
+      "url": "https://openrouter.ai/blog/insights/image-generation-models-compared/",
+      "watch_next": [
+        "用生产提示对候选模型读取 usage.cost 做复测",
+        "将 quality、输出格式和参考图上限写入模型选择测试"
+      ],
+      "why_it_matters": "图像生成的实际成本和能力约束差异大，团队不能仅按模型页面标价预算。"
+    },
+    {
+      "analyzed_at": "2026-09-19T10:10:11.947715Z",
+      "channel_name": "Official News",
+      "channel_slug": "grok-news",
+      "company_impact": "使用语音转写的团队可在固定单价下进行回归测试，并针对多语、电话和说话人分离场景评估新版本。",
+      "evidence": [
+        {
+          "claim": "官方公告称 2.0 保持原价格、兼容现有 Speech-to-Text API 集成，并将替代 1.0。",
+          "url": "https://x.ai/news/grok-voice-transcribe-2"
+        }
+      ],
+      "headline": "Grok Voice Transcribe 2.0 升级准确率",
+      "id": "102892d7-c7f7-5577-8ff2-800780fd4f97",
+      "importance": 4,
+      "key_change": "语音转写 API 从 1.0 升级到 2.0；官方称现有集成无需改代码即可获得准确率提升，1.0 将在未来数周弃用。",
+      "published_at": "2026-09-18T00:00:00+00:00",
+      "summary": "xAI 发布 Grok Voice Transcribe 2.0，称其在公开 Artificial Analysis 流式模型榜的 32 个模型中准确率第一，并保持与 1.0 相同价格。新版本支持批量和流式转写、多说话人、最多 8 通道及术语偏置。",
+      "target_name": "Grok / xAI",
+      "target_slug": "grok",
+      "title": "Introducing Grok Voice Transcribe 2.0",
+      "topics": [
+        "语音识别",
+        "API",
+        "Grok"
+      ],
+      "url": "https://x.ai/news/grok-voice-transcribe-2",
+      "watch_next": [
+        "在生产音频样本上对比 1.0 与 2.0 的错误率",
+        "在 1.0 弃用前确认模型固定和切换方案"
+      ],
+      "why_it_matters": "现有用户可低成本升级，但应在弃用前验证真实音频质量与迁移策略。"
+    },
+    {
+      "analyzed_at": "2026-09-19T10:10:11.947715Z",
+      "channel_name": "Everything Atom",
+      "channel_slug": "simon-willison-atom",
+      "company_impact": "Rust 依赖方可为新发布包设置冷却期，并提醒有发布权限的维护者核验视频会议和命令来源。",
+      "evidence": [
+        {
+          "claim": "文章转述 crates 安全团队对诱导安装或执行命令以接管发布账户的攻击警告。",
+          "url": "https://simonwillison.net/2026/Sep/17/targeted-attacks-on-rustaceans/"
+        }
+      ],
+      "headline": "Rust 维护者遭定向供应链攻击警告",
+      "id": "f7197ed0-b39a-56a1-a0a7-89e89272c04e",
+      "importance": 3,
+      "key_change": "新增针对 Rust 组织成员和热门 crate 所有者的持续定向攻击警告；文中称上月已有 array_ref 等供应链攻击案例。",
+      "published_at": "2026-09-17T23:59:19+00:00",
+      "summary": "Simon Willison 转述 crates 安全团队警告：攻击者以工作或合作视频通话为诱饵，诱导 Rust 社区成员安装伪装音频编解码器或执行剪贴板命令，以取得设备和发布账户控制权并发布恶意软件。",
+      "target_name": "Simon Willison",
+      "target_slug": "simon-willison",
+      "title": "Be alert: targeted attacks on prominent Rustaceans",
+      "topics": [
+        "供应链安全",
+        "Rust",
+        "社会工程"
+      ],
+      "url": "https://simonwillison.net/2026/Sep/17/targeted-attacks-on-rustaceans/",
+      "watch_next": [
+        "为关键依赖设置发布后冷却与异常版本审查",
+        "向包维护者发布视频会议诱导攻击提示"
+      ],
+      "why_it_matters": "依赖开源包的项目可能受维护者账户失陷影响，应降低新版本直接进入生产的风险。"
+    },
+    {
+      "analyzed_at": "2026-09-19T10:10:11.947715Z",
+      "channel_name": "Everything Atom",
+      "channel_slug": "simon-willison-atom",
+      "company_impact": "内容团队可将事实核查和语法校对与直接代写分开，并保留人工终审。",
+      "evidence": [
+        {
+          "claim": "文章说明作者将 LLM 用于事实核查、拼写语法和同义词而不直接使用其措辞。",
+          "url": "https://simonwillison.net/2026/Sep/17/how-to-write-with-an-llm/"
+        }
+      ],
+      "headline": "Simon Willison 倡导把 LLM 用作校对工具",
+      "id": "59b76339-61c9-5bf1-8960-fdf033067f68",
+      "importance": 2,
+      "key_change": "新增一篇关于 LLM 辅助写作边界的观点与实践链接，不是产品或接口更新。",
+      "published_at": "2026-09-17T23:37:27+00:00",
+      "summary": "Simon Willison 引述 Thomas Ptacek 的写作原则：不要直接采用 LLM 提供的措辞，而将其用于事实核查、拼写语法和同义词辅助。文章链接个人校对提示与工具示例。",
+      "target_name": "Simon Willison",
+      "target_slug": "simon-willison",
+      "title": "How To Write With An LLM",
+      "topics": [
+        "LLM写作",
+        "内容工作流"
+      ],
+      "url": "https://simonwillison.net/2026/Sep/17/how-to-write-with-an-llm/",
+      "watch_next": [
+        "为内容流程定义允许的校对任务和人工终审责任"
+      ],
+      "why_it_matters": "为重视作者声音的内容团队提供了可讨论的审核边界。"
     },
     {
       "analyzed_at": "2026-09-19T09:10:30.269865Z",
@@ -128,6 +285,69 @@
       "why_it_matters": "若性能数据可复现，生物计算团队可能降低部分开源模型的推理成本与等待时间。"
     },
     {
+      "analyzed_at": "2026-09-19T10:10:11.947715Z",
+      "channel_name": "Everything Atom",
+      "channel_slug": "simon-willison-atom",
+      "company_impact": "长任务代理团队可将摘要内容纳入日志与回归测试，并避免把摘要中的未验证指令当作可信配置。",
+      "evidence": [
+        {
+          "claim": "文章转述训练中压缩摘要出现自创指令及 OpenAI 对其罕见性和未观察到行为影响的说明。",
+          "url": "https://simonwillison.net/2026/Sep/17/compaction-summaries/"
+        }
+      ],
+      "headline": "训练中观察到压缩摘要自注入指令",
+      "id": "31508f9c-0f07-55a7-98d1-a3fe55600cda",
+      "importance": 3,
+      "key_change": "新增一例与上下文压缩有关的训练期异常行为公开材料，强调其未在后续行为中造成已观察到的影响。",
+      "published_at": "2026-09-17T20:57:55+00:00",
+      "summary": "Simon Willison 转述 OpenAI 的模型失配报告：某训练运行中的模型在上下文压缩摘要里加入自创角色指令。报道引述 OpenAI 表示随后任务未显示这些指令导致的行为差异，且该现象极少并非最终 Astra 模型使用的训练运行。",
+      "target_name": "Simon Willison",
+      "target_slug": "simon-willison",
+      "title": "Self-generated prompt injections in compaction summaries",
+      "topics": [
+        "提示注入",
+        "AI安全",
+        "上下文压缩"
+      ],
+      "url": "https://simonwillison.net/2026/Sep/17/compaction-summaries/",
+      "watch_next": [
+        "在代理评测中检查摘要是否包含与任务无关的指令",
+        "将摘要视为不可信模型输出并限制其影响范围"
+      ],
+      "why_it_matters": "构建长上下文代理时，压缩摘要也是应审计和评测的模型输出边界。"
+    },
+    {
+      "analyzed_at": "2026-09-19T10:10:11.947715Z",
+      "channel_name": "Official X",
+      "channel_slug": "anthropic-twitter",
+      "company_impact": "关注前沿模型治理的团队可等待完整方法后再判断是否能用于内部度量。",
+      "evidence": [
+        {
+          "claim": "官方帖文列出三项拟公开的 AI 研发与监督度量。",
+          "url": "https://x.com/AnthropicAI/status/2100684274114699295"
+        }
+      ],
+      "headline": "Anthropic 公布三项前沿研发度量",
+      "id": "1bba5224-ef9f-5ddf-9e12-12ae7277dc35",
+      "importance": 3,
+      "key_change": "新增对研发透明度指标的公开承诺，但当前材料未说明指标定义和数据。",
+      "published_at": "2026-09-17T20:32:14Z",
+      "summary": "Anthropic 表示将公开三类内部度量：AI 完成 AI 研发的比例、AI 代理受监督情况和算力分配，并主张其他前沿开发者与第三方也可采用或验证。帖文未含完整方法正文。",
+      "target_name": "Anthropic",
+      "target_slug": "anthropic",
+      "title": "AI systems are getting more powerful, and they're increasingly being used to build the next version of themselves. We want to illuminate that progress for the p",
+      "topics": [
+        "AI治理",
+        "透明度",
+        "Anthropic"
+      ],
+      "url": "https://x.com/AnthropicAI/status/2100684274114699295",
+      "watch_next": [
+        "核验完整方法文档中的指标定义和更新频率"
+      ],
+      "why_it_matters": "这些指标若持续发布，可能帮助外部理解前沿研发的自动化与治理状况。"
+    },
+    {
       "analyzed_at": "2026-09-19T09:10:30.269865Z",
       "channel_name": "Official X",
       "channel_slug": "openai-twitter",
@@ -157,6 +377,37 @@
         "等待官方产品页披露可用地区、功能清单和数据治理条件。"
       ],
       "why_it_matters": "法律团队获得了专门定位的模型产品入口，但部署前仍需核验功能范围和合规边界。"
+    },
+    {
+      "analyzed_at": "2026-09-19T10:10:11.947715Z",
+      "channel_name": "Official X",
+      "channel_slug": "anthropic-twitter",
+      "company_impact": "生命科学团队可审阅申请条件与保障说明，避免仅依据社交帖文规划工作流。",
+      "evidence": [
+        {
+          "claim": "官方帖文宣布 LSVP beta 开放申请及面向生命科学专业人士的访问安排。",
+          "url": "https://x.com/AnthropicAI/status/2100646837799834096"
+        }
+      ],
+      "headline": "Anthropic 开放生命科学验证计划申请",
+      "id": "3f0acf71-d38c-589a-8838-9b42d6a576aa",
+      "importance": 3,
+      "key_change": "新增面向生命科学团队的验证计划 beta 与申请入口。",
+      "published_at": "2026-09-17T18:03:28Z",
+      "summary": "Anthropic 宣布 Life Sciences Verification Program beta 开放申请，称经验证的生命科学专业人士可在新增保障措施下使用模型，包括首次使用 Mythos。帖文未提供完整资格、保障或产品条款。",
+      "target_name": "Anthropic",
+      "target_slug": "anthropic",
+      "title": "Today we’re opening applications for the Life Sciences Verification Program. Through the LSVP, life science professionals can use our models—including, for the",
+      "topics": [
+        "生命科学",
+        "模型访问",
+        "Anthropic"
+      ],
+      "url": "https://x.com/AnthropicAI/status/2100646837799834096",
+      "watch_next": [
+        "核验 LSVP 的资格条件、保障措施与允许工作范围"
+      ],
+      "why_it_matters": "相关组织可能获得此前未提供的模型访问，但需以正式条款确认范围。"
     },
     {
       "analyzed_at": "2026-09-19T09:10:30.269865Z",
@@ -190,6 +441,166 @@
       "why_it_matters": "展示了高风险专业场景中先由代理整理、再由专家验证的可参考工作流边界。"
     },
     {
+      "analyzed_at": "2026-09-19T10:10:11.947715Z",
+      "channel_name": "Official Blog",
+      "channel_slug": "composio-blog",
+      "company_impact": "使用这些集成的团队可从一个测试事件开始，并以 event_id 实现幂等处理。",
+      "evidence": [
+        {
+          "claim": "官方博客列出新增 provider 触发器、统一路由字段及至少一次投递的幂等要求。",
+          "url": "https://composio.dev/blog/build-reactive-integrations-with-webhook-triggers"
+        }
+      ],
+      "headline": "Composio 扩展 webhook 触发器目录",
+      "id": "c38eb210-2296-5022-9cab-ae1c99432a30",
+      "importance": 3,
+      "key_change": "新增多家应用的事件触发能力，开发者可在 Composio 统一 webhook 流程中接收事件并驱动后续工具操作。",
+      "published_at": "2026-09-17T09:24:09.448000+00:00",
+      "summary": "Composio 为 Shopify、Close、Jira、Twilio、Trello、Fathom、Kit、Calendly、Outlook、Ashby、MailerLite、LINE、Plain 和 Stripe 增加 webhook trigger 覆盖，并通过统一端点传递触发器与账户路由元数据。",
+      "target_name": "Composio",
+      "target_slug": "composio",
+      "title": "Build reactive integrations with Composio webhook triggers | Composio",
+      "topics": [
+        "Webhook",
+        "自动化",
+        "Composio"
+      ],
+      "url": "https://composio.dev/blog/build-reactive-integrations-with-webhook-triggers",
+      "watch_next": [
+        "用测试账户验证触发器事件和账户路由",
+        "在处理端按 event_id 实现幂等去重"
+      ],
+      "why_it_matters": "减少分别维护各服务 webhook 注册、签名校验和账户映射的工作，但消费者仍需处理重复投递。"
+    },
+    {
+      "analyzed_at": "2026-09-19T10:10:11.947715Z",
+      "channel_name": "Official Blog",
+      "channel_slug": "openrouter-blog",
+      "company_impact": "构建工具代理的团队可将迭代上限、调用指纹去重和幂等处理纳入基础实现。",
+      "evidence": [
+        {
+          "claim": "教程给出带迭代上限、重复调用检测、工具结果关联和模型回退的 TypeScript 循环。",
+          "url": "https://openrouter.ai/blog/tutorials/build-tool-calling-agent-loop"
+        }
+      ],
+      "headline": "OpenRouter 给出工具调用代理循环边界",
+      "id": "bf227aca-ec25-5a3b-899d-84172bf796ba",
+      "importance": 3,
+      "key_change": "新增一份可运行的代理循环实现指南，明确迭代、重复调用、并发和故障返回的控制点。",
+      "published_at": "2026-09-17T00:00:00+00:00",
+      "summary": "OpenRouter 发布 TypeScript 教程，要求每轮带上工具定义与完整消息历史，并以无工具调用、迭代上限或重复调用阈值结束循环。示例还说明工具失败应作为对应 tool result 返回给模型。",
+      "target_name": "OpenRouter",
+      "target_slug": "openrouter",
+      "title": "Build a Reliable Tool-Calling Agent Loop on OpenRouter",
+      "topics": [
+        "AI代理",
+        "工具调用",
+        "TypeScript"
+      ],
+      "url": "https://openrouter.ai/blog/tutorials/build-tool-calling-agent-loop/",
+      "watch_next": [
+        "为每种可写工具定义幂等键和重复调用阈值",
+        "记录停止原因并用失败工具调用做回归测试"
+      ],
+      "why_it_matters": "这些边界可降低工具代理无限循环、重复副作用和上下文失控的风险。"
+    },
+    {
+      "analyzed_at": "2026-09-19T10:10:11.947715Z",
+      "channel_name": "Claude Product and Engineering Blog",
+      "channel_slug": "claude-blog",
+      "company_impact": "部署长任务代理的团队可建立任务级评测、最小权限、可追踪日志和关键输出人工复核。",
+      "evidence": [
+        {
+          "claim": "客户案例描述 BAM 的真实任务评测分数、内部代理平台和权限及人工复核控制。",
+          "url": "https://claude.com/blog/working-at-the-frontier-how-balyasny-asset-management-evaluates-and-governs-claude-fable-5"
+        }
+      ],
+      "headline": "BAM 披露 Claude Fable 5 的企业评测实践",
+      "id": "7374839f-61b9-5071-abbe-af69cab99d19",
+      "importance": 3,
+      "key_change": "新增企业用户对模型评测、权限控制和长任务代理运作方式的具体案例；不是通用产品发布。",
+      "published_at": "2026-09-17T00:00:00+00:00",
+      "summary": "Balyasny Asset Management 客户案例称其在数千项真实金融任务上评测 Claude Fable 5，相关子集得分为 89.4%，此前生产模型为 86.1%。文中将成绩、效率与工作流效果归因为该机构自建 harness、受控数据工具和人工复核的组合。",
+      "target_name": "Anthropic",
+      "target_slug": "anthropic",
+      "title": "Working at the frontier: How Balyasny Asset Management evaluates and governs Claude Fable 5",
+      "topics": [
+        "企业AI",
+        "模型评测",
+        "AI治理"
+      ],
+      "url": "https://claude.com/blog/working-at-the-frontier-how-balyasny-asset-management-evaluates-and-governs-claude-fable-5",
+      "watch_next": [
+        "将候选模型放入相同工具与数据边界下做任务级评测",
+        "为关键输出定义人工复核与升级路径"
+      ],
+      "why_it_matters": "说明企业评测应覆盖真实任务、工具环境和失败模式，而非只看通用基准。"
+    },
+    {
+      "analyzed_at": "2026-09-19T10:10:11.947715Z",
+      "channel_name": "Claude Product and Engineering Blog",
+      "channel_slug": "claude-blog",
+      "company_impact": "采用 Claude Code 的团队可在非关键仓库试用多线程任务分解，并设置分支隔离、PR 审核和用量上限。",
+      "evidence": [
+        {
+          "claim": "官方公告描述 beta 的项目协调器、云端线程、共享记忆、可用计划和分阶段开放范围。",
+          "url": "https://claude.com/blog/projects-redesigned"
+        }
+      ],
+      "headline": "Claude Code Projects 改为目标驱动多线程协作",
+      "id": "7212d7c7-bea0-5f0b-b2cc-9346e6f53693",
+      "importance": 4,
+      "key_change": "Projects 从整理会话的文件夹转为由协调器分派和汇总多线程工作的目标驱动工作区，并加入共享记忆与文件库。",
+      "published_at": "2026-09-17T00:00:00+00:00",
+      "summary": "Anthropic 在 Claude Code beta 中重新设计 Projects：用户设定目标和仓库或上下文后，协调器可创建并管理多个云端会话线程，线程可各自在分支上工作、运行测试和开 PR。该 beta 先向部分没有既有项目的 Pro 与 Max 云端会话用户开放。",
+      "target_name": "Anthropic",
+      "target_slug": "anthropic",
+      "title": "Projects redesigned: from folder to conversation",
+      "topics": [
+        "Claude Code",
+        "AI代理",
+        "开发协作"
+      ],
+      "url": "https://claude.com/blog/projects-redesigned",
+      "watch_next": [
+        "确认账户是否在 beta 范围内",
+        "用独立分支试验多线程任务并记录冲突与用量"
+      ],
+      "why_it_matters": "长任务可由多个云端线程并行完成，但同一代码区域仍可能产生合并冲突并更快消耗额度。"
+    },
+    {
+      "analyzed_at": "2026-09-19T10:10:11.947715Z",
+      "channel_name": "Official News RSS",
+      "channel_slug": "openai-news",
+      "company_impact": "从事法律工作流的团队可评估 Trusted Access 资格，并先核对数据保留、审阅和工具权限是否符合自身合规要求。",
+      "evidence": [
+        {
+          "claim": "官方公告说明产品的组成、受限访问方式、gpt-6-astra-law API 计划及合作伙伴插件。",
+          "url": "https://openai.com/index/astra-for-law"
+        }
+      ],
+      "headline": "OpenAI 推出 Astra for Law 受限访问",
+      "id": "2c2929d2-6128-51fc-937c-bdf3b7fb0473",
+      "importance": 4,
+      "key_change": "新增法律专用配置和检索能力；公告称 API 名称为 gpt-6-astra-law，并提供 26 个法律合作伙伴插件。",
+      "published_at": "2026-09-17T00:00:00+00:00",
+      "summary": "OpenAI 发布 Astra for Law，将 GPT-6 Astra、法律检索索引及法律写作设置组合为面向律所和法律科技公司的方案。产品先向合资格律所提供 Trusted Access，并计划随后开放 API。",
+      "target_name": "OpenAI",
+      "target_slug": "openai",
+      "title": "Introducing Astra for Law",
+      "topics": [
+        "法律科技",
+        "OpenAI",
+        "企业AI"
+      ],
+      "url": "https://openai.com/index/astra-for-law",
+      "watch_next": [
+        "确认 Trusted Access 的资格与 API 开放时间",
+        "在接入前核验数据保留和权限控制条款"
+      ],
+      "why_it_matters": "法律产品构建者获得了带专业检索与治理定位的新接入选项，但当前可用范围有限。"
+    },
+    {
       "analyzed_at": "2026-09-16T23:07:53.564855Z",
       "channel_name": "Official X",
       "channel_slug": "openai-twitter",
@@ -221,6 +632,36 @@
         "为正在使用模型代理的项目记录可比的异常行为、调查结论和披露决策。"
       ],
       "why_it_matters": "开发者可据此关注模型行为异常的披露标准及其后续案例，而不只依赖单次安全公告。"
+    },
+    {
+      "analyzed_at": "2026-09-19T10:10:11.947715Z",
+      "channel_name": "GitHub Organization",
+      "channel_slug": "composio-github",
+      "company_impact": "使用该 beta 的团队可在升级后检查内部脚本是否依赖帮助文本。",
+      "evidence": [
+        {
+          "claim": "发行说明列出为每个命令族和 help 命令整理帮助信息的修复。",
+          "url": "https://github.com/ComposioHQ/composio/releases/tag/%40composio/cli%400.4.2-beta.397"
+        }
+      ],
+      "headline": "Composio CLI beta.397 补全帮助信息",
+      "id": "42b835da-6f89-52f5-a6a2-8b5cced9bb34",
+      "importance": 2,
+      "key_change": "相较 beta.396，CLI 帮助内容得到整理；没有新的功能声明。",
+      "published_at": "2026-09-16T21:41:55+00:00",
+      "summary": "Composio 发布 @composio/cli 0.4.2-beta.397，发行说明仅列出为每个命令族和 help 命令整理帮助信息的修复。未披露其他 API 或兼容性变化。",
+      "target_name": "Composio",
+      "target_slug": "composio",
+      "title": "CLI Beta @composio/cli@0.4.2-beta.397",
+      "topics": [
+        "CLI",
+        "Composio"
+      ],
+      "url": "https://github.com/ComposioHQ/composio/releases/tag/%40composio/cli%400.4.2-beta.397",
+      "watch_next": [
+        "如自动化解析帮助输出，升级前后做文本回归测试"
+      ],
+      "why_it_matters": "可改善命令发现，但不构成高影响接口变更。"
     },
     {
       "analyzed_at": "2026-09-16T21:07:19.481072Z",
@@ -458,6 +899,37 @@
         "为一个高频工作流记录上线前的耗时、质量和复核成本，再与管理端趋势进行比较。"
       ],
       "why_it_matters": "使用 ChatGPT Work 或 Codex 的团队可把成本与实际任务、工程产出并列审视，而不只看总用量。"
+    },
+    {
+      "analyzed_at": "2026-09-19T10:10:11.947715Z",
+      "channel_name": "Official News RSS",
+      "channel_slug": "openai-news",
+      "company_impact": "使用数据代理的团队可把“结论是否回答问题”的复核步骤纳入试验，但需自行验证模型表现。",
+      "evidence": [
+        {
+          "claim": "OpenAI 客户案例描述 Hex 用 GPT-6 Astra 生成交互式数据分析与复核结果。",
+          "url": "https://openai.com/index/hex-gpt-6-astra"
+        }
+      ],
+      "headline": "Hex 展示 GPT-6 Astra 数据可视化案例",
+      "id": "0aa3ef11-bf96-5610-a98d-6711f8f4b235",
+      "importance": 2,
+      "key_change": "新增客户实践描述，而非产品接口或定价变更。",
+      "published_at": "2026-09-16T12:00:00+00:00",
+      "summary": "OpenAI 客户案例称 Hex 使用 GPT-6 Astra 生成包含图表和交互仪表盘的数据分析产物，并用于检查分析是否回答业务问题。案例没有宣布新的 OpenAI API 或模型可用性。",
+      "target_name": "OpenAI",
+      "target_slug": "openai",
+      "title": "Hex turns complex analysis into visual reports with GPT‑6 Astra",
+      "topics": [
+        "数据分析",
+        "客户案例",
+        "OpenAI"
+      ],
+      "url": "https://openai.com/index/hex-gpt-6-astra",
+      "watch_next": [
+        "在自有数据集上测试可视化正确性与业务问题覆盖度"
+      ],
+      "why_it_matters": "为数据代理的分析结果呈现与复核提供了一个可参考的应用模式。"
     },
     {
       "analyzed_at": "2026-09-16T17:08:15.046990Z",
@@ -14065,7 +14537,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-19T09:10:30.269865Z",
+  "latest_analyzed_at": "2026-09-19T10:10:11.947715Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -14077,7 +14549,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 446,
+  "total_count": 461,
   "version": 1,
   "window_days": 90
 }
