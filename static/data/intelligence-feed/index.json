@@ -1,8 +1,40 @@
 {
   "archives": [],
-  "count": 464,
+  "count": 465,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-20T23:08:02.347498Z",
+      "channel_name": "Everything Atom",
+      "channel_slug": "simon-willison-atom",
+      "company_impact": "使用 LLM CLI 和远程开发机的团队可评估其是否适合内部密钥录入流程；在接入前应验证地址可达范围、主机权限和密钥存储方式。",
+      "evidence": [
+        {
+          "claim": "作者发布 llm-keys-ui 0.1，并说明可运行 llm keys-ui --all 后通过本地网络或 Tailscale 地址的界面保存额外 API 密钥。",
+          "url": "https://simonwillison.net/2026/Sep/20/llm-keys-ui/"
+        }
+      ],
+      "headline": "llm-keys-ui 为远程编码机提供密钥录入页",
+      "id": "2cc1cb47-7686-5672-b089-fc9ffcf8eea0",
+      "importance": 3,
+      "key_change": "新增 llm-keys-ui 0.1 插件及其网页录入流程；材料未说明密钥的加密、访问控制或多用户隔离实现。",
+      "published_at": "2026-09-20T19:22:19+00:00",
+      "summary": "Simon Willison 发布 llm-keys-ui 0.1：在远程机器运行命令后，可通过本地网络或 Tailscale 地址打开网页录入额外 API 密钥，随后由 LLM 命令行工具按名称读取。作者将其用于从手机控制远程编码代理时避免把密钥直接粘贴进代理会话。",
+      "target_name": "Simon Willison",
+      "target_slug": "simon-willison",
+      "title": "llm-keys-ui 0.1",
+      "topics": [
+        "LLM 工具",
+        "远程开发",
+        "API 密钥管理"
+      ],
+      "url": "https://simonwillison.net/2026/Sep/20/llm-keys-ui/",
+      "watch_next": [
+        "计划采用该插件的项目先在隔离开发机检查监听地址和密钥文件权限。",
+        "等待项目补充密钥存储、认证与多用户访问边界的文档。"
+      ],
+      "why_it_matters": "远程运行编码代理的个人开发者多了一个避免在对话中粘贴密钥的操作入口，但仍需自行核验网页的网络暴露范围。"
+    },
     {
       "analyzed_at": "2026-09-19T09:10:30.269865Z",
       "channel_name": "Everything Atom",
@@ -14636,7 +14668,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-20T22:07:29.748572Z",
+  "latest_analyzed_at": "2026-09-20T23:08:02.347498Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -14648,7 +14680,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 464,
+  "total_count": 465,
   "version": 1,
   "window_days": 90
 }
