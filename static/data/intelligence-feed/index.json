@@ -1,6 +1,6 @@
 {
   "archives": [],
-  "count": 467,
+  "count": 468,
   "history_preserved": true,
   "items": [
     {
@@ -34,6 +34,39 @@
         "对项目依赖的连接器运行一次授权、权限和端到端调用测试"
       ],
       "why_it_matters": "正在评估统一工具接入层的开发者可把 1,556 个应用作为待核对线索，但不能据此判断所需应用已经支持。"
+    },
+    {
+      "analyzed_at": "2026-09-21T14:16:47.829657Z",
+      "channel_name": "Official News RSS",
+      "channel_slug": "openai-news",
+      "company_impact": "对使用 V7 Go、ChatGPT 或 Codex 的团队，案例提供了上下文接入和长流程评测的参考；具体错误率与成本收益仅适用于 V7 自建测试，不能直接外推。",
+      "evidence": [
+        {
+          "claim": "OpenAI 客户案例称 V7 Go 通过 MCP 提供 Context Graph 查询与摄取，并报告 GPT-5.6 Sol 的工具调用错误率为 0.2%，GPT-5.5 为 2.7%。",
+          "url": "https://openai.com/index/v7"
+        }
+      ],
+      "headline": "V7 用上下文图降低代理工具调用错误",
+      "id": "bcc7869f-b7d6-53aa-b3bb-7839f56cc7cc",
+      "importance": 3,
+      "key_change": "新增可核验的客户实践细节：V7 Go 已通过 MCP 提供 Context Graph 查询与摄取，并报告 GPT-5.6 Sol 在其自建基准中将工具调用错误率从 2.7% 降至 0.2%；这不是 OpenAI 通用 API 或模型规格公告。",
+      "published_at": "2026-09-21T00:00:00+00:00",
+      "summary": "V7 的客户案例介绍其 V7 Go 如何把企业知识组织为 Context Graph，并通过 MCP 接入 ChatGPT 与 Codex。案例称 GPT-5.6 Sol 在其工具调用基准中的错误率由 GPT-5.5 的 2.7% 降至 0.2%，但这些数字来自 V7 自建评测，非独立复核。",
+      "target_name": "OpenAI",
+      "target_slug": "openai",
+      "title": "How V7 gives AI agents institutional memory",
+      "topics": [
+        "代理工作流",
+        "MCP",
+        "企业知识库",
+        "模型评测"
+      ],
+      "url": "https://openai.com/index/v7",
+      "watch_next": [
+        "检查 V7 Go 的 MCP 文档，确认 Context Graph 查询、摄取和权限边界是否向目标用户开放",
+        "用包含多次工具调用和长上下文的真实任务记录基线错误率，再比较不同模型与 Responses API 的结果"
+      ],
+      "why_it_matters": "采用 MCP 的团队可借鉴把企业上下文作为可查询层接入代理，并应先用自己的长流程基准验证收益。"
     },
     {
       "analyzed_at": "2026-09-21T00:33:47.946951Z",
@@ -14736,7 +14769,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-21T13:23:03.791999Z",
+  "latest_analyzed_at": "2026-09-21T14:16:47.829657Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -14748,7 +14781,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 467,
+  "total_count": 468,
   "version": 1,
   "window_days": 90
 }
