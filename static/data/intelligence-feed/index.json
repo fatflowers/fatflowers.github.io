@@ -1,6 +1,6 @@
 {
   "archives": [],
-  "count": 474,
+  "count": 475,
   "history_preserved": true,
   "items": [
     {
@@ -97,6 +97,39 @@
         "核对OpenAI是否发布独立验证或可复现实验材料"
       ],
       "why_it_matters": "为高能力数学系统引入外部审阅和传播机制，但具体成果价值仍需公开材料核验。"
+    },
+    {
+      "analyzed_at": "2026-09-21T20:08:46.146025Z",
+      "channel_name": "Official News RSS",
+      "channel_slug": "openai-news",
+      "company_impact": "如果团队采用 GPT-6 Astra 构建类似创意工作流，需单独验证多地区变体质量、审核流程和 API 成本；文中的一天交付速度属于 Higgsfield 自述，不能直接外推。",
+      "evidence": [
+        {
+          "claim": "OpenAI 客户案例称 Higgsfield 可用 GPT-6 Astra 从既有广告生成 100 个变体，并称单名工程师可在一天内交付新创意功能。",
+          "url": "https://openai.com/index/higgsfield-from-prompt-to-production-with-astra"
+        }
+      ],
+      "headline": "Higgsfield称单工程师一天推出视频功能",
+      "id": "62825e5e-fad9-54bb-88d0-e09f48627db4",
+      "importance": 2,
+      "key_change": "相比近期已刊的 OpenAI 客户案例，这是一项新的 Higgsfield 视频广告工作流与内部开发速度案例；没有宣布新的 API、模型可用范围或定价变化。",
+      "published_at": "2026-09-21T12:00:00+00:00",
+      "summary": "OpenAI 于 2026 年 9 月 21 日发布 Higgsfield AI 客户案例：该公司称 GPT-6 Astra 支持其把视频广告生成请求扩展为多地区变体，并帮助一名工程师在一天内交付新创意功能。文章是客户自述，未给出独立性能或成本验证。",
+      "target_name": "OpenAI",
+      "target_slug": "openai",
+      "title": "Higgsfield AI ships new video features in a day with GPT-6 Astra",
+      "topics": [
+        "OpenAI",
+        "GPT-6 Astra",
+        "视频生成",
+        "客户案例"
+      ],
+      "url": "https://openai.com/index/higgsfield-from-prompt-to-production-with-astra",
+      "watch_next": [
+        "检查 GPT-6 Astra 面向自身地区和 API 账户的实际可用性与价格",
+        "对多地区广告变体先建立人工审核和品牌合规测试"
+      ],
+      "why_it_matters": "正在做视频广告工具的团队可参考提示驱动的批量变体流程，但不能据案例估算自身交付速度。"
     },
     {
       "analyzed_at": "2026-09-21T18:11:05.686407Z",
@@ -14962,7 +14995,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-21T19:09:31.857334Z",
+  "latest_analyzed_at": "2026-09-21T20:08:46.146025Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -14974,7 +15007,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 474,
+  "total_count": 475,
   "version": 1,
   "window_days": 90
 }
