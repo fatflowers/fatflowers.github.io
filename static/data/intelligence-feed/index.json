@@ -1,8 +1,44 @@
 {
   "archives": [],
-  "count": 465,
+  "count": 466,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-21T00:33:47.946951Z",
+      "channel_name": "Official Blog",
+      "channel_slug": "openrouter-blog",
+      "company_impact": "采用多模型路由的团队可先检查现有评测 harness 是否支持由非工程角色触发、生成待审 PR，并为生产模型验证提供方故障时保持模型不变的回退策略。",
+      "evidence": [
+        {
+          "claim": "案例称 Descript 可通过 Claude Tag 运行模型评测并创建 PR，由人工审核批准；评测结果通常在一两小时返回。",
+          "url": "https://openrouter.ai/blog/insights/descript-model-evaluation-queue/"
+        },
+        {
+          "claim": "案例说明 Descript 可为同一模型按推理提供方配置优先级与回退，以在单一宿主故障时保持模型不变。",
+          "url": "https://openrouter.ai/blog/insights/descript-model-evaluation-queue/"
+        }
+      ],
+      "headline": "Descript 将新模型评测从排期改为自动化流程",
+      "id": "3525aa4e-c8f0-54d6-a2c9-2b163c57b95d",
+      "importance": 2,
+      "key_change": "这是对 Descript 评测与上线操作流程的新增第一方案例说明，不是 OpenRouter 宣布新的公共 API、模型或定价能力。",
+      "published_at": "2026-09-21T00:00:00+00:00",
+      "summary": "OpenRouter 的 Descript 案例称，团队把原本依赖工程师接入供应商的模型试用流程，改为可由 Claude Tag 发起评测、创建 PR 且经人工审核的工作流；评测通常在一两小时完成。生产侧可为同一模型配置推理提供方优先级与故障回退。",
+      "target_name": "OpenRouter",
+      "target_slug": "openrouter",
+      "title": "Two Hours of Work That Takes a Week",
+      "topics": [
+        "模型评测",
+        "多模型路由",
+        "Agent 工作流",
+        "工程实践"
+      ],
+      "url": "https://openrouter.ai/blog/insights/descript-model-evaluation-queue/",
+      "watch_next": [
+        "使用多供应商模型的项目可用现有评测集复现“新模型到结果”的交付时间，并核对自动创建 PR 的审核权限。"
+      ],
+      "why_it_matters": "多模型团队可将“接入供应商”与“验证模型价值”拆开，缩短从发现新模型到取得本地评测结果的等待时间。"
+    },
     {
       "analyzed_at": "2026-09-20T23:08:02.347498Z",
       "channel_name": "Everything Atom",
@@ -14668,7 +14704,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-20T23:08:02.347498Z",
+  "latest_analyzed_at": "2026-09-21T00:33:47.946951Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -14680,7 +14716,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 465,
+  "total_count": 466,
   "version": 1,
   "window_days": 90
 }
