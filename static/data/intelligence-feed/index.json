@@ -1,6 +1,6 @@
 {
   "archives": [],
-  "count": 468,
+  "count": 469,
   "history_preserved": true,
   "items": [
     {
@@ -67,6 +67,39 @@
         "用包含多次工具调用和长上下文的真实任务记录基线错误率，再比较不同模型与 Responses API 的结果"
       ],
       "why_it_matters": "采用 MCP 的团队可借鉴把企业上下文作为可查询层接入代理，并应先用自己的长流程基准验证收益。"
+    },
+    {
+      "analyzed_at": "2026-09-21T16:12:23.651207Z",
+      "channel_name": "Official News",
+      "channel_slug": "grok-news",
+      "company_impact": "采用 Grok API 或第三方路由的团队可以在不改变业务目标的前提下增加 Grok 4.7 对照测试；实际成本还取决于 token 用量、快速变体和平台加价。",
+      "evidence": [
+        {
+          "claim": "xAI 公告说明 Grok 4.7 的训练重点、可用平台、起始 token 价格及公告所列基准结果。",
+          "url": "https://x.ai/news/grok-4-7"
+        }
+      ],
+      "headline": "Grok 4.7 面向长任务编程升级",
+      "id": "3dd3fd55-ab1e-5821-931d-c786f33bda20",
+      "importance": 4,
+      "key_change": "相较 Grok 4.6，新增面向多小时任务的训练与自检设计，并公布了 Grok 4.7 的 API 可用性和起始价格；公告中的性能与安全数字均为 xAI 自报基准结果。",
+      "published_at": "2026-09-21T00:00:00+00:00",
+      "summary": "xAI 发布 Grok 4.7，称其采用更大基础模型和更长强化学习训练，重点提升长时编码、上下文管理与自检能力。该模型已在 Grok Build、Cursor、Grok API 及部分第三方平台提供，起价为每百万输入 token 2 美元、输出 6 美元。",
+      "target_name": "Grok / xAI",
+      "target_slug": "grok",
+      "title": "Introducing Grok 4.7",
+      "topics": [
+        "Grok",
+        "模型发布",
+        "编码代理",
+        "模型定价"
+      ],
+      "url": "https://x.ai/news/grok-4-7",
+      "watch_next": [
+        "用代表性长时编码任务对比 Grok 4.7 与当前模型的完成率、重试次数和总 token 成本",
+        "核对所使用的路由或云平台何时提供 Grok 4.7 及其快速变体"
+      ],
+      "why_it_matters": "正在构建长时编码代理的开发者多了一个可比较的 API 和模型选项，但应先用自身任务验证基准是否可复现。"
     },
     {
       "analyzed_at": "2026-09-21T00:33:47.946951Z",
@@ -14769,7 +14802,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-21T14:16:47.829657Z",
+  "latest_analyzed_at": "2026-09-21T16:12:23.651207Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -14781,7 +14814,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 468,
+  "total_count": 469,
   "version": 1,
   "window_days": 90
 }
