@@ -1,8 +1,76 @@
 {
   "archives": [],
-  "count": 475,
+  "count": 477,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-21T23:09:36.239610Z",
+      "channel_name": "Everything Atom",
+      "channel_slug": "simon-willison-atom",
+      "company_impact": "采用 Python Workers 的团队可以把生产评估从预览转入正式支持范围；这是基于公告的适用性判断，具体稳定性仍需按项目依赖实测。",
+      "evidence": [
+        {
+          "claim": "文章记录 Cloudflare Python Workers 结束两年预览并正式可用，运行在 Pyodide/WebAssembly workerd 中，且 multiprocessing 和 threading 不可用。",
+          "url": "https://simonwillison.net/2026/Sep/21/cloudflare-python-worker/"
+        }
+      ],
+      "headline": "Cloudflare Python Workers 转为正式支持",
+      "id": "ac75a98f-baea-5bd0-a9f9-73a04d14f3c3",
+      "importance": 4,
+      "key_change": "相较预览阶段，Cloudflare 将 Python Workers 标为 Developer Platform 的正式、一等支持语言；核心运行限制仍包括 WebAssembly 环境中的 multiprocessing 和 threading 不可用。",
+      "published_at": "2026-09-21T22:25:44+00:00",
+      "summary": "Cloudflare 宣布 Python Workers 结束两年预览并正式可用，Python 通过 Pyodide 编译为 WebAssembly 在 workerd 中运行；当前仍不支持 multiprocessing 和 threading，并提供本地 pywrangler 模拟环境。",
+      "target_name": "Simon Willison",
+      "target_slug": "simon-willison",
+      "title": "Cloudflare Python Workers are now generally available",
+      "topics": [
+        "Cloudflare",
+        "Python",
+        "WebAssembly",
+        "边缘计算",
+        "开发工具"
+      ],
+      "url": "https://simonwillison.net/2026/Sep/21/cloudflare-python-worker/",
+      "watch_next": [
+        "用目标项目的依赖清单运行 pywrangler 本地模拟，重点检查线程、多进程和原生扩展兼容性",
+        "核对 Cloudflare 正式文档中的运行时限制与部署配额后再安排生产迁移"
+      ],
+      "why_it_matters": "Python 团队可正式评估边缘部署，但需先排查依赖是否需要线程或多进程。"
+    },
+    {
+      "analyzed_at": "2026-09-21T23:09:36.239610Z",
+      "channel_name": "GitHub Organization",
+      "channel_slug": "composio-github",
+      "company_impact": "集成 Composio typesafe 的团队可通过升级降低 schema 参数被错误隐藏或解释的风险；这是基于补丁内容的工程建议，公告未证明存在已被利用事件。",
+      "evidence": [
+        {
+          "claim": "发布说明列出根 schema 组合、原型命名参数和 __proto__ 调用者数据处理的补丁变更。",
+          "url": "https://github.com/ComposioHQ/composio/releases/tag/%40composio/typesafe%400.1.1"
+        }
+      ],
+      "headline": "Composio typesafe 修复原型链参数风险",
+      "id": "262b331e-4b19-5059-b700-85d13b091dfc",
+      "importance": 3,
+      "key_change": "该补丁新增对根 schema 组合、原型命名参数和 __proto__ 数据保留的防护；发布说明未给出受影响版本范围或利用案例。",
+      "published_at": "2026-09-21T19:23:44+00:00",
+      "summary": "Composio typesafe 0.1.1 的补丁拒绝可能隐藏必填参数的根 schema 组合，要求显式提供原型命名参数，并在执行时把 __proto__ 保留为调用者数据。变更针对 schema 校验和参数处理。",
+      "target_name": "Composio",
+      "target_slug": "composio",
+      "title": "@composio/typesafe@0.1.1",
+      "topics": [
+        "Composio",
+        "TypeScript",
+        "安全",
+        "schema",
+        "工具调用"
+      ],
+      "url": "https://github.com/ComposioHQ/composio/releases/tag/%40composio/typesafe%400.1.1",
+      "watch_next": [
+        "将 @composio/typesafe 升级到 0.1.1 并运行现有工具参数回归测试",
+        "检查项目是否把 __proto__ 或原型命名字段作为输入，并为这些边界条件增加测试"
+      ],
+      "why_it_matters": "使用 Composio typesafe 处理不可信工具参数的项目应尽快升级并补充原型链相关测试。"
+    },
     {
       "analyzed_at": "2026-09-21T19:09:31.857334Z",
       "channel_name": "Official X",
@@ -14995,7 +15063,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-21T20:08:46.146025Z",
+  "latest_analyzed_at": "2026-09-21T23:09:36.239610Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -15007,7 +15075,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 475,
+  "total_count": 477,
   "version": 1,
   "window_days": 90
 }
