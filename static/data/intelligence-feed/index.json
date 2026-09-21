@@ -1,8 +1,39 @@
 {
   "archives": [],
-  "count": 472,
+  "count": 474,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-21T19:09:31.857334Z",
+      "channel_name": "Official X",
+      "channel_slug": "openai-twitter",
+      "company_impact": "对采用 AI 数学工具的团队，暂时没有需要迁移的技术变更；可将后续公开的评审标准作为研究结果复核和对外表述的参考。",
+      "evidence": [
+        {
+          "claim": "OpenAI 表示将与独立数学家咨询组合作，以协助评估和沟通 AI 数学成果，并支持学术标准与数学研究工具建设。",
+          "url": "https://x.com/OpenAI/status/2102093145051943229"
+        }
+      ],
+      "headline": "OpenAI设数学与人工智能咨询组",
+      "id": "1fefb9a0-6dc7-5b01-8aea-3fc7411f08f5",
+      "importance": 2,
+      "key_change": "新增独立数学家咨询机制；相较近期已刊事件，材料未显示具体模型、研究结果、API 或产品功能变化。",
+      "published_at": "2026-09-21T17:50:35Z",
+      "summary": "OpenAI 宣布与独立数学家咨询组合作，协助评估和沟通新的 AI 数学成果，并参与制定学术与职业标准及数学研究工具方向。公告未公布成员、评审流程或具体产品，因此当前是治理与咨询机制的公开承诺。",
+      "target_name": "OpenAI",
+      "target_slug": "openai",
+      "title": "We’re working with an independent advisory group of mathematicians to help OpenAI responsibly share advances in AI and mathematics. The group will advise on how",
+      "topics": [
+        "AI数学",
+        "模型治理",
+        "研究评估"
+      ],
+      "url": "https://x.com/OpenAI/status/2102093145051943229",
+      "watch_next": [
+        "检查 OpenAI 后续是否公布咨询组成员、评审标准或数学研究工具的具体更新"
+      ],
+      "why_it_matters": "使用 AI 做数学研究的开发者可期待更明确的结果评审与沟通标准，但当前尚无可执行接口或流程可用。"
+    },
     {
       "analyzed_at": "2026-09-21T13:23:03.791999Z",
       "channel_name": "Official X",
@@ -233,6 +264,38 @@
         "使用多供应商模型的项目可用现有评测集复现“新模型到结果”的交付时间，并核对自动创建 PR 的审核权限。"
       ],
       "why_it_matters": "多模型团队可将“接入供应商”与“验证模型价值”拆开，缩短从发现新模型到取得本地评测结果的等待时间。"
+    },
+    {
+      "analyzed_at": "2026-09-21T19:09:31.857334Z",
+      "channel_name": "Everything Atom",
+      "channel_slug": "simon-willison-atom",
+      "company_impact": "构建代理系统的团队应先列出允许访问的服务、凭据暴露边界和审计要求，再决定直接调用 API 还是引入 MCP；这是基于文章观点的工程建议。",
+      "evidence": [
+        {
+          "claim": "文章指出完整终端代理之外的受控系统需要限制外部服务访问、避免代理直接接触 API 密钥、提供认证界面并记录审计日志，而 MCP 可简化这些能力。",
+          "url": "https://simonwillison.net/2026/Sep/20/hn-49779718/"
+        }
+      ],
+      "headline": "MCP仍适合受控代理工作流",
+      "id": "c72b50ed-ee65-56f3-8014-4785949008f1",
+      "importance": 3,
+      "key_change": "新增对 MCP 适用边界的具体说明：从“能否直接调用 API”转向访问控制、凭据隔离、用户授权和审计；这不是 MCP 协议或产品版本更新。",
+      "published_at": "2026-09-20T20:24:41+00:00",
+      "summary": "Simon Willison 认为，虽然拥有不受限网络访问的终端代理未必需要 MCP，但更受控的代理仍需要精确限制外部服务、隔离认证密钥、提供用户授权界面和强审计日志。文章将 MCP 的现实价值定位为受控访问与治理基础，而非单纯的 API 调用替代品。",
+      "target_name": "Simon Willison",
+      "target_slug": "simon-willison",
+      "title": "Comment: MCP was always a bad idea?",
+      "topics": [
+        "MCP",
+        "代理安全",
+        "访问控制",
+        "审计"
+      ],
+      "url": "https://simonwillison.net/2026/Sep/20/hn-49779718/",
+      "watch_next": [
+        "在代理原型中测试 MCP 工具白名单、用户授权和调用审计是否覆盖实际外部服务"
+      ],
+      "why_it_matters": "设计代理平台时，MCP 可作为权限、认证和审计边界的一部分；是否采用应取决于代理的网络权限和治理要求。"
     },
     {
       "analyzed_at": "2026-09-20T23:08:02.347498Z",
@@ -14899,7 +14962,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-21T18:11:05.686407Z",
+  "latest_analyzed_at": "2026-09-21T19:09:31.857334Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -14911,7 +14974,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 472,
+  "total_count": 474,
   "version": 1,
   "window_days": 90
 }
