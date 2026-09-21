@@ -1,6 +1,6 @@
 {
   "archives": [],
-  "count": 469,
+  "count": 472,
   "history_preserved": true,
   "items": [
     {
@@ -34,6 +34,103 @@
         "对项目依赖的连接器运行一次授权、权限和端到端调用测试"
       ],
       "why_it_matters": "正在评估统一工具接入层的开发者可把 1,556 个应用作为待核对线索，但不能据此判断所需应用已经支持。"
+    },
+    {
+      "analyzed_at": "2026-09-21T18:11:05.686407Z",
+      "channel_name": "Official News RSS",
+      "channel_slug": "openai-news",
+      "company_impact": "使用AI辅助研究的团队可借鉴外部专家审阅、成果分级和公开传播的流程；这是基于公告的流程建议，并非已验证效果。",
+      "evidence": [
+        {
+          "claim": "OpenAI宣布数学与人工智能独立顾问组，并声称内部模型已解决100多个长期开放问题。",
+          "url": "https://openai.com/index/advisory-group-on-mathematics-and-ai"
+        }
+      ],
+      "headline": "OpenAI设数学与AI独立顾问组",
+      "id": "ced9a004-3ab4-585f-ad70-6cb72c0c90c0",
+      "importance": 3,
+      "key_change": "相较近期已刊的数学模型成果，新增了由外部数学家组成、可独立发表意见的顾问机制；模型解决100多个问题仍是OpenAI自述，正文未给出问题清单或独立验证。",
+      "published_at": "2026-09-21T12:00:00+00:00",
+      "summary": "OpenAI称其自8月28日起训练的内部模型已解决数学领域100多个长期开放问题，并宣布由九名数学家组成独立顾问组，参与评估成果意义、传播协调和研究规范讨论。顾问组可主动公开意见且不负责决定内部数学进展速度。",
+      "target_name": "OpenAI",
+      "target_slug": "openai",
+      "title": "Advisory Group on Mathematics and Artificial Intelligence",
+      "topics": [
+        "数学AI",
+        "AI治理",
+        "科研工具"
+      ],
+      "url": "https://openai.com/index/advisory-group-on-mathematics-and-ai",
+      "watch_next": [
+        "查看顾问组后续公开的成果审阅意见和问题清单",
+        "核对OpenAI是否发布独立验证或可复现实验材料"
+      ],
+      "why_it_matters": "为高能力数学系统引入外部审阅和传播机制，但具体成果价值仍需公开材料核验。"
+    },
+    {
+      "analyzed_at": "2026-09-21T18:11:05.686407Z",
+      "channel_name": "Official News RSS",
+      "channel_slug": "openai-news",
+      "company_impact": "开发前沿模型或自动化研究系统的团队可提前整理能力评测、人类复核和事件记录；具体标准尚未确定，不能据此宣称合规。",
+      "evidence": [
+        {
+          "claim": "OpenAI提出建立前沿AI国际技术标准，并列出能力测量、自动化研究监督和事件报告等范围。",
+          "url": "https://openai.com/index/building-standards-next-phase-ai"
+        }
+      ],
+      "headline": "OpenAI倡议建立前沿AI国际标准",
+      "id": "aee27488-f529-5454-8618-eda0fb8be50a",
+      "importance": 3,
+      "key_change": "新增一份面向国际合作的标准化倡议，具体提出测量、监督和事故报告三个方向；目前是OpenAI的政策主张，不是已生效的国际标准或监管要求。",
+      "published_at": "2026-09-21T10:00:00+00:00",
+      "summary": "OpenAI提出由美国牵头、各国协作制定前沿AI技术标准，覆盖能力评估、自动化AI研究和递归自我改进的人类监督、事件分级与报告阈值。文章明确这些标准不等同于模型许可或强制发布前审查，是否纳入法律由各国政府决定。",
+      "target_name": "OpenAI",
+      "target_slug": "openai",
+      "title": "Building standards for the next phase of AI",
+      "topics": [
+        "AI安全",
+        "国际标准",
+        "AI治理",
+        "递归自我改进"
+      ],
+      "url": "https://openai.com/index/building-standards-next-phase-ai",
+      "watch_next": [
+        "跟踪CAISI及各国AI安全机构是否形成正式标准草案",
+        "检查后续提案是否给出事件严重度、报告阈值和监督触发条件"
+      ],
+      "why_it_matters": "未来可能影响前沿模型评测、事故报告和高自主研究的合规准备，但当前没有立即生效的开发者义务。"
+    },
+    {
+      "analyzed_at": "2026-09-21T18:11:05.686407Z",
+      "channel_name": "Official News RSS",
+      "channel_slug": "openai-news",
+      "company_impact": "采用OpenAI API或Codex的团队可将课程作为内部培训入口，再用自己的代码评审、评测和上线门槛验证实际能力；课程内容与平台生态绑定。",
+      "evidence": [
+        {
+          "claim": "OpenAI宣布新增面向开发者、领导者、教育者和大学生的课程路径，并说明课程评估和徽章机制。",
+          "url": "https://openai.com/index/expanding-openai-academy-with-new-learning-paths"
+        }
+      ],
+      "headline": "OpenAI Academy新增四类AI学习路径",
+      "id": "f9d51e6f-24b9-5a6a-8f76-d8486f341489",
+      "importance": 2,
+      "key_change": "相较此前仅有基础职场应用路径的介绍，新增Build with AI、Lead AI Adoption和Teach and Learn with AI等角色化课程，并加入课程评估和徽章机制。",
+      "published_at": "2026-09-21T07:00:00+00:00",
+      "summary": "OpenAI Academy新增面向开发者、领导者、教育者和大学生的课程路径，与原有职场应用路径组合为按角色学习的课程体系。开发者课程覆盖Codex或API产品设计、评测、代理、检索和生产运营，课程评估通过后可获得Academy徽章。",
+      "target_name": "OpenAI",
+      "target_slug": "openai",
+      "title": "Expanding OpenAI Academy with new learning paths",
+      "topics": [
+        "开发者教育",
+        "OpenAI Academy",
+        "AI工程实践"
+      ],
+      "url": "https://openai.com/index/expanding-openai-academy-with-new-learning-paths",
+      "watch_next": [
+        "核对Build with AI课程的具体API、评测和生产运营模块是否开放",
+        "比较课程徽章的评估标准与组织内部能力认证要求"
+      ],
+      "why_it_matters": "个人和团队可以按岗位选择学习材料，但课程完成不等于实际系统质量或生产能力认证。"
     },
     {
       "analyzed_at": "2026-09-21T14:16:47.829657Z",
@@ -14802,7 +14899,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-21T16:12:23.651207Z",
+  "latest_analyzed_at": "2026-09-21T18:11:05.686407Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -14814,7 +14911,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 469,
+  "total_count": 472,
   "version": 1,
   "window_days": 90
 }
