@@ -6,6 +6,8 @@ categories: ["Original Tech"]
 description: "从 Task、Workspace、Gateway、Model 四个原语出发，理解 Google AX 为什么要为长时间运行的 AI Agent 重新设计一层执行基础设施。"
 ---
 
+> 本文仅用于学习和了解新项目，正文由 AI 撰写。
+
 写一个能调用大模型和工具的 Agent 并不难，难的是让一万个 Agent 安全、稳定、便宜地跑起来。
 
 本地演示里，Agent 往往只是一个 Python 或 TypeScript 进程：读提示词、调用模型、执行工具、输出结果。但进入生产环境后，问题很快会变成：代码应该在哪运行？它能访问哪些仓库和网站？闲置半小时还要不要占着一整台机器？进程被中断后能不能接着工作？怎样同时管理成千上万个执行中的 Agent？
