@@ -1,8 +1,76 @@
 {
   "archives": [],
-  "count": 478,
+  "count": 480,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-22T02:14:06.286840Z",
+      "channel_name": "Official Blog",
+      "channel_slug": "openrouter-blog",
+      "company_impact": "构建代理的团队可用自有工具调用任务评测 Lightning；处理敏感数据或依赖结构化输出时，不应直接以免费端点替代标准或本地部署。",
+      "evidence": [
+        {
+          "claim": "OpenRouter 说明 Lightning 为 30B-A3B 开放权重模型，定位高频代理执行，并列出工具调用、结构化输出和不同端点上下文限制。",
+          "url": "https://openrouter.ai/blog/insights/nemotron-3-5-lightning/"
+        },
+        {
+          "claim": "文章说明免费端点使用会被记录用于安全和改进，并建议不要上传机密信息或个人数据。",
+          "url": "https://openrouter.ai/blog/insights/nemotron-3-5-lightning/"
+        }
+      ],
+      "headline": "Nemotron Lightning 面向高频代理执行",
+      "id": "a0e186e0-c6ad-5ad6-a71e-e4f79a5695c0",
+      "importance": 3,
+      "key_change": "新增一个可评估的开放权重代理执行模型及清晰的端点差异：标准端点支持结构化输出但上下文较短，免费端点上下文更长但能力与数据处理条件不同。",
+      "published_at": "2026-09-22T00:00:00+00:00",
+      "summary": "OpenRouter 介绍 NVIDIA Nemotron 3.5 Lightning：30B 总参数、约 3B 激活参数，定位为高频代理执行层，支持工具调用和标准端点结构化输出。OpenRouter 标准端点当前提供 262,144 token 上下文，免费端点虽提供 100 万 token 但不列出结构化输出且有数据记录提示。",
+      "target_name": "OpenRouter",
+      "target_slug": "openrouter",
+      "title": "What Is Nemotron 3.5 Lightning",
+      "topics": [
+        "代理工程",
+        "开放权重模型",
+        "OpenRouter",
+        "工具调用"
+      ],
+      "url": "https://openrouter.ai/blog/insights/nemotron-3-5-lightning/",
+      "watch_next": [
+        "用真实工具调用任务对比 Lightning 与现有执行模型的成功率、重试次数和总成本",
+        "为长上下文或结构化输出需求分别校验标准与免费端点的当前模型页限制"
+      ],
+      "why_it_matters": "代理可将高频、目标明确的步骤与复杂规划分流，但必须按实际端点限制和任务成功率测试成本收益。"
+    },
+    {
+      "analyzed_at": "2026-09-22T02:14:06.286840Z",
+      "channel_name": "GitHub Organization",
+      "channel_slug": "openai-github",
+      "company_impact": "正在使用 OpenAI Java SDK 且仍传入旧 gpt-5.1-mini 标识的团队，可在升级前后运行模型选择与请求回归测试。",
+      "evidence": [
+        {
+          "claim": "4.66.1 的发行说明将恢复 legacy gpt-5.1-mini identifiers 列为 API bug fix。",
+          "url": "https://github.com/openai/openai-java/releases/tag/v4.66.1"
+        }
+      ],
+      "headline": "OpenAI Java SDK 恢复旧模型标识",
+      "id": "d3f2f748-2da7-5b5f-bf71-28d7db50546f",
+      "importance": 2,
+      "key_change": "相比 4.66.0，SDK 恢复了 legacy gpt-5.1-mini identifiers；这是针对旧标识兼容性的单项 bug fix。",
+      "published_at": "2026-09-21T23:35:51+00:00",
+      "summary": "OpenAI Java SDK 4.66.1 修复了 API 中旧版 gpt-5.1-mini 标识被移除的问题，恢复 legacy identifiers。变更仅涉及 SDK 兼容性修复，发布日期为 2026 年 9 月 21 日。",
+      "target_name": "OpenAI",
+      "target_slug": "openai",
+      "title": "v4.66.1",
+      "topics": [
+        "OpenAI Java SDK",
+        "兼容性",
+        "模型标识"
+      ],
+      "url": "https://github.com/openai/openai-java/releases/tag/v4.66.1",
+      "watch_next": [
+        "在 Java 项目中验证 gpt-5.1-mini 标识升级后的请求与回退路径"
+      ],
+      "why_it_matters": "依赖旧 gpt-5.1-mini 标识的 Java 项目可先升级补丁版本，减少模型名解析失败风险。"
+    },
     {
       "analyzed_at": "2026-09-22T00:08:41.824782Z",
       "channel_name": "Everything Atom",
@@ -15096,7 +15164,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-22T00:08:41.824782Z",
+  "latest_analyzed_at": "2026-09-22T02:14:06.286840Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -15108,7 +15176,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 478,
+  "total_count": 480,
   "version": 1,
   "window_days": 90
 }
