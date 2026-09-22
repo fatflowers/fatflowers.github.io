@@ -25,6 +25,7 @@ defaultContentLanguageInSubdir = false
 [params]
   env = "production"
   author = "Simon Sun"
+  images = ["/images/social-card.png"]
   defaultTheme = "auto"
   displayFullLangName = true
 
