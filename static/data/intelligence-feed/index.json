@@ -1,8 +1,41 @@
 {
   "archives": [],
-  "count": 477,
+  "count": 478,
   "history_preserved": true,
   "items": [
+    {
+      "analyzed_at": "2026-09-22T00:08:41.824782Z",
+      "channel_name": "Everything Atom",
+      "channel_slug": "simon-willison-atom",
+      "company_impact": "若团队考虑用模型做分类或排序，可先用低成本批量实验比较 Jev 与现有模型；不要把其分数直接用于招聘等高风险决策，因为文章指出模型不提供可审计的理由。",
+      "evidence": [
+        {
+          "claim": "文章介绍 Jev 的 state 输入、Noul/choice/score 三类问题、输出概率或分数，以及每百万输入 token 0.042 美元的价格主张。",
+          "url": "https://simonwillison.net/2026/Sep/21/jev/"
+        }
+      ],
+      "headline": "Jev把模型输出变成可评分的决策",
+      "id": "3c543cf4-2fe1-588d-bbd1-4486d193cebf",
+      "importance": 3,
+      "key_change": "新增一种面向分类、排序和重排的 Decision Model 形态：输入非结构化状态，输出带置信度的结构化决策值；文章还记录了 Jev 的低价 API 与开源复刻活动。",
+      "published_at": "2026-09-21T23:09:20+00:00",
+      "summary": "Simon Willison 介绍 TypeSafe 新发布的 Jev：它把文本或半结构化数据作为 state，并针对是非、选项和评分问题返回概率或数值结果，而不是生成文本。文章称首个模型只按输入计费，每百万 token 0.042 美元，并可并行处理多个问题。",
+      "target_name": "Simon Willison",
+      "target_slug": "simon-willison",
+      "title": "Jev introduces a new shape of LLM—System One, aka Decision Models",
+      "topics": [
+        "决策模型",
+        "结构化输出",
+        "模型评测",
+        "搜索重排"
+      ],
+      "url": "https://simonwillison.net/2026/Sep/21/jev/",
+      "watch_next": [
+        "查看 Jev API 的正式文档、限额与服务可用性",
+        "用一组人工标注样本比较 Jev 在分类和重排任务上的准确率及偏差"
+      ],
+      "why_it_matters": "适合把垃圾识别、标签、优先级和搜索重排做成结构化接口，但需要自行验证偏差与误判。"
+    },
     {
       "analyzed_at": "2026-09-21T23:09:36.239610Z",
       "channel_name": "Everything Atom",
@@ -15063,7 +15096,7 @@
       "why_it_matters": "该信息可能影响模型能力评估、代理系统选型、安全治理或开发者生态判断。"
     }
   ],
-  "latest_analyzed_at": "2026-09-21T23:09:36.239610Z",
+  "latest_analyzed_at": "2026-09-22T00:08:41.824782Z",
   "page_size": 30,
   "policy_sha256": "f783f2726e721557695fb53f6f8ae9e27cfed1a74e7accd0ab9b995980f6f865",
   "targets": [
@@ -15075,7 +15108,7 @@
     "OpenRouter",
     "Simon Willison"
   ],
-  "total_count": 477,
+  "total_count": 478,
   "version": 1,
   "window_days": 90
 }
