@@ -1,5 +1,5 @@
 .main:has(.post-single:not(.sources-page)) {
-  width: calc(80vw + var(--gap) * 2);
+  width: calc(75vw + var(--gap) * 2);
   max-width: 100%;
 }
 
