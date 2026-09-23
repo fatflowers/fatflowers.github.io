@@ -19,13 +19,19 @@ defaultContentLanguageInSubdir = false
 [minify]
   disableJSON = true
 
+[minify.tdewolff.html]
+  # Some social-card crawlers do not recognize unquoted twitter:* meta values.
+  keepQuotes = true
+
 [outputs]
   home = ["HTML", "RSS", "JSON"]
 
 [params]
   env = "production"
   author = "Simon Sun"
-  images = ["/images/social-card.png"]
+  images = ["/images/social-card-v2.jpg"]
+  # Bump this value when the default social card changes so X fetches fresh metadata.
+  socialCardVersion = "20260923"
   defaultTheme = "auto"
   displayFullLangName = true
 
