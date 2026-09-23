@@ -4,6 +4,9 @@ date: 2026-09-23
 tags: ["Agent", "Harness", "RRSI", "论文解读", "评测"]
 categories: ["Original Tech"]
 description: "解读 RRSI 如何约束 Agent Harness 的自动演化，让改进更可能迁移到没见过的任务。"
+cover:
+  image: "/images/rrsi-agent-harness-cover.jpg"
+  alt: "相同的练习任务围成闭环，经过调整的 Agent Harness 通向不同的新任务"
 ---
 
 > 本文仅用于学习和了解新项目，正文由 AI 撰写。
