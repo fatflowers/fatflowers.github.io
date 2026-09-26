@@ -54,6 +54,33 @@ Raft 的顶层结构很适合先按职责分成两边。服务端保存协作对
 
 源码入口：[数据库模型](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/server/src/db/schema.ts#L851)、[AgentOrchestrator](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/server/src/services/agentOrchestrator.ts)、[Daemon core](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/daemon/src/core.ts)。
 
+### 核心数据模型：先认识对象，再追踪流程 {#data-model}
+
+前面的地图回答“哪个组件负责什么”，数据模型则回答“系统长期保存了哪些事实”。先围绕协作空间、成员、消息和任务建立关系，再看模型如何运行，后面的源码会更容易串起来。
+
+{{< raft-model >}}
+
+| 对象 / 表 | 关键字段（节选） | 表达的事实 |
+| --- | --- | --- |
+| Server / `servers` | `id` | 协作空间；这里的 Server 对象不是某个操作系统进程 |
+| Agent / `agents` | `id`、`serverId`、`runtime`、`sessionId`、`machineId` | 成员身份、执行配置、当前原生会话引用和绑定机器 |
+| Channel / `channels` | `id`、`serverId`、`type`、`parentMessageId` | 消息空间；类型包括普通频道、私有频道、联合频道、DM 和 thread |
+| 频道成员 / `channel_agents` | `channelId`、`agentId`、`role` | 以频道与 Agent 的组合为主键，表达成员关系及频道角色 |
+| Message / `messages` | `id`、`seq`、`channelId`、`senderType`、`senderId`、`content` | 哪位发送者在何处说了什么；发送者可以是用户、Agent 或外部身份投影 |
+| Task / `tasks` | `id`、`channelId`、`messageId`、`status`、`claimedByType`、`claimedById`、`claimedAt`、`revision` | 可独立追踪的工作、关联消息、归属和并发更新版本 |
+| Machine / `daemons` | `id`、`serverId`、`runtimes`、`lastHeartbeat` | 可承载执行的机器；代码变量叫 `machines`，实际表名仍叫 `daemons` |
+| Runtime session / 原生会话 | `agents.sessionId` 保存其 ID | 模型侧的执行上下文由 runtime 管理；它不是频道成员关系，也不是这里的一张聊天记录表 |
+
+**任务与消息有关联，但不是同一个对象。** `tasks.channelId` 必填，`messageId` 则可为空，并有唯一索引：任务可以关联一条消息，同一条消息最多对应一条这样的任务记录。负责人通过类型与 ID 表达，可以是人或 Agent；不要把所有 `claimedById` 都当成指向 `agents` 的外键。消息表里仍保留旧 task 字段，但 schema 已标注为历史存储，当前任务状态的权威来源是 `tasks`。
+
+**讨论线程也不等于 runtime session。** Raft 的 thread 是一条 `type = "thread"` 的 Channel 记录，通过 `parentMessageId` 关联父消息；线程里的回复仍是 Message，只是 `channelId` 指向这个线程频道。`thread_follows` 另行记录谁跟随该线程。尤其要留意 `messages.threadId`：它是父消息上的线程入口标记，不能据此判断一条消息是不是线程内的回复。
+
+**数据库的 `sessions` 表保存用户登录会话。** 它包含 `userId`、`tokenHash`、`expiresAt` 等字段，用于刷新令牌等认证流程。`agents.sessionId` 是可空文本字段，没有外键指向该表。虽然都叫 session，这两者分别服务于“用户如何保持登录”和“Agent 如何延续模型上下文”。
+
+用一个具体例子把这些对象连起来：用户在 `#deploy` 发出消息 M1；频道里的 Atlas 与 Nova 分别收到投递，进入各自的 runtime session。若这项工作建立为任务 T1，T1 通过 `messageId` 关联 M1，再通过领取流程确定负责人。**投递给谁、任务归谁、由哪个 session 执行，是三组独立关系。** 因而加入同一频道并不会共享 session，领取任务也不会自动产生新的 session，更不能仅凭任务归属推断谁有权回答所有普通消息。
+
+模型依据：[Agent](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/server/src/db/schema.ts#L851)、[Channel](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/server/src/db/schema.ts#L1445)、[频道成员](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/server/src/db/schema.ts#L1590)、[Message](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/server/src/db/schema.ts#L1646)、[Task](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/server/src/db/schema.ts#L3415)、[Machine](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/server/src/db/schema.ts#L3377)、[线程跟随](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/server/src/db/schema.ts#L5140)、[登录 Session](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/server/src/db/schema.ts#L700)。图中省略用户成员表、权限表、外部投影与联合频道的展开结构；普通频道成员关系也不能直接替代线程、虚拟 `#all` 等特殊对象的受众规则。
+
 ## 03 · Atlas 是谁：频道、身份、会话与轮次 {#identity}
 
 ### Channel 与 runtime session 是两种不同的“会话”

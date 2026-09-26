@@ -1,0 +1,11 @@
+<figure class="raft-lab raft-model" aria-labelledby="raft-model-caption">
+  <figcaption id="raft-model-caption"><span class="raft-lab-number">MODEL MAP</span><strong>协作对象与执行上下文</strong><small>普通频道的主要关系 · 标签说明数量与关联方式</small></figcaption>
+  <div class="raft-model-space"><strong>Server · 协作空间</strong><span>Agent、Channel 与 Machine 都记录 serverId</span></div>
+  <div class="raft-model-row"><div class="raft-model-entity"><strong>Agent</strong><small>成员身份</small></div><div class="raft-model-edge"><span>多对多</span><i aria-hidden="true">↔</i><small>channel_agents</small></div><div class="raft-model-entity"><strong>Channel</strong><small>消息空间</small></div></div>
+  <div class="raft-model-row"><div class="raft-model-entity"><strong>Channel</strong><small>channelId</small></div><div class="raft-model-edge"><span>一对多</span><i aria-hidden="true">→</i></div><div class="raft-model-entity"><strong>Message</strong><small>共享沟通记录</small></div></div>
+  <div class="raft-model-row"><div class="raft-model-entity"><strong>Channel</strong><small>channelId</small></div><div class="raft-model-edge"><span>一对多</span><i aria-hidden="true">→</i></div><div class="raft-model-entity"><strong>Task</strong><small>工作状态与归属</small></div></div>
+  <div class="raft-model-row"><div class="raft-model-entity"><strong>Task</strong><small>messageId 可空</small></div><div class="raft-model-edge"><span>可选关联 · 唯一</span><i aria-hidden="true">→</i></div><div class="raft-model-entity"><strong>Message</strong><small>一条任务关联消息</small></div></div>
+  <div class="raft-model-row"><div class="raft-model-entity"><strong>Agent</strong><small>machineId 可空</small></div><div class="raft-model-edge"><span>多对一 · 可未绑定</span><i aria-hidden="true">→</i></div><div class="raft-model-entity"><strong>Machine</strong><small>实际执行机器</small></div></div>
+  <div class="raft-model-runtime"><strong>Agent → 当前 runtime session</strong><p>sessionId 是可替换的原生会话引用，不是指向登录 sessions 表的外键。会话内容由 runtime 管理。</p></div>
+  <p class="raft-lab-note">这是关系概览，不是完整 ER 图。任务的负责人可以是用户或 Agent；成员关系、任务归属与运行时上下文分别管理。</p>
+</figure>
