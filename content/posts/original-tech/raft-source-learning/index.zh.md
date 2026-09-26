@@ -54,7 +54,37 @@ Raft 的顶层结构很适合先按职责分成两边。服务端保存协作对
 
 源码入口：[数据库模型](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/server/src/db/schema.ts#L851)、[AgentOrchestrator](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/server/src/services/agentOrchestrator.ts)、[Daemon core](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/daemon/src/core.ts)。
 
-## 03 · Atlas 是谁：身份、会话、轮次和进程 {#identity}
+## 03 · Atlas 是谁：频道、身份、会话与轮次 {#identity}
+
+### Channel 与 runtime session 是两种不同的“会话”
+
+在界面上，我们可能把频道里的聊天也叫会话。但在源码里，**Channel 是多人共享的消息空间，runtime session 是某个 Agent 使用的原生模型上下文**。把两者混为一谈，就容易误以为“进一个频道便新建一个 session”，或者“频道成员共享一段模型上下文”。
+
+| 对象 | 关系与作用 |
+| --- | --- |
+| Channel | 保存共同可见的消息；一个频道可以加入多位 Agent |
+| Agent | 拥有稳定身份；同一 Agent 可以加入多个频道 |
+| `agents.sessionId` | 这位 Agent 当前保存的 runtime 会话引用，可为空，也会被替换 |
+| Runtime turn | 当前会话中的一轮执行；同一个 session 可以经历多轮 |
+| Runtime 进程 | 承载执行；进程重启之后仍可能恢复同一个 session |
+
+`channel_agents` 以 `(channelId, agentId)` 为联合主键，表达频道与 Agent 的多对多关系。`sessionId` 则放在 `agents` 表上，没有放在这张成员关系表里。Daemon 也按 `agentId` 查找当前的 `AgentProcess`，不是按 `(agentId, channelId)` 为每个频道分配一个进程或会话。
+
+下面假设 Atlas 同时加入两个频道，Nova 只加入部署频道：
+
+```text
+#deploy ──→ Atlas 的 Inbox ──→ Atlas 当前 session A1
+        └─→ Nova  的 Inbox ──→ Nova  当前 session N1
+#review ──→ Atlas 的同一个 Inbox ──→ 仍由 Atlas 当前 session A1 处理
+```
+
+这表示**来自不同频道的已消费消息可以进入同一位 Agent 的上下文**，并不表示频道全部历史会自动装入模型。消息携带 `channel_id`、目标类型、发送者等信息，Agent 再按需要读取历史、按原消息的 `target` 回复。因此频道的成员与访问边界，也不能当作同一 Agent 内部的模型上下文隔离边界。
+
+这里还有一处同名陷阱：Raft 的讨论线程是协作对象，而 Codex 协议中的 `threadId` 是原生会话 ID；它在这条适配链中对应 `agents.sessionId`，并不对应 Raft 的讨论线程 ID。代码里的 `RuntimeSession` 则是管理运行实例的接口，和持久保存的 session ID 也不是同一种对象。
+
+关系依据：[频道成员表](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/server/src/db/schema.ts#L1590)、[按 Agent 管理执行实例](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/daemon/src/agentProcessManager.ts#L1130)、[消息的来源与回复目标](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/daemon/src/drivers/systemPrompt.ts#L159)。
+
+### Agent 的身份不会随 session 更换而消失
 
 在 `agents` 表里，最值得先看的不是模型名称，而是这些字段之间的关系：
 
@@ -78,6 +108,39 @@ Raft 的顶层结构很适合先按职责分成两边。服务端保存协作对
 
 是否随后启动，还由计划的 `restart` 条件决定。保留会话引用也只意味着仍可尝试恢复，并不保证 runtime 一定能找回原始上下文。反过来，完整重置会触及工作目录，因此不能把“文件跨会话保留”理解成任何重置都不会影响文件。
 
+### 哪些时机会创建新 session？
+
+**一位 Agent 通常延续一个当前 session，但在自己的生命周期内可以先后使用多个 session。** `agents.sessionId` 保存当前引用，并不是该 Agent 从出生到删除都不变的身份标识。以下讨论本文主要关注的受管理 Claude / Codex 路径。
+
+| 时机 | 当前实现的处理 |
+| --- | --- |
+| 首次实际启动，尚无 `sessionId` | 创建新会话；不是仅创建 Agent 数据库记录就已经有模型会话 |
+| 收到下一条消息、进入下一轮、消息来自另一个频道 | 沿当前 Agent 的执行路径处理，不以这些事件作为按频道新建 session 的条件 |
+| 普通 `restart`、正常退出后恢复执行 | 保留 session 引用，尝试恢复旧上下文；换进程不等于换 session |
+| 显式 `session` 或 `full` 重置 | 清空引用；随后实际启动时创建新会话。若暂不启动，引用就先保持为空 |
+| 切换 runtime，例如 Claude → Codex | 设置更新路径清空旧引用；触发重启时使用 `session` 重置 |
+| 修改 Codex 模型并请求重启 | 服务端强制使用 `session` 重置，让新模型通过新 `thread/start` 生效；仅改 reasoning effort 不触发这条强制规则 |
+| 恢复命中特定可回退错误 | 例如 Claude 找不到旧会话，或 Codex 缺少 rollout / thread writer busy，进入新会话恢复路径 |
+| 执行机器迁移完成持有者投影 | `finalizeAgentHolderProjection()` 清空 session 引用；目标机器后续启动不能仅凭旧 ID 当作已经恢复 |
+
+最直观的证据是 Codex 的 `buildThreadRequest()`，其分支可以简化成：
+
+```ts
+// 解释性节选：实际实现还带工作目录、模型与提示词等参数
+if (config.sessionId) {
+  return { method: "thread/resume", params: { threadId: config.sessionId } };
+}
+return { method: "thread/start", params: { /* 新会话配置 */ } };
+```
+
+Claude 的启动参数则在有旧 ID 时加上 `--resume`。runtime 建立会话后，Daemon 处理 `session_init`，更新执行实例的 `sessionId` 并通过 `agent:session` 上报。可以把时间线理解成：`Atlas → session A1 → 多轮工作 → session 重置 → session A2`；Atlas 的身份、频道成员关系和共享消息记录仍是各自的数据对象。
+
+**恢复失败也不是一律静默重开。** Codex 的分类函数只对识别出的缺失记录与 writer busy 等情况选择新 thread；权限拒绝和未知错误保留为错误。新 session 也不等于旧模型上下文完整迁移成功，仍需要依靠消息历史和工作目录恢复工作。单纯看到新 turn、进程重启或上下文压缩事件，不能据此断言 session ID 已经变化。
+
+创建与恢复依据：[Codex 创建与恢复](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/daemon/src/drivers/codex.ts#L809)、[恢复错误分类](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/daemon/src/drivers/codex.ts#L722)、[Claude 启动参数](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/daemon/src/drivers/claudeLaunch.ts#L89)、[Claude 缺失会话后的冷启动](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/daemon/src/agentProcessManager.ts#L3409)、[设置变更的重置规则](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/server/src/routes/agents.ts#L2297)、[机器迁移清空引用](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/server/src/services/agentMigrationService.ts#L1003)、[新会话 ID 上报](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/daemon/src/agentProcessManager.ts#L7166)。
+
+### 进程状态是另一条轴
+
 Daemon 侧的 `AgentLifecycleRecord` 又描述了 `queued`、`starting`、`running`、`idle`、`cooldown` 和 `terminal` 等状态。它们与数据库的 `active`、`inactive`、`stopped` 不是同一组枚举：前者服务于机器上的执行管理，后者是平台层的状态表达。
 
 其中，空闲和冷却记录可以保存 `AgentRestartSnapshot`，带着配置、会话与 launch 信息等待后续恢复。这些记录使用进程内的 Map 管理，不能自动当作跨 Daemon 重启的持久存储。阅读分布式系统时，“可以恢复”必须接着问：**恢复所需的事实放在哪里，能承受哪一层重启？**
@@ -89,6 +152,34 @@ Daemon 侧的 `AgentLifecycleRecord` 又描述了 `queued`、`starting`、`runni
 现在，用户在频道里说：“Atlas，检查这个项目的部署流程。”为便于阅读，下面展示受平台管理的 Agent 的主要链路，省略跨副本转发、迁移和外部 Agent 等分支。
 
 {{< raft-lab kind="delivery" >}}
+
+### 同一频道的多位 Agent，会一起处理新消息吗？
+
+**它们可能并行处理，但没有“频道内只选一位 Agent 回答”的统一调度规则，也不保证每位成员在同一时刻开始执行。** 普通频道先通过 `getChannelAgents()` 取得成员，再逐个构造投递内容；最后为各接收者发起 `deliverMessage()`，用 `Promise.all` 汇集这些异步操作。它不会等 Atlas 完成任务，才把同一条消息交给 Nova。
+
+还要把三个阶段分开看：
+
+| 阶段 | 决定什么 |
+| --- | --- |
+| 选择接收者 | 普通频道以成员为基础；线程按其跟随与投递规则选人。过滤 Agent 自己发出的消息，并处理静音与可见 @mention 等条件 |
+| 投递或唤醒 | 每位接收者独立检查 scope、目标访问权、停止状态、重置窗口、机器与 runtime 状态；可能直接投递、排队、唤醒或丢弃 |
+| 消费与行动 | 各自读取 Inbox、进入或继续自己的执行轮次，再决定是否回复、领取任务或保持安静 |
+
+所以，“我只在正文里 @Atlas”不能简单理解成“其他频道成员收不到”。普通未静音成员仍在投递候选中；@mention 会影响目标可见性、通知和部分静音穿透等行为。对于频道外的 Agent，也不能只凭写出一个名字就假设已经投递，源码还有发送者侧的 mention 解析和 notify/add 路径。线程同样不是无条件广播给父频道的所有 Agent。
+
+到机器端，空闲的持久 runtime 可以先收到不含正文的 Inbox 更新提示，再通过 check/read 消费内容；忙碌时的处理取决于投递分支。例如，被追踪的 @mention 会先进入队列并等待观察到的轮次边界，不能仅根据 driver 声明支持 `steer`，就说所有新消息都会立即打断执行。**可并行的是不同 Agent 的执行；同一 Agent 收到多条消息，不会因此按频道自动拆成多个独立 session。**
+
+### Atlas 发出的消息，Nova 怎样处理？
+
+假设 Atlas 和 Nova 都是 `#deploy` 的成员，并且权限、静音与运行状态允许投递：
+
+1. Atlas 调用 `raft message send` 发送“检查完成，请 Nova 复核”，服务端保存一条发送者类型为 `agent` 的普通协作消息。
+2. 分发循环跳过 `agent.id === senderId` 的 Atlas，向 Nova 等其他符合条件的接收者投递；Nova 得到的是消息内容、发送者身份与来源目标，**不是 Atlas 的 runtime session、完整思考过程或工具上下文**。
+3. Nova 在自己的 Inbox / session 中消费消息，结合自己的上下文判断是否需要复核。若回复，仍调用 `raft message send`，这条新消息又可能投递给 Atlas。
+
+这形成了通过共享消息通信的协作，而不是两个模型互相接管会话。源码跳过发送者，能避免一条消息直接回投给自己；但它并不能独自阻止 Atlas 和 Nova 轮流发送新消息。提示词里的沟通约定要求尊重正在进行的对话、不重复汇报别人的工作、没有可行动内容时不广播。**这些是 Agent 应遵守的行为约定，不是服务端保证不会互相刷屏的硬性机制。** 真正涉及动手工作的归属，还要接到第 07 节的 task claim。
+
+分发与响应依据：[频道接收者查询](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/server/src/services/channelService.ts#L3186)、[接收者过滤与并行投递](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/server/src/services/messageService.ts#L9070)、[唤醒决策](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/server/src/services/agentLifecycleReducer.ts#L223)、[忙碌 mention 队列](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/daemon/src/agentProcessManager.ts#L4492)、[空闲 Inbox 提示](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/daemon/src/agentProcessManager.ts#L4617)、[沟通约定](https://github.com/botiverse/raft-source/blob/05f7d8fd77d2535f993d5d90b85118438bc18216/packages/daemon/src/drivers/raftCliGuide.ts#L379)。
 
 ### 从业务消息到执行输入
 
@@ -104,7 +195,7 @@ Daemon 收到消息后，会把它交给 `agentManager.deliverMessage()`。这�
 
 假设频道中有 10、11、12 三条消息，Atlas 只在输入中见到了 12。如果直接把“已读水位”推进到 12，10 和 11 就可能被误判成无需再投递。实现因此区分精确的消息 ID 与有连续消费依据的边界，同时按频道、线程、私信隔离这些记录。
 
-这里的“模型已见”是工程上的内容投递记录，不是对模型是否理解、记住或遵从消息的证明。任务完成还需要独立的任务状态与结果判断。
+上面的多 Agent 例子也要按这个边界理解：同一条消息在 Atlas 那里已消费，不代表 Nova 也已消费。这里的“模型已见”是工程上的内容投递记录，不是对模型是否理解、记住或遵从消息的证明。任务完成还需要独立的任务状态与结果判断。
 
 ### 模型输出如何成为频道回复
 
