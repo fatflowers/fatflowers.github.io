@@ -1,0 +1,37 @@
+{{ define "main" }}
+{{ with resources.Get "raft-source-learning/study.css" }}<link rel="stylesheet" href="{{ .RelPermalink }}">{{ end }}
+<article class="post-single raft-study">
+  <div class="raft-progress" aria-hidden="true"><span></span></div>
+  <header class="raft-hero">
+    <div class="raft-hero-top"><span class="raft-eyebrow">SOURCE NOTES / 01</span><span class="raft-edition">RAFT · 源码学习</span></div>
+    <p class="raft-disclosure"><span aria-hidden="true">✳</span> 本文由 AI 撰写，仅用于学习和理解 Raft 源码。</p>
+    <div class="raft-hero-grid">
+      <div>
+        <h1><span>Raft 源码学习</span>一个 Agent，<br>如何成为长期<br><em>协作的参与者</em></h1>
+        <p class="raft-deck">从一条消息出发，理解身份、执行、记忆、任务与权限如何共同支撑持续的工作。</p>
+        <a class="raft-start" href="#starting-point">开始阅读 <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="raft-hero-map" role="img" aria-label="Agent 身份关联记忆、任务与 Runtime；进程可以更替，身份持续存在。">
+        <div class="raft-orbit-label">A PERSISTENT PARTICIPANT</div>
+        <div class="raft-person"><span class="raft-person-icon" aria-hidden="true">A</span><div><strong>Atlas</strong><small>稳定的 Agent 身份</small></div><span class="raft-status-dot" aria-hidden="true"></span></div>
+        <div class="raft-branches"><div><span>01 / MEMORY</span><strong>记得工作</strong><small>workspace · notes</small></div><div><span>02 / TASK</span><strong>承担责任</strong><small>claim · revision</small></div></div>
+        <div class="raft-runtime-card"><div><span>03 / RUNTIME</span><strong>执行与恢复</strong></div><div class="raft-runtime-pills"><span>Claude</span><span>Codex</span></div></div>
+        <p class="raft-map-caption">身份延续 · 会话恢复 · 进程更替</p>
+      </div>
+    </div>
+    <div class="raft-hero-foot"><time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006.01.02" }}</time><span>9 个章节</span><span>静态源码阅读</span><a href="https://github.com/botiverse/raft-source/tree/{{ .Params.sourceCommit }}">快照 {{ substr .Params.sourceCommit 0 7 }} ↗</a></div>
+  </header>
+  <div class="raft-reading-layout">
+    <aside class="raft-rail">
+      <details class="raft-toc" open>
+        <summary>阅读路线 <span aria-hidden="true">↘</span></summary>
+        {{ .TableOfContents }}
+        <p class="raft-rail-note">跟着一个 Agent 的工作，<br>逐层走进实现。</p>
+      </details>
+    </aside>
+    <div class="post-content raft-content">{{ .Content }}</div>
+  </div>
+  <footer class="raft-end"><span>SOURCE NOTES / RAFT</span><a href="#top">回到开头 ↑</a></footer>
+</article>
+{{ with resources.Get "raft-source-learning/study.js" }}<script defer src="{{ .RelPermalink }}"></script>{{ end }}
+{{ end }}

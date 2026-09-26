@@ -1,0 +1,42 @@
+{{ $kind := .Get "kind" }}
+{{ if eq $kind "architecture" }}
+<figure class="raft-lab raft-architecture">
+  <figcaption><span class="raft-lab-number">FIG. 01</span><strong>协作数据与实际执行，分在两侧</strong><small>展开卡片查看职责与源码入口</small></figcaption>
+  <div class="raft-architecture-top"><span>人 / Web / Desktop</span><span aria-hidden="true">↓</span></div>
+  <details class="raft-node raft-node-server" open><summary><span class="raft-node-num">01</span><div><strong>Server</strong><small>身份 · 消息 · 权限 · 任务</small></div><span class="raft-node-expand" aria-hidden="true">＋</span></summary><div class="raft-node-body">保存协作事实，判断是否允许访问与投递，再把执行请求交给绑定的机器。<a href="https://github.com/botiverse/raft-source/blob/{{ .Page.Params.sourceCommit }}/packages/server/src/services/agentOrchestrator.ts">agentOrchestrator.ts ↗</a></div></details>
+  <div class="raft-wire"><span>连接机器，传递控制与事件</span></div>
+  <div class="raft-machine"><span class="raft-machine-label">COMPUTER / 实际执行机器</span>
+    <details class="raft-node"><summary><span class="raft-node-num">02</span><div><strong>Daemon</strong><small>启动 · 投递 · 恢复 · 凭据代理</small></div><span class="raft-node-expand" aria-hidden="true">＋</span></summary><div class="raft-node-body">常驻的执行管理者，根据 Agent 状态与 driver 契约处理输入、会话和进程。<a href="https://github.com/botiverse/raft-source/blob/{{ .Page.Params.sourceCommit }}/packages/daemon/src/agentProcessManager.ts">agentProcessManager.ts ↗</a></div></details>
+    <div class="raft-wire raft-wire-short"><span>RuntimeSession</span></div>
+    <details class="raft-node"><summary><span class="raft-node-num">03</span><div><strong>Runtime</strong><small>Claude Code / Codex / 其他适配器</small></div><span class="raft-node-expand" aria-hidden="true">＋</span></summary><div class="raft-node-body">运行模型与工具，通过各自协议向 Daemon 报告事件；公开沟通由 Agent 经 CLI 发起。<a href="https://github.com/botiverse/raft-source/blob/{{ .Page.Params.sourceCommit }}/packages/daemon/src/drivers/types.ts">drivers/types.ts ↗</a></div></details>
+  </div>
+  <p class="raft-lab-note">CLI 提供反向调用路径：Agent → 本地代理 → Server。此图按职责简化，不表示每层都是独立部署单元。</p>
+</figure>
+{{ else if eq $kind "delivery" }}
+<figure class="raft-lab raft-delivery" data-raft-stepper>
+  <figcaption><span class="raft-lab-number">FIG. 02</span><strong>跟踪一条消息</strong><small>六个步骤，从协作事实到公开回复</small></figcaption>
+  <div class="raft-step-buttons" hidden aria-label="选择消息链路步骤">
+    <button type="button" data-step="0" aria-controls="raft-step-0" aria-pressed="true"><b>01</b>消息</button><button type="button" data-step="1" aria-controls="raft-step-1" aria-pressed="false"><b>02</b>决策</button><button type="button" data-step="2" aria-controls="raft-step-2" aria-pressed="false"><b>03</b>投递</button><button type="button" data-step="3" aria-controls="raft-step-3" aria-pressed="false"><b>04</b>执行</button><button type="button" data-step="4" aria-controls="raft-step-4" aria-pressed="false"><b>05</b>轨迹</button><button type="button" data-step="5" aria-controls="raft-step-5" aria-pressed="false"><b>06</b>回复</button>
+  </div>
+  <div class="raft-step-panels" aria-live="polite" aria-atomic="true">
+    <section id="raft-step-0" class="raft-step-panel"><span class="raft-panel-label">01 / MESSAGE SERVICE</span><h3>形成可识别的业务消息</h3><p>频道、发送者、正文、消息 ID 与序号共同组成投递内容。一条消息是可追踪的协作对象。</p><code>messageService → deliverMessage</code><p class="raft-step-evidence">此时能说明：平台有这条消息。</p></section>
+    <section id="raft-step-1" class="raft-step-panel"><span class="raft-panel-label">02 / SERVER ORCHESTRATOR</span><h3>检查权限，决定如何唤醒</h3><p>读取 Agent 状态与访问权，决定直接投递、排队或进入唤醒流程。权限变化可能导致丢弃。</p><code>agentOrchestrator.deliverMessage()</code><p class="raft-step-evidence">此时能说明：服务端作出了投递决策。</p></section>
+    <section id="raft-step-2" class="raft-step-panel"><span class="raft-panel-label">03 / DAEMON</span><h3>接纳输入，处理缓冲与重复</h3><p>检查已见内容，处理启动中的消息缓存，或依据空闲、忙碌、错误状态选择下一步。</p><code>core → agentManager.deliverMessage()</code><p class="raft-step-evidence">此时能说明：机器端接纳或处理了这次投递。</p></section>
+    <section id="raft-step-3" class="raft-step-panel"><span class="raft-panel-label">04 / RUNTIME SESSION</span><h3>用运行时支持的方式输入</h3><p>根据契约启动、发送或 steer；不支持或拒绝输入时返回具体失败原因，不能假装成功。</p><code>RuntimeSession.start() / send()</code><p class="raft-step-evidence">输入被接纳，仍不代表任务已完成。</p></section>
+    <section id="raft-step-4" class="raft-step-panel"><span class="raft-panel-label">05 / ACTIVITY & TRAJECTORY</span><h3>记录执行活动与输出</h3><p>模型文本、工具调用、压缩与错误等事件进入对应管理路径。文本可以成为轨迹，而非正式频道回复。</p><code>text event → queueTrajectoryText()</code><p class="raft-step-evidence">此时能说明：观察到了执行活动。</p></section>
+    <section id="raft-step-5" class="raft-step-panel"><span class="raft-panel-label">06 / PUBLIC REPLY</span><h3>通过 CLI 正式发送消息</h3><p>Agent 按沟通约定调用 raft message send，经本地代理与服务端检查，提交团队可见的答复。</p><code>raft message send → proxy → Server</code><p class="raft-step-evidence">公开回复与任务完成，需要分别判断。</p></section>
+  </div>
+  <div class="raft-step-footer" hidden><span data-step-count>01 / 06</span><div><button type="button" data-step-prev aria-label="上一步">←</button><button type="button" data-step-next aria-label="下一步">→</button></div></div>
+  <p class="raft-lab-note">教学示意：展示受管理 Agent 的主要路径，不连接或运行真实 Agent。</p>
+</figure>
+{{ else if eq $kind "claim" }}
+<figure class="raft-lab raft-claim">
+  <figcaption><span class="raft-lab-number">FIG. 03</span><strong>两个 Agent，竞争同一个任务</strong><small>用 revision 条件理解并发领取</small></figcaption>
+  <div class="raft-claim-initial"><span>TASK #42</span><strong>待领取 · revision 7</strong></div>
+  <div class="raft-claim-grid">
+    <div><span class="raft-claim-avatar">A</span><h3>Atlas</h3><p>读取 revision 7</p><code>WHERE revision = 7</code><div class="raft-claim-outcome raft-claim-win">先更新成功 → revision 8</div></div>
+    <div><span class="raft-claim-avatar raft-claim-avatar-alt">N</span><h3>Nova</h3><p>同样读取 revision 7</p><code>WHERE revision = 7</code><div class="raft-claim-outcome">旧版本不匹配 → 返回冲突</div></div>
+  </div>
+  <p class="raft-lab-note">示例假定 Atlas 先提交。源码同时检查领取状态与归属，图中仅突出版本条件；不表示存在全局执行锁。</p>
+</figure>
+{{ end }}
