@@ -11,6 +11,12 @@
         <p class="raft-deck">从一条消息出发，理解身份、执行、记忆、任务与权限如何共同支撑持续的工作。</p>
         <a class="raft-start" href="#starting-point">开始阅读 <span aria-hidden="true">↗</span></a>
       </div>
+      {{ with .Params.cover }}
+      <figure class="raft-hero-cover">
+        <img src="{{ .image | relURL }}" alt="{{ .alt }}" width="{{ .width }}" height="{{ .height }}" fetchpriority="high" decoding="async">
+        <figcaption>{{ .caption | markdownify }}</figcaption>
+      </figure>
+      {{ else }}
       <div class="raft-hero-map" role="img" aria-label="Agent 身份关联记忆、任务与 Runtime；进程可以更替，身份持续存在。">
         <div class="raft-orbit-label">A PERSISTENT PARTICIPANT</div>
         <div class="raft-person"><span class="raft-person-icon" aria-hidden="true">A</span><div><strong>Atlas</strong><small>稳定的 Agent 身份</small></div><span class="raft-status-dot" aria-hidden="true"></span></div>
@@ -18,6 +24,7 @@
         <div class="raft-runtime-card"><div><span>03 / RUNTIME</span><strong>执行与恢复</strong></div><div class="raft-runtime-pills"><span>Claude</span><span>Codex</span></div></div>
         <p class="raft-map-caption">身份延续 · 会话恢复 · 进程更替</p>
       </div>
+      {{ end }}
     </div>
     <div class="raft-hero-foot"><time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006.01.02" }}</time><span>9 个章节</span><span>静态源码阅读</span><a href="https://github.com/botiverse/raft-source/tree/{{ .Params.sourceCommit }}">快照 {{ substr .Params.sourceCommit 0 7 }} ↗</a></div>
   </header>

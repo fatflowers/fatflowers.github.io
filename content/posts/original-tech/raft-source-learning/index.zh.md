@@ -6,6 +6,15 @@ description: "从身份、消息投递、Runtime、记忆、任务领取和权�
 tags: ["Agent", "Raft", "源码阅读", "Runtime", "多智能体"]
 categories: ["Original Tech"]
 layout: raft-study
+images: ["/images/raft-source-learning-cover.png"]
+cover:
+  image: "/images/raft-source-learning-cover.png"
+  alt: "Raft 官方分享图：中央 RAFT 标志与周围彩色像素角色"
+  width: 1200
+  height: 630
+  mime: "image/png"
+  caption: "图片：[Raft 官方](https://raft.build/)，沿用官网分享图。"
+  source: "https://raft.build/og/raft-social-1200x630.png"
 ShowToc: false
 disableShare: true
 sourceCommit: "05f7d8fd77d2535f993d5d90b85118438bc18216"

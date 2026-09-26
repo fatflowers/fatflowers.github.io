@@ -5,6 +5,7 @@
 {{- else }}
 <meta name="twitter:image" content="{{ (path.Join .RelPermalink .Params.cover.image ) | absURL }}">
 {{- end}}
+{{- with .Params.cover.alt }}<meta name="twitter:image:alt" content="{{ . | plainify }}">{{ end }}
 {{- else }}
 {{- $images := partial "templates/_funcs/get-page-images" . -}}
 {{- with index $images 0 -}}
