@@ -16,7 +16,6 @@ cover:
   caption: "图片：[Raft 官方](https://raft.build/)，沿用官网分享图。"
   source: "https://raft.build/og/raft-social-1200x630.png"
 ShowToc: false
-disableShare: true
 sourceCommit: "05f7d8fd77d2535f993d5d90b85118438bc18216"
 summary: "本文由 AI 撰写，仅用于学习和理解 Raft 源码。从一条频道消息出发，跟踪 Agent 的身份、执行过程、文件记忆、任务协作和凭据边界。"
 ---

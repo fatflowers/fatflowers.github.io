@@ -37,6 +37,27 @@
     widget.querySelector('.raft-step-footer').hidden = false;
   }
 
+  for (const button of article.querySelectorAll('[data-copy-link]')) {
+    const group = button.closest('.raft-share');
+    const status = group.querySelector('.raft-share-status');
+    const fallback = group.querySelector('.raft-share-fallback');
+    button.hidden = false;
+    button.addEventListener('click', async () => {
+      try {
+        if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+        await navigator.clipboard.writeText(button.dataset.copyLink);
+        fallback.hidden = true;
+        status.textContent = '链接已复制';
+      } catch {
+        fallback.hidden = false;
+        const input = fallback.querySelector('input');
+        input.focus();
+        input.select();
+        status.textContent = '请复制下方链接';
+      }
+    });
+  }
+
   const toc = article.querySelector('.raft-toc');
   const narrow = window.matchMedia('(max-width: 960px)');
   if (narrow.matches) toc.open = false;

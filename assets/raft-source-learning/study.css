@@ -144,3 +144,14 @@
 .raft-hero-cover figcaption{margin-top:12px;font-size:10px;line-height:1.8;color:#a8bcae;text-align:right}
 .raft-hero-cover figcaption a{text-decoration:underline;text-underline-offset:3px;color:#c0d5b3}
 @media(max-width:640px){.raft-hero-cover{margin-top:32px}.raft-hero-cover figcaption{font-size:9px}}
+
+.raft-share{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:22px 24px;color:var(--r-ink);font-size:12px;line-height:1.6}
+.raft-share-label{color:var(--r-muted);margin-right:3px}
+.raft-share a,.raft-share button{display:inline-flex;align-items:center;gap:14px;min-height:40px;padding:9px 15px;border:1px solid var(--r-line);border-radius:4px;font:inherit;text-decoration:none;background:var(--r-paper);color:var(--r-ink);cursor:pointer}
+.raft-share .raft-share-x{background:var(--r-accent);border-color:var(--r-accent);color:var(--r-paper)}
+.raft-share a:hover,.raft-share button:hover{filter:brightness(.92)}
+.raft-share-status{color:var(--r-accent);font-size:11px}
+.raft-share-fallback{flex-basis:100%;font-size:11px;color:var(--r-muted)}
+.raft-share-fallback input{display:block;width:100%;margin-top:6px;padding:10px;border:1px solid var(--r-line);border-radius:4px;color:var(--r-ink);background:var(--r-paper);font:12px ui-monospace,SFMono-Regular,Consolas,monospace}
+@media(max-width:640px){.raft-share{margin:20px 0;gap:9px;font-size:11px}.raft-share a,.raft-share button{padding:9px 12px;min-height:44px}.raft-share-status{flex-basis:100%}}
+@media print{.raft-share{display:none!important}}

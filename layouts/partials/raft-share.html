@@ -1,0 +1,9 @@
+{{ if not (.Param "disableShare") }}
+<div class="raft-share" role="group" aria-label="分享本文">
+  <span class="raft-share-label">分享本文</span>
+  <a class="raft-share-x" href="https://x.com/intent/tweet?text={{ .Title }}&amp;url={{ .Permalink }}" target="_blank" rel="noopener noreferrer">分享到 X / Twitter <span aria-hidden="true">↗</span></a>
+  <button type="button" data-copy-link="{{ .Permalink }}" hidden>复制链接</button>
+  <span class="raft-share-status" role="status" aria-live="polite"></span>
+  <label class="raft-share-fallback" hidden>文章链接<input type="text" readonly value="{{ .Permalink }}"></label>
+</div>
+{{ end }}

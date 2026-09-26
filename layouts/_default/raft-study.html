@@ -28,6 +28,7 @@
     </div>
     <div class="raft-hero-foot"><time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006.01.02" }}</time><span>9 个章节</span><span>静态源码阅读</span><a href="https://github.com/botiverse/raft-source/tree/{{ .Params.sourceCommit }}">快照 {{ substr .Params.sourceCommit 0 7 }} ↗</a></div>
   </header>
+  {{ partial "raft-share.html" . }}
   <div class="raft-reading-layout">
     <aside class="raft-rail">
       <details class="raft-toc" open>
@@ -38,6 +39,7 @@
     </aside>
     <div class="post-content raft-content">{{ .Content }}</div>
   </div>
+  {{ partial "raft-share.html" . }}
   <footer class="raft-end"><span>SOURCE NOTES / RAFT</span><a href="#top">回到开头 ↑</a></footer>
 </article>
 {{ with resources.Get "raft-source-learning/study.js" }}<script defer src="{{ .RelPermalink }}"></script>{{ end }}
