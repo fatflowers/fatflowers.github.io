@@ -12,7 +12,7 @@ description: "Earendil 工程团队解释 Pi 为何从拒绝 MCP 转向将其纳
 >
 > **作者：** Earendil Engineering · **原文发布日期：** 2026 年 9 月 29 日
 >
-> **翻译说明：** 本文根据原文 PDF 译为中文，翻译由 AI 完成。正文保留作者的第一人称表述，文中的“我们”指 Earendil 团队。产品行为与判断以原文发表时为准；文末交互式会话回放仅呈现 PDF 中可见的片段，完整回放请访问原文。
+> **翻译说明：** 本文根据原文 PDF 译为中文，翻译由 AI 完成。正文保留作者的第一人称表述，文中的“我们”指 Earendil 团队。产品行为与判断以原文发表时为准；文末演示已根据补充的会话记录完整呈现，交互式回放请访问原文。
 
 如果你过去访问过 [pi.dev](https://pi.dev)，就会看到一条颇为自豪的声明：Pi 不支持 MCP。如果你听过我们谈论 Pi 的播客，也会发现我们不止一次对 MCP 表达过不以为然的态度。[Mario 还专门写过一篇文章](https://mariozechner.at/posts/2025-11-02-what-if-you-dont-need-mcp/)。然而，现在升级 Pi 后，你会发现 MCP 已经成为受支持的功能。发生了什么？
 
@@ -56,9 +56,77 @@ Codemode 的特别之处在于，它运行在框架所在的一侧。理解它�
 
 它会巧妙地把 Linear MCP 和 Jev 等能力组合起来，直接在 Pi 中完成分析，而不浪费任何上下文。
 
-下面是 PDF 中可见的会话回放片段。工具输出里的字段名、问题编号和问题标题保留原样；片段从统计字段开始，问题标题末尾的省略号来自原文的截断。
+**会话回放**
+
+> 通过 Codemode 使用 typesafe/jev，找出我们的问题跟踪系统中最感到沮丧的人。
+
+我会从 Linear 获取尚未关闭的问题，让 Jev 评估每个讨论串的情绪，每次并行处理四个。
+
+**codemode**
+
+```javascript
+const { issues } = await tools.mcp__linear__list_issues({
+  team: "Pi", state: "open", limit: 250,
+});
+const jev = await models.getModelOfType(
+  "classifier", "cloudflare-workers-ai", "typesafe/jev",
+);
+const questions = {
+  frustration: {
+    type: "choice",
+    instructions: "Judge ONLY the emotional tone of the people writing. " +
+      "Ignore how severe the bug is.",
+    criteria: {
+      none: "Neutral, factual, or friendly, even about a serious bug",
+      mild: "Explicit annoyance, impatience, or disappointment",
+      high: "Clearly angry, exasperated, sarcastic, or fed up",
+    },
+  },
+};
+
+const results = [];
+let next = 0;
+async function worker() {
+  while (next < issues.length) {
+    const issue = issues[next++];
+    const { comments } = await tools.mcp__linear__list_comments({
+      issueId: issue.identifier,
+    });
+    const c = await models.classify(jev, { state: { ...issue, comments }, questions });
+    results.push({ id: issue.identifier, title: issue.title, ...c.answers.frustration });
+  }
+}
+await Promise.all([worker(), worker(), worker(), worker()]);
+store("frustration", results);
+
+const score = (r) => r.probabilities.mild * 0.5 + r.probabilities.high;
+const counts = {};
+for (const r of results) counts[r.choice] = (counts[r.choice] ?? 0) + 1;
+const flagged = results.filter((r) => r.choice !== "none");
+flagged.sort((a, b) => score(b) - score(a));
+return {
+  total: results.length,
+  counts,
+  flagged: flagged.map((r) => `${r.id} ${r.title}`),
+};
+```
 
 ```text
+... (327 earlier calls, ctrl+o to expand)
+
+✓ mcp__linear__list_comments {"issueId":"PI-4945"} 347ms
+✓ mcp__linear__list_comments {"issueId":"PI-4748"} 324ms
+✓ models.classify cloudflare-workers-ai/typesafe/jev 759ms
+✓ models.classify cloudflare-workers-ai/typesafe/jev 783ms
+✓ mcp__linear__list_comments {"issueId":"PI-4714"} 255ms
+✓ mcp__linear__list_comments {"issueId":"PI-3200"} 354ms
+✓ models.classify cloudflare-workers-ai/typesafe/jev 756ms
+✓ models.classify cloudflare-workers-ai/typesafe/jev 750ms
+```
+
+```json
+{
+  "total": 167,
   "counts": {
     "none": 156,
     "mild": 11
@@ -79,12 +147,16 @@ Codemode 的特别之处在于，它运行在框架所在的一侧。理解它�
 }
 ```
 
-问题跟踪系统中的大多数讨论都很平静。Jev 将 167 个尚未关闭的问题中的 156 个评为情绪中性，11 个评为轻度沮丧，没有任何一个被评为高度沮丧。
+问题跟踪系统中的大多数讨论都很平静。Jev 将 **167** 个尚未关闭的问题中的 **156** 个评为情绪中性，**11** 个评为轻度沮丧，没有任何一个被评为高度沮丧。
 
 最明显的几个例子：
 
-- **PI-6907：** README 中没有安装说明（“这让人很沮丧”）。
-- **PI-10031：** 在思考期间按下 Esc 后，Pi 卡在“Working...”状态。
+- `PI-6907`：README 中没有安装说明（“这让人很沮丧”）。
+- `PI-10031`：在思考期间按下 Esc 后，Pi 卡在“Working...”状态。
+- `PI-4714`：请求添加 `/update` 命令（“太让人头疼了”）。
+- `PI-7730`：在 macOS 上长时间运行会话时，CPU 占用过高。
+
+每个问题的评估结果都保存在 Codemode 的 `frustration` 中，因此我可以深入查看其中任意一个，而不必重新获取问题。
 
 *这是一次 Pi 会话的精简回放。可在[原文](https://earendil.com/posts/you-said-no-mcp/)中查看并重播。*
 

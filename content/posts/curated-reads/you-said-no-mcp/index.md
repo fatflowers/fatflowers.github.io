@@ -12,7 +12,7 @@ description: "Earendil Engineering explains why Pi now includes MCP in its core,
 >
 > **Author:** Earendil Engineering · **Originally published:** September 29, 2026
 >
-> **Reprint note:** The English article below is reproduced from the supplied PDF, with its original wording and links retained. The embedded session replay includes only the excerpt visible in that PDF; visit the source for the interactive replay. Statements about product behavior reflect the original publication date.
+> **Reprint note:** The English article below is reproduced from the supplied PDF, with its original wording and links retained. The session replay has been completed using the supplied transcript; visit the source for the interactive replay. Statements about product behavior reflect the original publication date.
 
 If you went to pi.dev in the past, you found a proud declaration that Pi does not support MCP. If you listen to podcasts where we talked about Pi, you will have found more than one dismissive statement about MCP from us. Including [a post by Mario about it](https://mariozechner.at/posts/2025-11-02-what-if-you-dont-need-mcp/). And yet, if you upgrade to Pi you will find MCP is now a supported piece of functionality. What happened?
 
@@ -52,7 +52,77 @@ In Pi, Codemode is automatically loaded when MCP is configured, or it can be add
 
 And it will cleverly combine things like the Linear MCP and Jev to do that analysis, right from within Pi, without wasting any context at all.
 
+**Session replay**
+
+> Use typesafe/jev via codemode to find the most frustrated people on our issue tracker
+
+I'll pull the open issues from Linear and let Jev rate the tone of each thread, four at a time.
+
+**codemode**
+
+```javascript
+const { issues } = await tools.mcp__linear__list_issues({
+  team: "Pi", state: "open", limit: 250,
+});
+const jev = await models.getModelOfType(
+  "classifier", "cloudflare-workers-ai", "typesafe/jev",
+);
+const questions = {
+  frustration: {
+    type: "choice",
+    instructions: "Judge ONLY the emotional tone of the people writing. " +
+      "Ignore how severe the bug is.",
+    criteria: {
+      none: "Neutral, factual, or friendly, even about a serious bug",
+      mild: "Explicit annoyance, impatience, or disappointment",
+      high: "Clearly angry, exasperated, sarcastic, or fed up",
+    },
+  },
+};
+
+const results = [];
+let next = 0;
+async function worker() {
+  while (next < issues.length) {
+    const issue = issues[next++];
+    const { comments } = await tools.mcp__linear__list_comments({
+      issueId: issue.identifier,
+    });
+    const c = await models.classify(jev, { state: { ...issue, comments }, questions });
+    results.push({ id: issue.identifier, title: issue.title, ...c.answers.frustration });
+  }
+}
+await Promise.all([worker(), worker(), worker(), worker()]);
+store("frustration", results);
+
+const score = (r) => r.probabilities.mild * 0.5 + r.probabilities.high;
+const counts = {};
+for (const r of results) counts[r.choice] = (counts[r.choice] ?? 0) + 1;
+const flagged = results.filter((r) => r.choice !== "none");
+flagged.sort((a, b) => score(b) - score(a));
+return {
+  total: results.length,
+  counts,
+  flagged: flagged.map((r) => `${r.id} ${r.title}`),
+};
+```
+
 ```text
+... (327 earlier calls, ctrl+o to expand)
+
+✓ mcp__linear__list_comments {"issueId":"PI-4945"} 347ms
+✓ mcp__linear__list_comments {"issueId":"PI-4748"} 324ms
+✓ models.classify cloudflare-workers-ai/typesafe/jev 759ms
+✓ models.classify cloudflare-workers-ai/typesafe/jev 783ms
+✓ mcp__linear__list_comments {"issueId":"PI-4714"} 255ms
+✓ mcp__linear__list_comments {"issueId":"PI-3200"} 354ms
+✓ models.classify cloudflare-workers-ai/typesafe/jev 756ms
+✓ models.classify cloudflare-workers-ai/typesafe/jev 750ms
+```
+
+```json
+{
+  "total": 167,
   "counts": {
     "none": 156,
     "mild": 11
@@ -73,12 +143,16 @@ And it will cleverly combine things like the Linear MCP and Jev to do that analy
 }
 ```
 
-Most of the tracker is calm. Jev rated 156 of the 167 open issues as neutral, 11 as mildly frustrated and none as highly frustrated.
+Most of the tracker is calm. Jev rated **156** of the **167** open issues as neutral, **11** as mildly frustrated and none as highly frustrated.
 
 The clearest cases:
 
-- PI-6907 no installation section in the README (“It's frustrating”)
-- PI-10031 Pi gets stuck on “Working...” after pressing Esc during thinking
+- `PI-6907` no installation section in the README (“It's frustrating”)
+- `PI-10031` Pi gets stuck on “Working...” after pressing Esc during thinking
+- `PI-4714` a `/update` command request (“a pain in the butt”)
+- `PI-7730` high CPU usage on macOS in long sessions
+
+The per-issue verdicts are stored in codemode under `frustration`, so I can dig into any of them without fetching the issues again.
 
 *A condensed replay of such a session in Pi. [Replay](https://earendil.com/posts/you-said-no-mcp/).*
 
